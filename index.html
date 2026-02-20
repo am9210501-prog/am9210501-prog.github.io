@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>سایت من</title>
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  font-family: Tahoma;
+  background: linear-gradient(135deg, #c2ffd8, #465efb);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.box {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.2);
+}
+h1 { font-size: 34px; }
+p { font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>👋 خوش آمدی!</h1>
+  <p>به سایت من خوش اومدی 😎</p>
+  <p id="time"></p>
+</div>
+
+<script>
+function updateTime() {
+  const now = new Date();
+  const options = { timeZone: 'Asia/Tehran', hour12: false };
+  document.getElementById("time").innerHTML =
+    now.toLocaleString('fa-IR', options);
+}
+setInterval(updateTime, 1000);
+</script>
+
+</body>
+</html>
