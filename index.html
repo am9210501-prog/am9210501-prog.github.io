@@ -3,117 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سایت حرفه‌ای من</title>
-
+<title>سایت اقتصادی آنلاین</title>
 <style>
 :root {
-  --bg1: #e0f7fa;
-  --bg2: #b2dfdb;
+  --bg1: #d4fc79;
+  --bg2: #96e6a1;
   --card: white;
   --text: #222;
 }
-
 .dark {
   --bg1: #0f2027;
   --bg2: #203a43;
   --card: rgba(255,255,255,0.1);
   --text: white;
 }
-
 body {
   margin: 0;
   font-family: Tahoma, sans-serif;
-  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  background: linear-gradient(135deg,var(--bg1),var(--bg2));
   color: var(--text);
   text-align: center;
   transition: 0.4s;
 }
-
 .container { padding: 20px; }
-
 .card {
   background: var(--card);
-  backdrop-filter: blur(10px);
   margin: 15px auto;
   padding: 20px;
   border-radius: 15px;
   max-width: 420px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
-
-h1 { font-size: 26px; }
-
 .price { font-size: 20px; margin: 10px 0; }
-
 .time { font-size: 16px; }
-
-input, button {
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  margin-top: 10px;
-  font-size: 16px;
-}
-
-button {
-  background: #00bfa5;
-  color: white;
-  cursor: pointer;
-}
-
-.toggle { background: #555; }
-
+button { padding: 10px; border-radius: 10px; border:none; background:#00bfa5; color:white; cursor:pointer; }
 .green { color: green; }
 .red { color: red; }
 </style>
 </head>
-
 <body>
 
 <div class="container">
-
-  <h1 id="welcome">👋 خوش آمدی</h1>
-
-  <div class="card" id="nameBox">
-    <p>نام خود را وارد کنید:</p>
-    <input type="text" id="nameInput" placeholder="نام شما">
-    <br>
-    <button onclick="saveName()">ورود</button>
-  </div>
+  <h1>📊 قیمت آنلاین به تومان</h1>
 
   <div class="card">
     <div id="btc" class="price">⏳ دریافت بیت‌کوین...</div>
     <div id="usdt" class="price">⏳ دریافت تتر...</div>
     <div id="gold" class="price">⏳ دریافت طلا...</div>
+    <div id="usdRate" class="price">⏳ دریافت نرخ دلار...</div>
   </div>
 
   <div class="card">
-    <div class="time" id="time"></div>
-    <div class="time" id="date"></div>
-    <button class="toggle" onclick="toggleMode()">🌙 تغییر حالت</button>
+    <div id="time" class="time"></div>
+    <div id="date" class="time"></div>
+    <button onclick="toggleMode()">🌙 تغییر حالت</button>
   </div>
-
 </div>
 
 <script>
-// 👤 ذخیره نام کاربر
-function saveName() {
-  const name = document.getElementById("nameInput").value;
-  if (!name) return;
-  localStorage.setItem("username", name);
-  showWelcome();
-}
-
-function showWelcome() {
-  const name = localStorage.getItem("username");
-  if (name) {
-    document.getElementById("welcome").innerText = "👋 خوش آمدی " + name;
-    document.getElementById("nameBox").style.display = "none";
-  }
-}
-showWelcome();
-
-// 🌙 دارک مود
+// 🌙 دارک / لایت مود
 function toggleMode() {
   document.body.classList.toggle("dark");
 }
@@ -121,46 +69,53 @@ function toggleMode() {
 // ⏰ ساعت ایران
 function updateTime() {
   const now = new Date();
-  const time = now.toLocaleTimeString("fa-IR", { timeZone: "Asia/Tehran" });
-  const date = now.toLocaleDateString("fa-IR", { timeZone: "Asia/Tehran" });
-
-  document.getElementById("time").innerText = "🕒 ساعت ایران: " + time;
-  document.getElementById("date").innerText = "📅 تاریخ: " + date;
+  document.getElementById("time").innerText =
+    "🕒 ساعت ایران: " + now.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
+  document.getElementById("date").innerText =
+    "📅 تاریخ: " + now.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
 }
-setInterval(updateTime, 1000);
+setInterval(updateTime,1000);
 updateTime();
 
-// 💰 دریافت قیمت‌ها (API پایدار)
-async function loadPrices() {
+// 💰 دریافت قیمت آنلاین
+async function loadOnlinePrices() {
   try {
-    const res = await fetch(
+    // تبدیل دلار به تومان
+    const resRate = await fetch("https://api.exchangerate.host/convert?from=USD&to=IRR");
+    const rateData = await resRate.json();
+    const dollarRate = rateData.result;
+
+    document.getElementById("usdRate").innerText = "💵 نرخ دلار: " + Math.round(dollarRate).toLocaleString("fa-IR") + " ریال";
+
+    // قیمت بیت‌کوین و تتر
+    const cryptoRes = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether,pax-gold&vs_currencies=usd&include_24hr_change=true"
     );
-    const data = await res.json();
+    const crypto = await cryptoRes.json();
 
-    const btc = data.bitcoin;
-    const usdt = data.tether;
-    const gold = data["pax-gold"]; // معادل طلا
+    const btcUsd = crypto.bitcoin.usd;
+    const usdtUsd = crypto.tether.usd;
+    const goldUsd = crypto["pax-gold"].usd;
 
-    document.getElementById("btc").innerHTML =
-      "🟠 بیت‌کوین: $" + btc.usd +
-      ` <span class="${btc.usd_24h_change >= 0 ? 'green' : 'red'}">(${btc.usd_24h_change.toFixed(2)}%)</span>`;
+    // تبدیل به تومان
+    const btcToman = Math.round(btcUsd * dollarRate / 10).toLocaleString("fa-IR");
+    const usdtToman = Math.round(usdtUsd * dollarRate / 10).toLocaleString("fa-IR");
+    const goldToman = Math.round(goldUsd * dollarRate / 10).toLocaleString("fa-IR");
 
-    document.getElementById("usdt").innerHTML =
-      "🟢 تتر: $" + usdt.usd +
-      ` <span class="${usdt.usd_24h_change >= 0 ? 'green' : 'red'}">(${usdt.usd_24h_change.toFixed(2)}%)</span>`;
+    document.getElementById("btc").innerText =
+      "🟠 بیت‌کوین: " + btcToman + " تومان";
+    document.getElementById("usdt").innerText =
+      "🟢 تتر: " + usdtToman + " تومان";
+    document.getElementById("gold").innerText =
+      "🟡 طلا: " + goldToman + " تومان";
 
-    document.getElementById("gold").innerHTML =
-      "🟡 طلا (PAXG): $" + gold.usd +
-      ` <span class="${gold.usd_24h_change >= 0 ? 'green' : 'red'}">(${gold.usd_24h_change.toFixed(2)}%)</span>`;
-
-  } catch (e) {
-    document.getElementById("btc").innerText = "❌ دریافت قیمت ممکن نیست";
+  } catch (err) {
+    document.getElementById("btc").innerText = "❌ خطا در دریافت قیمت‌ها";
   }
 }
 
-loadPrices();
+loadOnlinePrices();
 </script>
 
 </body>
-  </html>
+</html>
