@@ -4,69 +4,70 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>سایت خفن من</title>
-
 <style>
+/* ======= پس زمینه متحرک ======= */
 body {
   margin: 0;
   font-family: Tahoma, sans-serif;
-  background: linear-gradient(120deg, #00c3ff, #ffff1c, #ff00f7);
+  background: linear-gradient(120deg, #ff7f50, #1e90ff, #32cd32, #ff1493);
   background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
+  animation: gradientBG 20s ease infinite;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  color: white;
   text-align: center;
+  color: white;
 }
-
 @keyframes gradientBG {
   0% {background-position:0% 50%;}
   50% {background-position:100% 50%;}
   100% {background-position:0% 50%;}
 }
 
+/* ======= کارت ======= */
 .container {
   width: 95%;
-  max-width: 450px;
+  max-width: 500px;
   background: rgba(255,255,255,0.1);
-  padding: 25px 20px;
+  padding: 30px 20px;
   border-radius: 25px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
   backdrop-filter: blur(15px);
-  margin-top: 20px;
+  margin-top: 30px;
 }
 
-h1 { font-size: 32px; margin: 10px 0; }
-p { font-size: 18px; margin: 6px 0; }
+/* ======= متن ======= */
+h1 { font-size: 38px; margin: 10px 0; }
+p { font-size: 20px; margin: 6px 0; }
 
+/* ======= Input و Button ======= */
 input {
-  padding: 12px;
+  padding: 14px;
   width: 80%;
   border-radius: 12px;
   border: none;
-  font-size: 16px;
-  margin-top: 10px;
+  font-size: 18px;
+  margin-top: 12px;
   text-align: center;
 }
-
 button {
-  padding: 12px 25px;
+  padding: 14px 30px;
   border: none;
   border-radius: 15px;
-  font-size: 18px;
-  margin-top: 10px;
+  font-size: 20px;
+  margin-top: 12px;
   cursor: pointer;
   background: #00ffcc;
   color: black;
   transition: 0.3s;
 }
-
 button:hover {
   background: #00ccaa;
   transform: scale(1.05);
 }
 
+/* ======= iframe ======= */
 iframe {
   margin-top: 20px;
   width: 100%;
@@ -74,49 +75,105 @@ iframe {
   border: none;
   border-radius: 15px;
 }
+
+/* ======= ورود اول ======= */
+#loginScreen {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  flex-direction: column;
+}
+#loginScreen input { font-size: 20px; padding: 15px; }
+#loginScreen button { font-size: 22px; padding: 15px 40px; }
 </style>
 </head>
-
 <body>
-<div class="container">
-  <h1>👋 خوش آمدی!</h1>
-  <p id="welcome">به سایت من خوش اومدی 😎</p>
+
+<!-- صفحه ورود -->
+<div id="loginScreen">
+  <h1>👋 اسم خودت رو وارد کن</h1>
+  <input id="loginName" placeholder="اسمت رو بنویس">
+  <br>
+  <button onclick="enterSite()">ورود</button>
+</div>
+
+<!-- صفحه اصلی سایت -->
+<div class="container" id="mainContent" style="display:none;">
+  <h1 id="welcome">به سایت من خوش اومدی 😎</h1>
   <p id="time"></p>
 
-  <input id="nameInput" placeholder="اسمت رو بنویس">
+  <input id="nameInput" placeholder="اسمت رو دوباره بنویس">
   <br>
   <button onclick="saveName()">ثبت اسم</button>
+
+  <p>👥 کلیکر:</p>
+  <button onclick="clicker()">کلیک کن</button>
+  <p>تعداد کلیک: <span id="clickCount">0</span></p>
 
   <br>
   <a href="https://forms.gle/e5us6YdJNeHphBgF7" target="_blank">
     <button>📩 ثبت رسمی اسم</button>
   </a>
 
-  <!-- 👀 نمایش Google Sheet -->
   <iframe src="https://docs.google.com/spreadsheets/d/1JOfMkRyKDz4uJmwtnjzK9upZtvxMv8omjUyMswbLw3A/preview?widget=true&headers=false"></iframe>
+
+  <!-- مینی‌بازی -->
+  <div style="margin-top:20px;">
+    <p>🎮 بازی کوچک: روی دکمه تصادفی کلیک کن!</p>
+    <button id="gameBtn" style="position:relative;">🎯 کلیک کن</button>
+    <p>امتیاز: <span id="score">0</span></p>
+  </div>
 </div>
 
 <script>
-// ⏰ ساعت ایران
+// ======= ساعت ایران =======
 function updateTime() {
   const now = new Date();
   const options = { timeZone: 'Asia/Tehran', hour12: false };
   document.getElementById("time").innerHTML = "🕒 " + now.toLocaleString('fa-IR', options);
 }
-setInterval(updateTime, 1000);
+setInterval(updateTime,1000);
 
-// 👤 ذخیره اسم‌ها در مرورگر
-let names = JSON.parse(localStorage.getItem("names")) || [];
+// ======= ورود اول =======
+function enterSite() {
+  const name = document.getElementById("loginName").value.trim();
+  if(!name) return;
+  localStorage.setItem("userName", name);
+  document.getElementById("welcome").innerText = "خوش اومدی " + name + " 😍";
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("mainContent").style.display = "block";
+}
 
+// ======= ذخیره اسم‌ها =======
+let names = JSON.parse(localStorage.getItem("names"))||[];
 function saveName() {
   const name = document.getElementById("nameInput").value.trim();
-  if (!name) return;
-
+  if(!name) return;
   names.push(name);
-  localStorage.setItem("names", JSON.stringify(names));
-
-  document.getElementById("welcome").innerHTML = "خوش اومدی " + name + " 😍";
+  localStorage.setItem("names",JSON.stringify(names));
+  document.getElementById("welcome").innerText = "خوش اومدی " + name + " 😍";
+}// ======= کلیکر ساده =======
+let clicks = 0;
+function clicker() {
+  clicks++;
+  document.getElementById("clickCount").innerText = clicks;
 }
+
+// ======= مینی‌بازی =======
+let score = 0;
+const gameBtn = document.getElementById("gameBtn");
+gameBtn.addEventListener("click", ()=>{
+  score++;
+  document.getElementById("score").innerText = score;
+  const x = Math.random()*80;
+  const y = Math.random()*80;
+  gameBtn.style.transform = translate(${x}px, ${y}px);
+});
 </script>
+
 </body>
 </html>
