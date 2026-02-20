@@ -3,66 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سایت حرفه‌ای اقتصادی</title>
+<title>سایت اقتصادی آنلاین پایدار</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
-:root {
-  --bg1: #00c9ff;
-  --bg2: #92fe9d;
-  --card: rgba(255,255,255,0.9);
-  --text: #222;
+:root{
+  --bg1:#00c9ff;
+  --bg2:#92fe9d;
+  --card:rgba(255,255,255,0.9);
+  --text:#222;
 }
-.dark {
-  --bg1: #0f2027;
-  --bg2: #203a43;
-  --card: rgba(0,0,0,0.6);
-  --text: white;
+.dark{
+  --bg1:#0f2027;
+  --bg2:#203a43;
+  --card:rgba(0,0,0,0.6);
+  --text:white;
 }
 
-body {
+body{
   margin:0;
-  font-family: 'Vazirmatn', sans-serif;
-  background: linear-gradient(-45deg, var(--bg1), var(--bg2), var(--bg1), var(--bg2));
-  background-size: 400% 400%;
-  color: var(--text);
+  font-family:'Vazirmatn',sans-serif;
+  background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));
+  background-size:400% 400%;
+  color:var(--text);
   text-align:center;
-  animation: gradientBG 15s ease infinite;
-  transition: 0.4s;
+  animation:gradientBG 15s ease infinite;
+  transition:0.4s;
 }
 
-@keyframes gradientBG {
-  0% {background-position:0% 50%;}
-  50% {background-position:100% 50%;}
-  100% {background-position:0% 50%;}
+@keyframes gradientBG{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
 }
 
-.container { padding:20px; }
+.container{padding:20px;}
 
-.card {
-  background: var(--card);
-  margin: 15px auto;
-  padding: 25px;
-  border-radius: 20px;
-  max-width: 450px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+.card{
+  background:var(--card);
+  margin:15px auto;
+  padding:25px;
+  border-radius:20px;
+  max-width:450px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.2);
   opacity:0;
-  transform: translateY(30px);
-  transition: 0.6s;
+  transform:translateY(30px);
+  transition:0.6s;
 }
-.card.show { opacity:1; transform: translateY(0);}
-.card:hover { transform: scale(1.03); }
+.card.show{opacity:1;transform:translateY(0);}
+.card:hover{transform:scale(1.03);}
 
-h1 { font-size:32px; margin-bottom:15px; }
-.price { font-size:22px; margin:12px 0; }
-.time { font-size:18px; margin:6px 0; }
-button { padding:12px 20px; border-radius:12px; border:none; cursor:pointer; font-size:16px; margin-top:10px; }
-button.toggle { background:#555; color:white; }
+h1{font-size:32px;margin-bottom:15px;}
+.price{font-size:22px;margin:12px 0;}
+.time{font-size:18px;margin:6px 0;}
+button{padding:12px 20px;border-radius:12px;border:none;cursor:pointer;font-size:16px;margin-top:10px;}
+button.toggle{background:#555;color:white;}
 
-.green { color:#0f0; }
-.red { color:#f00; }
+.green{color:#0f0;}
+.red{color:#f00;}
 
-input {
+input{
   padding:10px;
   border-radius:10px;
   border:1px solid #ccc;
@@ -78,7 +78,7 @@ input {
 
   <h1 id="welcome">👋 خوش آمدی</h1>
 
-  <div class="card" id="nameBox">
+  <div class="card show" id="nameBox">
     <p>نام خود را وارد کنید:</p>
     <input type="text" id="nameInput" placeholder="نام شما">
     <br>
@@ -102,68 +102,61 @@ input {
 
 <script>
 // ذخیره نام کاربر
-function saveName() {
-  const name = document.getElementById("nameInput").value.trim();
+function saveName(){
+  const name=document.getElementById("nameInput").value.trim();
   if(!name) return;
-  localStorage.setItem("username", name);
+  localStorage.setItem("username",name);
   showWelcome();
 }
-
-function showWelcome() {
-  const name = localStorage.getItem("username");
+function showWelcome(){
+  const name=localStorage.getItem("username");
   if(name){
-    document.getElementById("welcome").innerText = "👋 خوش آمدی " + name;
+    document.getElementById("welcome").innerText="👋 خوش آمدی "+name;
     document.getElementById("nameBox").style.display="none";
   }
 }
 showWelcome();
 
 // دارک مود
-function toggleMode(){
-  document.body.classList.toggle("dark");
-}
+function toggleMode(){document.body.classList.toggle("dark");}
 
 // ساعت و تاریخ ایران
 function updateTime(){
-  const now = new Date();
-  document.getElementById("time").innerText =
-    "🕒 ساعت ایران: " + now.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
-  document.getElementById("date").innerText =
-    "📅 تاریخ: " + now.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
+  const now=new Date();
+  document.getElementById("time").innerText="🕒 ساعت ایران: "+now.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
+  document.getElementById("date").innerText="📅 تاریخ: "+now.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
 }
 setInterval(updateTime,1000);
 updateTime();
 
-// دریافت قیمت آنلاین و تبدیل به تومان
+// قیمت‌ها آنلاین به تومان با API پایدار
 async function loadPrices(){
   try{
     // نرخ دلار آنلاین
-    const resRate = await fetch("https://api.exchangerate.host/convert?from=USD&to=IRR");
-    const rateData = await resRate.json();
-    const dollarRate = rateData.result;
+    const resRate=await fetch("https://api.exchangerate.host/convert?from=USD&to=IRR");
+    const rateData=await resRate.json();
+    const dollarRate=rateData.result;
 
-    document.getElementById("usdRate").innerText = "💵 نرخ دلار: " + Math.round(dollarRate).toLocaleString("fa-IR") + " ریال";
+    document.getElementById("usdRate").innerText="💵 نرخ دلار: "+Math.round(dollarRate).toLocaleString("fa-IR")+" ریال";
 
     // قیمت کریپتو و طلا
-    const cryptoRes = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether,pax-gold&vs_currencies=usd&include_24hr_change=true"
-    );
-    const crypto = await cryptoRes.json();
+    const cryptoRes=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether,pax-gold&vs_currencies=usd&include_24hr_change=true");
+    const crypto=await cryptoRes.json();
 
-    const btcUsd = crypto.bitcoin.usd;
-    const usdtUsd = crypto.tether.usd;
-    const goldUsd = crypto["pax-gold"].usd;
+    const btcUsd=crypto.bitcoin.usd;
+    const usdtUsd=crypto.tether.usd;
+    const goldUsd=crypto["pax-gold"].usd;
 
-    const btcToman = Math.round(btcUsd*dollarRate/10).toLocaleString("fa-IR");
-    const usdtToman = Math.round(usdtUsd*dollarRate/10).toLocaleString("fa-IR");
-    const goldToman = Math.round(goldUsd*dollarRate/10).toLocaleString("fa-IR");
+    const btcToman=Math.round(btcUsd*dollarRate/10).toLocaleString("fa-IR");
+    const usdtToman=Math.round(usdtUsd*dollarRate/10).toLocaleString("fa-IR");
+    const goldToman=Math.round(goldUsd*dollarRate/10).toLocaleString("fa-IR");
 
-    document.getElementById("btc").innerText = "🟠 بیت‌کوین: " + btcToman + " تومان";
-    document.getElementById("usdt").innerText = "🟢 تتر: " + usdtToman + " تومان";
-    document.getElementById("gold").innerText = "🟡 طلا: " + goldToman + " تومان";
+    document.getElementById("btc").innerText="🟠 بیت‌کوین: "+btcToman+" تومان";
+    document.getElementById("usdt").innerText="🟢 تتر: "+usdtToman+" تومان";
+    document.getElementById("gold").innerText="🟡 طلا: "+goldToman+" تومان";
 
-  } catch{
-    document.getElementById("btc").innerText = "❌ دریافت قیمت‌ها ممکن نیست";
+  }catch{
+    document.getElementById("btc").innerText="❌ دریافت قیمت‌ها ممکن نیست";
   }
 }
 
