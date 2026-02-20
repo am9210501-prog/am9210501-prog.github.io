@@ -120,7 +120,7 @@ function askAI(){
   if(!input) return;
   addMessage(input,"user");
   document.getElementById("userInput").value="";
-  let response="😅 هنوز دردسترس نیست!";
+  let response="😅 ببخشید هوش مصنوعی هنوز به طور کامل در دسترس نیست(اشتراک)!";
   if(input.includes("ساعت")) response="🕒 ساعت ایران: "+new Date().toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
   else if(input.includes("تاریخ")) response="📅 تاریخ امروز: "+new Date().toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
   else if(input.includes("سلام")) response="👋 سلام! چطوری؟";
