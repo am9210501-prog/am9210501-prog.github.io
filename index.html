@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>سایت خفن من</title>
+
 <style>
-/* ======= پس زمینه متحرک ======= */
+/* ======= پس‌زمینه متحرک ======= */
 body {
   margin: 0;
   font-family: Tahoma, sans-serif;
@@ -95,7 +96,7 @@ iframe {
 
 <!-- صفحه ورود -->
 <div id="loginScreen">
-  <h1>👋 اسم خودت رو وارد کن</h1>
+  <h1>👋 لطفاً اسمت رو وارد کن</h1>
   <input id="loginName" placeholder="اسمت رو بنویس">
   <br>
   <button onclick="enterSite()">ورود</button>
@@ -130,49 +131,65 @@ iframe {
 </div>
 
 <script>
-// ======= ساعت ایران =======
-function updateTime() {
-  const now = new Date();
-  const options = { timeZone: 'Asia/Tehran', hour12: false };
-  document.getElementById("time").innerHTML = "🕒 " + now.toLocaleString('fa-IR', options);
-}
-setInterval(updateTime,1000);
+// ======= اجرا بعد از لود کامل =======
+window.onload = function(){
 
-// ======= ورود اول =======
-function enterSite() {
-  const name = document.getElementById("loginName").value.trim();
-  if(!name) return;
-  localStorage.setItem("userName", name);
-  document.getElementById("welcome").innerText = "خوش اومدی " + name + " 😍";
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("mainContent").style.display = "block";
-}
+  // ======= ساعت ایران =======
+  function updateTime() {
+    const now = new Date();
+    const options = { timeZone: 'Asia/Tehran', hour12: false };
+    document.getElementById("time").innerHTML = "🕒 " + now.toLocaleString('fa-IR', options);
+  }
+  setInterval(updateTime,1000);
 
-// ======= ذخیره اسم‌ها =======
-let names = JSON.parse(localStorage.getItem("names"))||[];
-function saveName() {
-  const name = document.getElementById("nameInput").value.trim();
-  if(!name) return;
-  names.push(name);
-  localStorage.setItem("names",JSON.stringify(names));
-  document.getElementById("welcome").innerText = "خوش اومدی " + name + " 😍";
-}// ======= کلیکر ساده =======
-let clicks = 0;
-function clicker() {
-  clicks++;
-  document.getElementById("clickCount").innerText = clicks;
-}
+  // ======= ورود اول =======
+  function enterSite() {
+    const name = document.getElementById("loginName").value.trim();
+    if(!name) return;
+    localStorage.setItem("userName", name);
+    document.getElementById("welcome").innerText = "خوش اومدی " + name + " 😍";
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+  }
+  window.enterSite = enterSite;// ======= ذخیره اسم‌ها =======
+  let names = JSON.parse(localStorage.getItem("names"))||[];
+  function saveName() {
+    const name = document.getElementById("nameInput").value.trim();
+    if(!name) return;
+    names.push(name);
+    localStorage.setItem("names",JSON.stringify(names));
+    document.getElementById("welcome").innerText = "خوش اومدی " + name + " 😍";
+  }
+  window.saveName = saveName;
 
-// ======= مینی‌بازی =======
-let score = 0;
-const gameBtn = document.getElementById("gameBtn");
-gameBtn.addEventListener("click", ()=>{
-  score++;
-  document.getElementById("score").innerText = score;
-  const x = Math.random()*80;
-  const y = Math.random()*80;
-  gameBtn.style.transform = translate(${x}px, ${y}px);
-});
+  // ======= کلیکر ساده =======
+  let clicks = 0;
+  function clicker() {
+    clicks++;
+    document.getElementById("clickCount").innerText = clicks;
+  }
+  window.clicker = clicker;
+
+  // ======= مینی‌بازی =======
+  let score = 0;
+  const gameBtn = document.getElementById("gameBtn");
+  gameBtn.addEventListener("click", ()=>{
+    score++;
+    document.getElementById("score").innerText = score;
+    const x = Math.random()*80;
+    const y = Math.random()*80;
+    gameBtn.style.transform = translate(${x}px, ${y}px);
+  });
+
+  // ======= اگر قبلاً کاربر وارد شده بود =======
+  const prevName = localStorage.getItem("userName");
+  if(prevName){
+    document.getElementById("welcome").innerText = "خوش اومدی " + prevName + " 😍";
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+  }
+
+};
 </script>
 
 </body>
