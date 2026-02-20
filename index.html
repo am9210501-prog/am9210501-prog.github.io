@@ -2,44 +2,120 @@
 <html lang="fa">
 <head>
 <meta charset="UTF-8">
-<title>سایت من</title>
+<title>سایت خفن من</title>
+
 <style>
 body {
   margin: 0;
-  height: 100vh;
   font-family: Tahoma;
-  background: linear-gradient(135deg, #c2ffd8, #465efb);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: linear-gradient(135deg,#0f2027,#2c5364,#a8ff78);
+  color: white;
   text-align: center;
 }
-.box {
-  background: white;
-  padding: 40px;
-  border-radius: 20px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.2);
+
+.container {
+  margin-top: 60px;
 }
+
+.card {
+  background: rgba(255,255,255,0.1);
+  padding: 30px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 420px;
+  margin: auto;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 30px rgba(0,0,0,0.4);
+}
+
 h1 { font-size: 34px; }
 p { font-size: 20px; }
+
+input {
+  padding: 12px;
+  width: 80%;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  text-align: center;
+}
+
+button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 12px;
+  margin-top: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  background: #00ffcc;
+  color: black;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #00ccaa;
+}
+
+.names {
+  margin-top: 20px;
+  font-size: 18px;
+}
 </style>
 </head>
+
 <body>
 
-<div class="box">
-  <h1>👋 خوش آمدی!</h1>
-  <p>به سایت من خوش اومدی 😎</p>
-  <p id="time"></p>
+<div class="container">
+  <div class="card">
+    <h1>👋 خوش آمدی</h1>
+    <p id="welcome">به سایت من خوش اومدی 😎</p>
+    <p id="time"></p>
+
+    <input id="nameInput" placeholder="اسمت رو بنویس">
+    <br>
+    <button onclick="saveName()">ثبت اسم</button>
+
+    <div class="names" id="namesList"></div>
+
+    <br>
+    <a href="https://forms.gle/e5us6YdJNeHphBgF7" target="_blank">
+      <button>📩 ثبت رسمی اسم</button>
+    </a>
+  </div>
 </div>
 
 <script>
+// ساعت ایران
 function updateTime() {
   const now = new Date();
   const options = { timeZone: 'Asia/Tehran', hour12: false };
   document.getElementById("time").innerHTML =
-    now.toLocaleString('fa-IR', options);
+    "🕒 " + now.toLocaleString('fa-IR', options);
 }
 setInterval(updateTime, 1000);
+
+// ذخیره اسم‌ها در مرورگر
+let names = JSON.parse(localStorage.getItem("names")) || [];
+
+function saveName() {
+  const name = document.getElementById("nameInput").value.trim();
+  if (!name) return;
+
+  names.push(name);
+  localStorage.setItem("names", JSON.stringify(names));
+
+  document.getElementById("welcome").innerHTML =
+    "خوش اومدی " + name + " 😍";
+
+  showNames();
+}
+
+function showNames() {
+  document.getElementById("namesList").innerHTML =
+    "👥 بازدیدکننده‌ها:<br>" + names.join("<br>");
+}
+
+showNames();
 </script>
 
 </body>
