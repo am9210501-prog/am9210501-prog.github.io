@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سایت افسانه‌ای من</title>
+<title>سایت خفن من</title>
 
 <style>
 :root {
@@ -40,7 +40,6 @@ body {
   padding: 20px;
   border-radius: 15px;
   max-width: 420px;
-  animation: fadeIn 1s ease;
 }
 
 h1 { font-size: 28px; }
@@ -63,16 +62,10 @@ button {
 
 .toggle {
   background: #444;
-  margin-top: 10px;
 }
 
 .green { color: #00ff9c; }
 .red { color: #ff6b6b; }
-
-@keyframes fadeIn {
-  from {opacity: 0; transform: translateY(10px);}
-  to {opacity: 1;}
-}
 </style>
 </head>
 
@@ -90,9 +83,9 @@ button {
   </div>
 
   <div class="card">
-    <div id="btc" class="price">در حال دریافت بیت‌کوین...</div>
-    <div id="usdt" class="price">در حال دریافت تتر...</div>
-    <div id="gold" class="price">در حال دریافت طلا...</div>
+    <div id="btc" class="price">⏳ دریافت بیت‌کوین...</div>
+    <div id="usdt" class="price">⏳ دریافت تتر...</div>
+    <div id="gold" class="price">⏳ دریافت طلا...</div>
   </div>
 
   <div class="card">
@@ -104,7 +97,7 @@ button {
 </div>
 
 <script>
-// 👤 نام کاربر
+// 👤 ذخیره نام کاربر
 function saveName() {
   const name = document.getElementById("nameInput").value;
   if (!name) return;
@@ -121,7 +114,7 @@ function showWelcome() {
 }
 showWelcome();
 
-// 🌙 دارک مود
+// 🌙 دارک/لایت مود
 function toggleMode() {
   document.body.classList.toggle("light");
 }
@@ -129,26 +122,36 @@ function toggleMode() {
 // ⏰ ساعت ایران
 function updateTime() {
   const now = new Date();
-  const time = now.toLocaleTimeString("fa-IR", { timeZone: "Asia/Tehran" });
-  const date = now.toLocaleDateString("fa-IR", { timeZone: "Asia/Tehran" });
+
+  const time = now.toLocaleTimeString("fa-IR", {
+    timeZone: "Asia/Tehran"
+  });
+
+  const date = now.toLocaleDateString("fa-IR", {
+    timeZone: "Asia/Tehran"
+  });
 
   document.getElementById("time").innerText = "🕒 ساعت ایران: " + time;
   document.getElementById("date").innerText = "📅 تاریخ: " + date;
 }
+
 setInterval(updateTime, 1000);
 updateTime();
 
-// 💰 قیمت‌ها
+
+// 💰 دریافت قیمت‌ها (نسخه اصلاح‌شده)
 async function loadPrices() {
   try {
+    // کریپتو
     const cryptoRes = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether&vs_currencies=usd&include_24hr_change=true"
     );
     const crypto = await cryptoRes.json();
 
+    // طلا (فرمت خاص)
     const goldRes = await fetch("https://api.metals.live/v1/spot/gold");
     const goldData = await goldRes.json();
-    const goldPrice = goldData[0].price;
+    const goldPrice = goldData[0].gold; // 👈 اصلاح مهم
 
     const btcChange = crypto.bitcoin.usd_24h_change;
     const usdtChange = crypto.tether.usd_24h_change;
@@ -162,14 +165,15 @@ async function loadPrices() {
       ` <span class="${usdtChange >= 0 ? 'green' : 'red'}">(${usdtChange.toFixed(2)}%)</span>`;
 
     document.getElementById("gold").innerHTML =
-      "🟡 طلا: $" + goldPrice;
+      "🟡 طلا (اونس): $" + goldPrice.toFixed(2);
 
-  } catch {
-    document.getElementById("btc").innerText = "❌ خطا در دریافت قیمت";
+  } catch (e) {
+    document.getElementById("btc").innerText = "❌ خطا در دریافت قیمت‌ها";
   }
 }
+
 loadPrices();
 </script>
 
 </body>
-  </html>
+</html>
