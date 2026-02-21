@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IRN - فوق‌العاده</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
 :root{
   --bg1:#ff7e5f; --bg2:#feb47b; --card:rgba(255,255,255,0.9); --text:#222;
 }
@@ -15,32 +16,107 @@
 }
 
 body{
-  margin:0; font-family:'Vazirmatn',sans-serif;
+  margin:0;
+  font-family:'Vazirmatn',sans-serif;
   background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));
-  background-size:400% 400%; color:var(--text); text-align:center;
-  animation:gradientBG 20s ease infinite; transition:0.5s;
+  background-size:400% 400%;
+  color:var(--text);
+  text-align:center;
+  animation:gradientBG 20s ease infinite;
+  transition:0.5s;
 }
-@keyframes gradientBG{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+
+@keyframes gradientBG{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
 
 .container{padding:20px;}
-.card{background:var(--card); margin:15px auto; padding:30px; border-radius:25px; max-width:500px;
-  box-shadow:0 15px 30px rgba(0,0,0,0.2); opacity:0; transform:translateY(40px); transition:0.8s;}
+
+.card{
+  background:var(--card);
+  margin:15px auto;
+  padding:30px;
+  border-radius:25px;
+  max-width:500px;
+  box-shadow:0 15px 30px rgba(0,0,0,0.2);
+  opacity:0;
+  transform:translateY(40px);
+  transition:0.8s;
+}
 .card.show{opacity:1; transform:translateY(0);}
 .card:hover{transform:scale(1.05); transition:0.3s;}
-h1{font-size:36px; margin-bottom:20px; text-shadow:1px 1px 5px rgba(0,0,0,0.3); animation:wavy 2s infinite;}
+
+h1{
+  font-size:36px;
+  margin-bottom:20px;
+  text-shadow:1px 1px 5px rgba(0,0,0,0.3);
+  animation:wavy 2s infinite;
+}
+
+@keyframes wavy{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-8px);}
+}
+
 .time{font-size:20px; margin:8px 0;}
-button{padding:12px 25px;border-radius:15px;border:none;cursor:pointer;font-size:16px;margin-top:10px;}
+
+button{
+  padding:12px 25px;
+  border-radius:15px;
+  border:none;
+  cursor:pointer;
+  font-size:16px;
+  margin-top:10px;
+}
+
 button.toggle{background:#555;color:white;}
-input, textarea{padding:12px; border-radius:12px; border:1px solid #ccc; font-size:16px; width:80%; text-align:center; margin-bottom:12px;}
-.chatbox{max-height:300px; overflow-y:auto; text-align:left; margin-top:12px;}
-.message{padding:10px; margin:5px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.2);}
+
+input, textarea{
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #ccc;
+  font-size:16px;
+  width:80%;
+  text-align:center;
+  margin-bottom:12px;
+}
+
+.chatbox{
+  max-height:300px;
+  overflow-y:auto;
+  text-align:left;
+  margin-top:12px;
+}
+
+.message{
+  padding:10px;
+  margin:5px;
+  border-radius:12px;
+  box-shadow:0 2px 5px rgba(0,0,0,0.2);
+}
+
 .message.user{background:#c0e6ff;}
 .message.bot{background:#ffd9c0;}
-@keyframes wavy{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
 .game{margin-top:15px;}
 .score{font-weight:bold; font-size:18px;}
+
+/* فوتر */
+.footer{
+  margin-top:40px;
+  padding:15px;
+  background:rgba(0,0,0,0.2);
+  backdrop-filter: blur(10px);
+  color:#fff;
+  font-size:14px;
+  border-top:1px solid rgba(255,255,255,0.3);
+}
+.dark .footer{background:rgba(255,255,255,0.1);}
 </style>
 </head>
+
 <body>
 
 <div class="container">
@@ -76,13 +152,22 @@ input, textarea{padding:12px; border-radius:12px; border:1px solid #ccc; font-si
 <p class="score" id="gameResult"></p>
 </div>
 
-<audio id="clickSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
-
 </div>
 
+<footer class="footer">
+  © <span id="year"></span> تمامی حقوق این سایت متعلق به ABOLFAZL است
+</footer>
+
+<audio id="clickSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+
 <script>
+// سال خودکار
+document.getElementById("year").innerText = new Date().getFullYear();
+
 // صدا
-function playSound(){document.getElementById("clickSound").play();}
+function playSound(){
+  document.getElementById("clickSound").play();
+}
 
 // نام کاربر
 function saveName(){
@@ -102,7 +187,10 @@ function showWelcome(){
 showWelcome();
 
 // دارک مود
-function toggleMode(){document.body.classList.toggle("dark"); playSound();}
+function toggleMode(){
+  document.body.classList.toggle("dark");
+  playSound();
+}
 
 // ساعت و تاریخ ایران
 function updateTime(){
@@ -118,17 +206,24 @@ function askAI(){
   playSound();
   const input=document.getElementById("userInput").value.trim().toLowerCase();
   if(!input) return;
+
   addMessage(input,"user");
   document.getElementById("userInput").value="";
-  let response="😅 ببخشید هوش مصنوعی هنوز به طور کامل در دسترس نیست(اشتراک)!";
-  if(input.includes("ساعت")) response="🕒 ساعت ایران: "+new Date().toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
-  else if(input.includes("تاریخ")) response="📅 تاریخ امروز: "+new Date().toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
-  else if(input.includes("سلام")) response="👋 سلام! چطوری؟";
-  else if(input.includes("معرفی سایت")) response="🌐 این سایت IRN است، یه سایت فوق‌العاده با طراحی مدرن و کارت‌های جذاب!";
+
+  let response="😅 متاسفم هوش مصنوعی هنوز به طور کامل در دسترس نیس(اشتراک)!";
+  if(input.includes("ساعت"))
+    response="🕒 ساعت ایران: "+new Date().toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
+  else if(input.includes("تاریخ"))
+    response="📅 تاریخ امروز: "+new Date().toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
+  else if(input.includes("سلام"))
+    response="👋 سلام! خوش اومدی 😍";
+  else if(input.includes("irn"))
+    response="🌐 IRN یک سایت مدرن و خفن طراحی شده توسط ABOLFAZL است.";
+
   addMessage(response,"bot");
 }
 
-// پیام‌ها
+// نمایش پیام‌ها
 function addMessage(msg,cls){
   const chatBox=document.getElementById("chatBox");
   const div=document.createElement("div");
@@ -142,14 +237,21 @@ function addMessage(msg,cls){
 function playGame(){
   playSound();
   const guess=parseInt(document.getElementById("guessInput").value);
-  if(!guess || guess<1 || guess>10){alert("یک عدد بین 1 تا 10 وارد کنید!"); return;}
+  if(!guess || guess<1 || guess>10){
+    alert("یک عدد بین 1 تا 10 وارد کنید!");
+    return;
+  }
   const random=Math.floor(Math.random()*10)+1;
   const result=document.getElementById("gameResult");
-  if(guess===random) result.innerText="🎉 تبریک! درست حدس زدی!";
-  else result.innerText="❌ عدد درست "+random+" بود!";
+
+  if(guess===random)
+    result.innerText="🎉 تبریک! درست حدس زدی!";
+  else
+    result.innerText="❌ عدد درست "+random+" بود!";
+
   document.getElementById("guessInput").value="";
 }
 </script>
 
 </body>
-  </html>
+</html>
