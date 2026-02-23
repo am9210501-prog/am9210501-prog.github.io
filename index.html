@@ -1,189 +1,161 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-
-<style>
-:root{--bg1:#ff7e5f;--bg2:#feb47b;--card:#ffffffd9;--text:#222;}
-.dark{--bg1:#0f2027;--bg2:#203a43;--card:#000000aa;--text:#fff;}
-.glass .card{background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);}
-
-body{
-margin:0;font-family:'Vazirmatn',sans-serif;text-align:center;color:var(--text);
-background:linear-gradient(-45deg,var(--bg1),var(--bg2));
-background-size:400% 400%;animation:bg 15s infinite;transition:.4s;
-}
-@keyframes bg{0%{background-position:0%}50%{background-position:100%}100%{background-position:0%}}
-
-.container{padding:20px;}
-.card{margin:15px auto;padding:20px;border-radius:18px;max-width:520px;
-box-shadow:0 10px 25px rgba(0,0,0,.2);}
-
-button,input,textarea,select{
-padding:10px;border-radius:10px;border:none;font-size:15px;margin-top:8px;width:80%;
-}
-button{background:#444;color:#fff;cursor:pointer}
-.footer{margin-top:30px;padding:15px;background:#0003;color:#fff;font-size:14px}
-.info{font-size:14px;margin-top:6px}
-.stats{margin:10px 0;padding:10px;background:#fff;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);}
-.dark .stats{background:#222;color:white;}
-.message{background:#fff;padding:10px;border-radius:10px;margin-top:10px;box-shadow:0 3px 8px rgba(0,0,0,0.2);}
-.dark .message{background:#333;color:white;}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<h1 id="welcome">👋 خوش آمدی به IRN</h1>
-
-<div class="card stats">
-📊 بازدید کل سایت: <span id="views">0</span> |
-💬 تعداد پیام‌ها: <span id="msgCount">0</span>
-</div>
-
-<div class="card">
-<div id="time"></div>
-<div id="date"></div>
-<div class="info" id="device"></div>
-<div class="info" id="battery"></div>
-<div class="info" id="online"></div>
-<div class="info" id="resolution"></div>
-
-<button onclick="toggleMode()">🌙 دارک مود</button>
-<button onclick="toggleGlass()">✨ حالت شیشه‌ای</button>
-<button onclick="changeBg()">🖼 تغییر پس‌زمینه</button>
-</div>
-
-<div class="card">
-<h3>📝 دفترچه یادداشت</h3>
-<textarea id="note" placeholder="یادداشت شما..."></textarea>
-<button onclick="saveNote()">ذخیره</button>
-</div>
-
-<div class="card">
-<h3>💬 پیام‌رسان داخلی</h3>
-<input id="username" placeholder="نام شما">
-<input id="messageInput" placeholder="پیام بنویس...">
-<button onclick="sendMessage()">ارسال پیام</button>
-<div id="messages"></div>
-</div>
-
-<div class="card">
-<h3>⏳ تایمر</h3>
-<input id="timerInput" placeholder="ثانیه">
-<button onclick="startTimer()">شروع</button>
-<p id="timerDisplay"></p>
-</div>
-
-<div class="card">
-<h3>🧮 ماشین حساب</h3>
-<input id="calcInput" placeholder="مثال: 2+2*5">
-<button onclick="calc()">محاسبه</button>
-<p id="calcResult"></p>
-</div>
-
-<div class="card">
-<h3>🎲 سرگرمی</h3>
-<button onclick="coin()">پرتاب سکه</button>
-<button onclick="password()">رمز قوی</button>
-<button onclick="laugh()">😂 بخند</button>
-<p id="funResult"></p>
-</div>
-
-<div class="card">
-<button onclick="focusMode()">🎯 حالت تمرکز</button>
-</div>
-
-</div>
-
-<footer class="footer">
-© <span id="year"></span> تمامی حقوق این سایت متعلق به ABOLFAZL است
-</footer>
+<!-- فقط بخش <script> را با این نسخه جایگزین کن -->
 
 <script>
 // سال
 year.innerText=new Date().getFullYear();
 
-// ساعت و تاریخ
-setInterval(()=>{
+// صدا
+function clickSound(){document.getElementById("clickSound").play();}
+
+// پیام بر اساس زمان
+function timeGreeting(){
+let h=new Date().getHours();
+if(h<12) return "صبح بخیر ☀️";
+if(h<18) return "عصر بخیر 🌤";
+return "شب بخیر 🌙";
+}
+
+// ذخیره نام
+function saveName(){
+let name=nameInput.value.trim();
+if(!name)return;
+localStorage.setItem("name",name);
+
+// لیست کاربران
+let users=JSON.parse(localStorage.getItem("users")||"[]");
+if(!users.includes(name))users.push(name);
+localStorage.setItem("users",JSON.stringify(users));
+
+showUser();
+notify(timeGreeting()+" "+name+" 👋");
+}
+
+// نمایش کاربر
+function showUser(){
+let name=localStorage.getItem("name");
+if(name){
+welcome.innerText="👋 "+timeGreeting()+" "+name;
+nameBox.style.display="none";
+}
+
+let users=JSON.parse(localStorage.getItem("users")||"[]");
+userCount.innerText="👥 تعداد کاربران: "+users.length;
+userList.innerText="📋 کاربران: "+users.join(" ، ");
+}
+showUser();
+
+// دارک مود
+function toggleMode(){
+document.body.classList.toggle("dark");
+localStorage.setItem("dark",document.body.classList.contains("dark"));
+clickSound();
+}
+if(localStorage.getItem("dark")==="true")document.body.classList.add("dark");
+
+// تغییر رنگ
+function changeTheme(color){
+if(!color)return;
+document.documentElement.style.setProperty('--bg1',color);
+localStorage.setItem("theme",color);
+}
+if(localStorage.getItem("theme")){
+document.documentElement.style.setProperty('--bg1',localStorage.getItem("theme"));
+}
+
+// اندازه فونت
+function changeFont(size){
+document.body.style.fontSize=size+"px";
+localStorage.setItem("fontSize",size);
+}
+if(localStorage.getItem("fontSize")){
+document.body.style.fontSize=localStorage.getItem("fontSize")+"px";
+}
+
+// ساعت ایران + روز هفته
+function clock(){
 let d=new Date();
 time.innerText="🕒 "+d.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
-date.innerText="📅 "+d.toLocaleDateString("fa-IR",{weekday:"long"});
-},1000);
+date.innerText="📅 "+d.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran",weekday:"long"});
+}
+setInterval(clock,1000);clock();
 
 // دستگاه
-device.innerText=/Mobi/.test(navigator.userAgent)?"📱 موبایل":"💻 کامپیوتر";
+device.innerText=/Mobi|Android/i.test(navigator.userAgent)?"📱 موبایل":"💻 کامپیوتر";
 
-// باتری
-navigator.getBattery?.().then(b=>{battery.innerText="🔋 باتری: "+Math.round(b.level*100)+"%";});
+// آخرین بازدید
+let last=localStorage.getItem("lastVisit");
+if(last) lastVisit.innerText="⏳ آخرین بازدید: "+last;
+localStorage.setItem("lastVisit",new Date().toLocaleString("fa-IR"));
 
-// آنلاین
-function updateOnline(){online.innerText=navigator.onLine?"🟢 آنلاین":"🔴 آفلاین";}
-window.addEventListener("online",updateOnline);
-window.addEventListener("offline",updateOnline);
-updateOnline();
+// شمارنده ورود
+let visits=parseInt(localStorage.getItem("visits")||0)+1;
+localStorage.setItem("visits",visits);
+let visitDiv=document.createElement("div");
+visitDiv.className="info";
+visitDiv.innerText="🔁 تعداد ورود شما: "+visits;
+document.querySelector(".card").appendChild(visitDiv);
 
-// رزولوشن
-resolution.innerText="📺 رزولوشن: "+screen.width+"×"+screen.height;
-
-// دارک مود و شیشه‌ای
-function toggleMode(){document.body.classList.toggle("dark");}
-function toggleGlass(){document.body.classList.toggle("glass");}
-
-// پس‌زمینه
-function changeBg(){let url=prompt("لینک عکس:");if(url) document.body.style.background=`url(${url}) center/cover fixed`;}
-
-// یادداشت
-note.value=localStorage.note||"";
-function saveNote(){localStorage.note=note.value; alert("ذخیره شد");}
-
-// تایمر
-function startTimer(){let t=parseInt(timerInput.value);let i=setInterval(()=>{if(t<=0){clearInterval(i);timerDisplay.innerText="⏰ تمام!";return;}timerDisplay.innerText=t+" ثانیه";t--;},1000);}
-
-// ماشین حساب
-function calc(){try{calcResult.innerText="="+eval(calcInput.value);}catch{calcResult.innerText="خطا";}}
-
-// سرگرمی
-function coin(){funResult.innerText=Math.random()<.5?"شیر 🦁":"خط 🪙";}
-function password(){funResult.innerText=Math.random().toString(36).slice(-10);}
-function laugh(){funResult.innerText="😂🤣😆😹";}
-
-// تمرکز
-function focusMode(){document.body.innerHTML="<h1 style='margin-top:40vh'>🎯 حالت تمرکز فعال شد</h1>";}
-
-// پیام‌رسان داخلی با آمار
-let messages = JSON.parse(localStorage.getItem("messages")) || [];
-function renderMessages(){ 
-    let box=document.getElementById("messages"); 
-    box.innerHTML=""; 
-    messages.forEach((m,i)=>{ 
-        box.innerHTML+=`<div class="message"><b>${m.user}</b>: ${m.text}</div>`; 
-    }); 
-    document.getElementById("msgCount").innerText = messages.length; 
+// زمان سپری‌شده در سایت
+let seconds=0;
+setInterval(()=>{
+seconds++;
+let t=document.getElementById("stayTime");
+if(!t){
+t=document.createElement("div");
+t.id="stayTime";
+t.className="info";
+document.querySelector(".card").appendChild(t);
 }
-renderMessages();
+t.innerText="⏱ زمان حضور: "+seconds+" ثانیه";
+},1000);
 
-function sendMessage(){
-    let text=messageInput.value.trim();
-    let user=username.value.trim()||"ناشناس";
-    if(!text) return;
-    messages.push({user,text});
-    localStorage.setItem("messages",JSON.stringify(messages));
-    messageInput.value="";
-    renderMessages();
+// پیام انگیزشی
+const quotes=[
+"موفقیت از تلاش‌های کوچک ساخته می‌شود.",
+"تو قوی‌تر از چیزی هستی که فکر می‌کنی.",
+"هر روز یک شروع تازه است.",
+"باور داشته باش، می‌توانی.",
+"رویاهایت را جدی بگیر."
+];
+function newQuote(){
+quote.innerText=quotes[Math.floor(Math.random()*quotes.length)];
+clickSound();
+}
+newQuote();
+
+// بازی
+function playGame(){
+clickSound();
+let g=parseInt(guessInput.value);
+if(!g||g<1||g>10){alert("عدد 1 تا 10");return;}
+let r=Math.floor(Math.random()*10)+1;
+gameResult.innerText=(g===r)?"🎉 درست حدس زدی!":"❌ عدد "+r+" بود";
+guessInput.value="";
 }
 
-// شمارنده بازدید از 895
-let views = parseInt(localStorage.getItem("views") || 895) + 1;
-localStorage.setItem("views",views);
-document.getElementById("views").innerText = views;
-</script>
+// عدد تصادفی
+function randomNumber(){
+alert("🎲 عدد شانسی امروز: "+Math.floor(Math.random()*100)+1);
+}
 
-</body>
-    </html>
+// شانس روزانه
+function dailyLuck(){
+let luck=["عالی 😍","خوب 🙂","معمولی 😐","شانسی نیست 😅"];
+alert("🔮 شانس امروز: "+luck[Math.floor(Math.random()*luck.length)]);
+}
+
+// نوتیفیکیشن
+function notify(text){
+let div=document.createElement("div");
+div.innerText=text;
+div.style.position="fixed";
+div.style.bottom="20px";
+div.style.right="20px";
+div.style.background="#000";
+div.style.color="#fff";
+div.style.padding="10px 15px";
+div.style.borderRadius="10px";
+document.body.appendChild(div);
+setTimeout(()=>div.remove(),3000);
+}
+                                          </script>
