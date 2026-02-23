@@ -3,82 +3,86 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN | Super Site</title>
+<title>IRN</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
 
 <style>
 :root{--bg1:#ff7e5f;--bg2:#feb47b;--card:#ffffffd9;--text:#222;}
 .dark{--bg1:#0f2027;--bg2:#203a43;--card:#000000aa;--text:#fff;}
+.glass .card{background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);}
+
 body{
 margin:0;font-family:'Vazirmatn',sans-serif;text-align:center;color:var(--text);
-background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));
-background-size:400% 400%;animation:bg 20s infinite;
+background:linear-gradient(-45deg,var(--bg1),var(--bg2));
+background-size:400% 400%;animation:bg 15s infinite;transition:.4s;
 }
 @keyframes bg{0%{background-position:0%}50%{background-position:100%}100%{background-position:0%}}
+
 .container{padding:20px;}
-.card{
-background:var(--card);margin:15px auto;padding:25px;border-radius:20px;max-width:500px;
-box-shadow:0 10px 25px rgba(0,0,0,.2);animation:fade .8s ease;
+.card{margin:15px auto;padding:20px;border-radius:18px;max-width:520px;
+box-shadow:0 10px 25px rgba(0,0,0,.2);}
+
+button,input,textarea,select{
+padding:10px;border-radius:10px;border:none;font-size:15px;margin-top:8px;width:80%;
 }
-@keyframes fade{from{opacity:0;transform:translateY(30px)}to{opacity:1}}
-button,input,textarea{
-padding:12px;border-radius:12px;border:none;font-size:16px;margin-top:10px;width:80%;
-}
-button{cursor:pointer;background:#444;color:#fff}
-.chatbox{max-height:250px;overflow:auto;text-align:left}
-.msg{padding:8px;margin:5px;border-radius:10px}
-.user{background:#c0e6ff}.bot{background:#ffd9c0}
+button{background:#444;color:#fff;cursor:pointer}
 .footer{margin-top:30px;padding:15px;background:#0003;color:#fff;font-size:14px}
-.infoBox{position:fixed;top:10px;right:10px;background:#0009;color:#fff;padding:8px;border-radius:10px;font-size:12px}
-.visitBox{position:fixed;bottom:10px;left:10px;background:#0009;color:#fff;padding:8px;border-radius:10px;font-size:12px}
+.info{font-size:14px;margin-top:6px}
 </style>
 </head>
 
 <body>
 
-<div id="tsparticles" style="position:fixed;z-index:-1;"></div>
-
 <div class="container">
 
 <h1 id="welcome">👋 خوش آمدی به IRN</h1>
 
-<div class="card" id="nameBox">
-نام خود را وارد کنید:
-<input id="nameInput" placeholder="نام شما">
-<button onclick="saveName()">ورود</button>
-</div>
-
 <div class="card">
 <div id="time"></div>
 <div id="date"></div>
-<button onclick="toggleMode()">🌙 تغییر حالت</button>
+<div class="info" id="device"></div>
+<div class="info" id="battery"></div>
+<div class="info" id="online"></div>
+<div class="info" id="resolution"></div>
+
+<button onclick="toggleMode()">🌙 دارک مود</button>
+<button onclick="toggleGlass()">✨ حالت شیشه‌ای</button>
+<button onclick="changeBg()">🖼 تغییر پس‌زمینه</button>
 </div>
 
 <div class="card">
-<h3>🤖 چت IRN</h3>
-<textarea id="input" rows="2" placeholder="پیام..."></textarea>
-<button onclick="chat()">ارسال</button>
-<div id="chat" class="chatbox"></div>
+<h3>📝 دفترچه یادداشت</h3>
+<textarea id="note" placeholder="یادداشت شما..."></textarea>
+<button onclick="saveNote()">ذخیره</button>
 </div>
 
 <div class="card">
-<h3>🎮 بازی حدس عدد</h3>
-<input id="guess" type="number" placeholder="عدد 1 تا 10">
-<button onclick="game()">حدس</button>
-<p id="result"></p>
+<h3>⏳ تایمر</h3>
+<input id="timerInput" placeholder="ثانیه">
+<button onclick="startTimer()">شروع</button>
+<p id="timerDisplay"></p>
 </div>
 
+<div class="card">
+<h3>🧮 ماشین حساب</h3>
+<input id="calcInput" placeholder="مثال: 2+2*5">
+<button onclick="calc()">محاسبه</button>
+<p id="calcResult"></p>
 </div>
 
-<div class="infoBox" id="info">در حال دریافت...</div>
+<div class="card">
+<h3>🎲 سرگرمی</h3>
+<button onclick="coin()">پرتاب سکه</button>
+<button onclick="password()">رمز قوی</button>
+<button onclick="laugh()">😂 بخند</button>
+<p id="funResult"></p>
+</div>
 
-<div class="visitBox">
-👁 بازدید:
-<img src="https://visitor-badge.laobi.icu/badge?page_id=am9210501-prog.irn">
+<div class="card">
+<button onclick="focusMode()">🎯 حالت تمرکز</button>
+</div>
+
 </div>
 
 <footer class="footer">
@@ -86,67 +90,74 @@ button{cursor:pointer;background:#444;color:#fff}
 </footer>
 
 <script>
-NProgress.start();window.onload=()=>NProgress.done();
+// سال
 year.innerText=new Date().getFullYear();
 
-// نام کاربر
-function saveName(){
-let n=nameInput.value.trim();if(!n)return;
-localStorage.setItem("name",n);showUser();
-}
-function showUser(){
-let n=localStorage.getItem("name");
-if(n){welcome.innerText="👋 خوش آمدی "+n;nameBox.style.display="none";}
-}
-showUser();
-
-// دارک مود
-function toggleMode(){
-document.body.classList.toggle("dark");
-localStorage.setItem("dark",document.body.classList.contains("dark"));
-}
-if(localStorage.getItem("dark")==="true")document.body.classList.add("dark");
-
-// زمان ایران
-function clock(){
+// ساعت
+setInterval(()=>{
 let d=new Date();
 time.innerText="🕒 "+d.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
-date.innerText="📅 "+d.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
-}
-setInterval(clock,1000);clock();
+date.innerText="📅 "+d.toLocaleDateString("fa-IR",{weekday:"long"});
+},1000);
 
-// چت
-function chat(){
-let t=input.value.trim();if(!t)return;
-add(t,"user");input.value="";
-let r="😅 نفهمیدم";
-if(t.includes("سلام"))r="👋 سلام رفیق!";
-if(t.includes("ساعت"))r=time.innerText;
-if(t.includes("تاریخ"))r=date.innerText;
-if(t.includes("نام من"))r="نامت "+localStorage.getItem("name");
-add(r,"bot");
-}
-function add(m,c){
-let d=document.createElement("div");
-d.className="msg "+c;d.innerText=m;chat.appendChild(d);
-}
+// دستگاه
+device.innerText=/Mobi/.test(navigator.userAgent)?"📱 موبایل":"💻 کامپیوتر";
 
-// بازی
-function game(){
-let g=parseInt(guess.value);let r=Math.floor(Math.random()*10)+1;
-result.innerText=g===r?"🎉 بردی!":"❌ عدد "+r;
-}
-
-// اطلاعات کاربر
-fetch("https://ipapi.co/json/")
-.then(r=>r.json())
-.then(d=>{
-info.innerHTML="🌍 "+d.country_name+"<br>💻 "+navigator.platform;
+// باتری
+navigator.getBattery?.().then(b=>{
+battery.innerText="🔋 باتری: "+Math.round(b.level*100)+"%";
 });
 
+// آنلاین
+function updateOnline(){online.innerText=navigator.onLine?"🟢 آنلاین":"🔴 آفلاین";}
+window.addEventListener("online",updateOnline);
+window.addEventListener("offline",updateOnline);
+updateOnline();
+
+// رزولوشن
+resolution.innerText="📺 رزولوشن: "+screen.width+"×"+screen.height;
+
+// دارک مود
+function toggleMode(){document.body.classList.toggle("dark");}
+
+// شیشه‌ای
+function toggleGlass(){document.body.classList.toggle("glass");}
+
 // پس‌زمینه
-tsParticles.load("tsparticles",{particles:{number:{value:40},size:{value:3},move:{speed:1},links:{enable:true}}});
+function changeBg(){
+let url=prompt("لینک عکس:");
+if(url) document.body.style.background=`url(${url}) center/cover fixed`;
+}
+
+// یادداشت
+note.value=localStorage.note||"";
+function saveNote(){localStorage.note=note.value; alert("ذخیره شد");}
+
+// تایمر
+function startTimer(){
+let t=parseInt(timerInput.value);
+let i=setInterval(()=>{
+if(t<=0){clearInterval(i);timerDisplay.innerText="⏰ تمام!";return;}
+timerDisplay.innerText=t+" ثانیه";t--;
+},1000);
+}
+
+// ماشین حساب
+function calc(){
+try{calcResult.innerText="="+eval(calcInput.value);}
+catch{calcResult.innerText="خطا";}
+}
+
+// سرگرمی
+function coin(){funResult.innerText=Math.random()<.5?"شیر 🦁":"خط 🪙";}
+function password(){funResult.innerText=Math.random().toString(36).slice(-10);}
+function laugh(){funResult.innerText="😂🤣😆😹";}
+
+// تمرکز
+function focusMode(){
+document.body.innerHTML="<h1 style='margin-top:40vh'>🎯 حالت تمرکز فعال شد</h1>";
+}
 </script>
 
 </body>
-  </html>
+</html>
