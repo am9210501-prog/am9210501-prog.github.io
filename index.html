@@ -3,255 +3,150 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN - فوق‌العاده</title>
+<title>IRN | Super Site</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
 
 <style>
-:root{
-  --bg1:#ff7e5f; --bg2:#feb47b; --card:rgba(255,255,255,0.9); --text:#222;
-}
-.dark{
-  --bg1:#0f2027; --bg2:#203a43; --card:rgba(0,0,0,0.6); --text:white;
-}
-
+:root{--bg1:#ff7e5f;--bg2:#feb47b;--card:#ffffffd9;--text:#222;}
+.dark{--bg1:#0f2027;--bg2:#203a43;--card:#000000aa;--text:#fff;}
 body{
-  margin:0;
-  font-family:'Vazirmatn',sans-serif;
-  background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));
-  background-size:400% 400%;
-  color:var(--text);
-  text-align:center;
-  animation:gradientBG 20s ease infinite;
-  transition:0.5s;
+margin:0;font-family:'Vazirmatn',sans-serif;text-align:center;color:var(--text);
+background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));
+background-size:400% 400%;animation:bg 20s infinite;
 }
-
-@keyframes gradientBG{
-  0%{background-position:0% 50%;}
-  50%{background-position:100% 50%;}
-  100%{background-position:0% 50%;}
-}
-
+@keyframes bg{0%{background-position:0%}50%{background-position:100%}100%{background-position:0%}}
 .container{padding:20px;}
-
 .card{
-  background:var(--card);
-  margin:15px auto;
-  padding:30px;
-  border-radius:25px;
-  max-width:500px;
-  box-shadow:0 15px 30px rgba(0,0,0,0.2);
-  opacity:0;
-  transform:translateY(40px);
-  transition:0.8s;
+background:var(--card);margin:15px auto;padding:25px;border-radius:20px;max-width:500px;
+box-shadow:0 10px 25px rgba(0,0,0,.2);animation:fade .8s ease;
 }
-.card.show{opacity:1; transform:translateY(0);}
-.card:hover{transform:scale(1.05); transition:0.3s;}
-
-h1{
-  font-size:36px;
-  margin-bottom:20px;
-  text-shadow:1px 1px 5px rgba(0,0,0,0.3);
-  animation:wavy 2s infinite;
+@keyframes fade{from{opacity:0;transform:translateY(30px)}to{opacity:1}}
+button,input,textarea{
+padding:12px;border-radius:12px;border:none;font-size:16px;margin-top:10px;width:80%;
 }
-
-@keyframes wavy{
-  0%,100%{transform:translateY(0);}
-  50%{transform:translateY(-8px);}
-}
-
-.time{font-size:20px; margin:8px 0;}
-
-button{
-  padding:12px 25px;
-  border-radius:15px;
-  border:none;
-  cursor:pointer;
-  font-size:16px;
-  margin-top:10px;
-}
-
-button.toggle{background:#555;color:white;}
-
-input, textarea{
-  padding:12px;
-  border-radius:12px;
-  border:1px solid #ccc;
-  font-size:16px;
-  width:80%;
-  text-align:center;
-  margin-bottom:12px;
-}
-
-.chatbox{
-  max-height:300px;
-  overflow-y:auto;
-  text-align:left;
-  margin-top:12px;
-}
-
-.message{
-  padding:10px;
-  margin:5px;
-  border-radius:12px;
-  box-shadow:0 2px 5px rgba(0,0,0,0.2);
-}
-
-.message.user{background:#c0e6ff;}
-.message.bot{background:#ffd9c0;}
-
-.game{margin-top:15px;}
-.score{font-weight:bold; font-size:18px;}
-
-/* فوتر */
-.footer{
-  margin-top:40px;
-  padding:15px;
-  background:rgba(0,0,0,0.2);
-  backdrop-filter: blur(10px);
-  color:#fff;
-  font-size:14px;
-  border-top:1px solid rgba(255,255,255,0.3);
-}
-.dark .footer{background:rgba(255,255,255,0.1);}
+button{cursor:pointer;background:#444;color:#fff}
+.chatbox{max-height:250px;overflow:auto;text-align:left}
+.msg{padding:8px;margin:5px;border-radius:10px}
+.user{background:#c0e6ff}.bot{background:#ffd9c0}
+.footer{margin-top:30px;padding:15px;background:#0003;color:#fff;font-size:14px}
+.infoBox{position:fixed;top:10px;right:10px;background:#0009;color:#fff;padding:8px;border-radius:10px;font-size:12px}
+.visitBox{position:fixed;bottom:10px;left:10px;background:#0009;color:#fff;padding:8px;border-radius:10px;font-size:12px}
 </style>
 </head>
 
 <body>
 
+<div id="tsparticles" style="position:fixed;z-index:-1;"></div>
+
 <div class="container">
+
 <h1 id="welcome">👋 خوش آمدی به IRN</h1>
 
-<div class="card show" id="nameBox">
-<p>نام خود را وارد کنید:</p>
-<input type="text" id="nameInput" placeholder="نام شما">
-<br>
+<div class="card" id="nameBox">
+نام خود را وارد کنید:
+<input id="nameInput" placeholder="نام شما">
 <button onclick="saveName()">ورود</button>
 </div>
 
-<div class="card show">
-<div id="time" class="time"></div>
-<div id="date" class="time"></div>
-<button class="toggle" onclick="toggleMode()">🌙 تغییر حالت</button>
+<div class="card">
+<div id="time"></div>
+<div id="date"></div>
+<button onclick="toggleMode()">🌙 تغییر حالت</button>
 </div>
 
-<div class="card show">
-<h3>🤖 چت داخلی IRN</h3>
-<textarea id="userInput" rows="2" placeholder="سوال خود را بنویسید"></textarea>
-<br>
-<button onclick="askAI()">ارسال</button>
-<div class="chatbox" id="chatBox"></div>
+<div class="card">
+<h3>🤖 چت IRN</h3>
+<textarea id="input" rows="2" placeholder="پیام..."></textarea>
+<button onclick="chat()">ارسال</button>
+<div id="chat" class="chatbox"></div>
 </div>
 
-<div class="card show game">
+<div class="card">
 <h3>🎮 بازی حدس عدد</h3>
-<p>یک عدد بین 1 تا 10 حدس بزن:</p>
-<input type="number" id="guessInput" placeholder="عدد خود را وارد کن">
-<br>
-<button onclick="playGame()">حدس بزن</button>
-<p class="score" id="gameResult"></p>
+<input id="guess" type="number" placeholder="عدد 1 تا 10">
+<button onclick="game()">حدس</button>
+<p id="result"></p>
 </div>
 
+</div>
+
+<div class="infoBox" id="info">در حال دریافت...</div>
+
+<div class="visitBox">
+👁 بازدید:
+<img src="https://visitor-badge.laobi.icu/badge?page_id=am9210501-prog.irn">
 </div>
 
 <footer class="footer">
-  © <span id="year"></span> تمامی حقوق این سایت متعلق به ABOLFAZL است
+© <span id="year"></span> تمامی حقوق این سایت متعلق به ABOLFAZL است
 </footer>
 
-<audio id="clickSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
-
 <script>
-// سال خودکار
-document.getElementById("year").innerText = new Date().getFullYear();
-
-// صدا
-function playSound(){
-  document.getElementById("clickSound").play();
-}
+NProgress.start();window.onload=()=>NProgress.done();
+year.innerText=new Date().getFullYear();
 
 // نام کاربر
 function saveName(){
-  playSound();
-  const name=document.getElementById("nameInput").value.trim();
-  if(!name) return;
-  localStorage.setItem("username",name);
-  showWelcome();
+let n=nameInput.value.trim();if(!n)return;
+localStorage.setItem("name",n);showUser();
 }
-function showWelcome(){
-  const name=localStorage.getItem("username");
-  if(name){
-    document.getElementById("welcome").innerText="👋 خوش آمدی "+name;
-    document.getElementById("nameBox").style.display="none";
-  }
+function showUser(){
+let n=localStorage.getItem("name");
+if(n){welcome.innerText="👋 خوش آمدی "+n;nameBox.style.display="none";}
 }
-showWelcome();
+showUser();
 
 // دارک مود
 function toggleMode(){
-  document.body.classList.toggle("dark");
-  playSound();
+document.body.classList.toggle("dark");
+localStorage.setItem("dark",document.body.classList.contains("dark"));
+}
+if(localStorage.getItem("dark")==="true")document.body.classList.add("dark");
+
+// زمان ایران
+function clock(){
+let d=new Date();
+time.innerText="🕒 "+d.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
+date.innerText="📅 "+d.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
+}
+setInterval(clock,1000);clock();
+
+// چت
+function chat(){
+let t=input.value.trim();if(!t)return;
+add(t,"user");input.value="";
+let r="😅 نفهمیدم";
+if(t.includes("سلام"))r="👋 سلام رفیق!";
+if(t.includes("ساعت"))r=time.innerText;
+if(t.includes("تاریخ"))r=date.innerText;
+if(t.includes("نام من"))r="نامت "+localStorage.getItem("name");
+add(r,"bot");
+}
+function add(m,c){
+let d=document.createElement("div");
+d.className="msg "+c;d.innerText=m;chat.appendChild(d);
 }
 
-// ساعت و تاریخ ایران
-function updateTime(){
-  const now=new Date();
-  document.getElementById("time").innerText="🕒 ساعت ایران: "+now.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
-  document.getElementById("date").innerText="📅 تاریخ: "+now.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
-}
-setInterval(updateTime,1000);
-updateTime();
-
-// چت ساده داخلی
-function askAI(){
-  playSound();
-  const input=document.getElementById("userInput").value.trim().toLowerCase();
-  if(!input) return;
-
-  addMessage(input,"user");
-  document.getElementById("userInput").value="";
-
-  let response="😅 متاسفم هوش مصنوعی هنوز به طور کامل در دسترس نیس(اشتراک)!";
-  if(input.includes("ساعت"))
-    response="🕒 ساعت ایران: "+new Date().toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
-  else if(input.includes("تاریخ"))
-    response="📅 تاریخ امروز: "+new Date().toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"});
-  else if(input.includes("سلام"))
-    response="👋 سلام! خوش اومدی 😍";
-  else if(input.includes("irn"))
-    response="🌐 IRN یک سایت مدرن و خفن طراحی شده توسط ABOLFAZL است.";
-
-  addMessage(response,"bot");
+// بازی
+function game(){
+let g=parseInt(guess.value);let r=Math.floor(Math.random()*10)+1;
+result.innerText=g===r?"🎉 بردی!":"❌ عدد "+r;
 }
 
-// نمایش پیام‌ها
-function addMessage(msg,cls){
-  const chatBox=document.getElementById("chatBox");
-  const div=document.createElement("div");
-  div.className="message "+cls;
-  div.innerText=msg;
-  chatBox.appendChild(div);
-  chatBox.scrollTop=chatBox.scrollHeight;
-}
+// اطلاعات کاربر
+fetch("https://ipapi.co/json/")
+.then(r=>r.json())
+.then(d=>{
+info.innerHTML="🌍 "+d.country_name+"<br>💻 "+navigator.platform;
+});
 
-// بازی حدس عدد
-function playGame(){
-  playSound();
-  const guess=parseInt(document.getElementById("guessInput").value);
-  if(!guess || guess<1 || guess>10){
-    alert("یک عدد بین 1 تا 10 وارد کنید!");
-    return;
-  }
-  const random=Math.floor(Math.random()*10)+1;
-  const result=document.getElementById("gameResult");
-
-  if(guess===random)
-    result.innerText="🎉 تبریک! درست حدس زدی!";
-  else
-    result.innerText="❌ عدد درست "+random+" بود!";
-
-  document.getElementById("guessInput").value="";
-}
+// پس‌زمینه
+tsParticles.load("tsparticles",{particles:{number:{value:40},size:{value:3},move:{speed:1},links:{enable:true}}});
 </script>
 
 </body>
-</html>
+  </html>
