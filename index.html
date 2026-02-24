@@ -2,27 +2,25 @@
 <html lang="fa">
 <head>
 <meta charset="UTF-8">
-<title>ثبت‌نام پیام‌رسان</title>
+<title>چت تست</title>
 </head>
 <body>
 
-<div id="register">
-  <h2>ثبت‌نام</h2>
-  <input id="regName" placeholder="نام خود را وارد کنید (مثال: محمد)">
-  <input id="regPhone" placeholder="شماره یا آیدی (اختیاری)">
-  <button onclick="registerUser()">ثبت‌نام</button>
-</div>
+<h2>💬 چت تست</h2>
 
-<div id="welcome" style="display:none;">
-  <h2 id="welcomeMsg"></h2>
-  <p>خوشحالم از دیدنت 😎</p>
-</div>
+<input id="name" placeholder="نام">
+<input id="msg" placeholder="پیام">
+<button onclick="send()">ارسال</button>
+
+<div id="chat"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import {
+  getFirestore, collection, addDoc,
+  query, orderBy, onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-// تنظیمات Firebase پروژه خودت
 const firebaseConfig = {
   apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
   authDomain: "irn-chat.firebaseapp.com",
@@ -32,35 +30,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// تابع ثبت‌نام
-async function registerUser() {
-  const name = document.getElementById("regName").value.trim();
-  const phone = document.getElementById("regPhone").value.trim();
+const chatBox = document.getElementById("chat");
 
-  if(!name) {
-    alert("نام را وارد کنید!");
-    return;
-  }
-
-  try {
-    const docRef = await addDoc(collection(db, "users"), {
-      name: name,
-      phone: phone,
-      time: serverTimestamp()
-    });
-
-    // نمایش پیام خوش‌آمدگویی
-    document.getElementById("register").style.display = "none";
-    document.getElementById("welcome").style.display = "block";
-    document.getElementById("welcomeMsg").innerText = `به سایت خوش آمدی، ${name}!`;
-
-    console.log("کاربر ثبت شد با ID: ", docRef.id);
-
-  } catch (e) {
-    console.error("خطا در ثبت‌نام: ", e);
-    alert("خطا در ثبت‌نام! دوباره تلاش کنید.");
-  }
+function send(){
+  addDoc(collection(db,"messages"),{
+    name: document.getElementById("name").value || "ناشناس",
+    text: document.getElementById("msg").value,
+    time: Date.now()
+  });
 }
+
+const q = query(collection(db,"messages"), orderBy("time"));
+onSnapshot(q, snap=>{
+  chatBox.innerHTML="";
+  snap.forEach(doc=>{
+    const d = doc.data();
+    chatBox.innerHTML += `<p><b>${d.name}</b>: ${d.text}</p>`;
+  });
+});
 </script>
 
 </body>
