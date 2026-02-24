@@ -19,7 +19,7 @@ button{background:#111;color:#fff;cursor:pointer;transition:.3s;}
 button:hover{background:#444;}
 .footer{padding:15px;background:#0005;color:#fff;margin-top:30px;border-top:1px solid #fff3;}
 .info{font-size:14px;margin-top:6px;}
-.stats{margin:10px 0;padding:10px;background:#fff;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);color:#000;}
+.stats{margin:10px 0;padding:10px;background:#fff;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,.2);color:#000;}
 .dark .stats{background:#222;color:white;}
 .message{padding:10px;border-radius:10px;margin:6px;box-shadow:0 3px 8px rgba(0,0,0,.2);background:#fff;}
 .dark .message{background:#333;color:white;}
@@ -39,14 +39,14 @@ button:hover{background:#444;}
 <!-- فرم ورود -->
 <div id="loginScreen">
   <h1>👋 لطفاً نام خود را وارد کنید</h1>
-  <input id="userNameInput" placeholder="مثال: ABOLFAZL">
+  <input id="userNameInput" placeholder="مثال: محمد">
   <button onclick="checkName()">ورود</button>
   <p id="loginMsg"></p>
 </div>
 
 <div class="container" id="mainContent" style="display:none;">
 
-<h1>🚀 خوش آمدی به IRN Galaxy Hacker Terminal</h1>
+<h1 id="welcomeTitle"></h1>
 
 <div class="card stats">
 📊 بازدید کل سایت: <span id="views">0</span> |
@@ -89,7 +89,7 @@ button:hover{background:#444;}
 <div class="card">
 <h3>🖥 ترمینال هکری</h3>
 <div id="terminal"></div>
-<input id="terminalInput" placeholder="کد جاوااسکریپت یا print('hello')">
+<input id="terminalInput" placeholder="کد جاوااسکریپت یا print('سلام')">
 </div>
 
 <div class="card">
@@ -106,11 +106,12 @@ button:hover{background:#444;}
 </footer>
 
 <script>
-// -------------------- فرم ورود --------------------
+// -------------------- فرم ورود فارسی --------------------
 function checkName() {
   const input = document.getElementById("userNameInput").value.trim();
   const msg = document.getElementById("loginMsg");
-  const validFormat = /^[A-Za-zآ-ی]{2,20}$/;
+  // فقط حروف فارسی ۲ تا ۲۰ کاراکتر
+  const validFormat = /^[آ-ی]{2,20}$/;
   if(!validFormat.test(input)){
     msg.innerText = "❌ فرمت نام اشتباه است! متاسفانه شما نمی‌توانید وارد شوید.";
     return;
@@ -120,28 +121,24 @@ function checkName() {
   setTimeout(()=>{
     document.getElementById("loginScreen").style.display="none";
     document.getElementById("mainContent").style.display="block";
+    document.getElementById("welcomeTitle").innerText = `🚀 خوش آمدی ${input} به IRN Galaxy Ultimate!`;
   },2000);
 }
 
 // -------------------- سایت اصلی --------------------
 year.innerText=new Date().getFullYear();
-
 setInterval(()=>{
 let d=new Date();
 time.innerText="🕒 ساعت ایران: "+d.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
 date.innerText="📅 تاریخ: "+d.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran",weekday:"long"});
 updateCalendar();
 },1000);
-
 device.innerText=/Mobi/.test(navigator.userAgent)?"📱 موبایل":"💻 کامپیوتر";
-
 navigator.getBattery?.().then(b=>{battery.innerText="🔋 باتری: "+Math.round(b.level*100)+"%";});
-
 function updateOnline(){online.innerText=navigator.onLine?"🟢 آنلاین":"🔴 آفلاین";}
 window.addEventListener("online",updateOnline);
 window.addEventListener("offline",updateOnline);
 updateOnline();
-
 resolution.innerText="📺 رزولوشن: "+screen.width+"×"+screen.height;
 
 function toggleMode(){document.body.classList.toggle("dark");}
@@ -206,7 +203,6 @@ termInput.addEventListener("keydown",e=>{
   if(e.key==="Enter"){
     const cmd=termInput.value.trim();
     if(!cmd) return;
-    // JS ساده
     try{
       if(cmd.startsWith("print(")){
         let val=cmd.match(/print\((.*)\)/)[1];
