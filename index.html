@@ -9,15 +9,18 @@ body{font-family:tahoma;text-align:center;background:#0b1a2f;color:white;transit
 .chat{max-width:600px;margin:auto;background:#111;padding:15px;border-radius:10px}
 .msg{background:#222;margin:5px;padding:8px;border-radius:6px;text-align:right;position:relative}
 .msg button{position:absolute;left:5px;top:5px;background:red;color:white;border:none;border-radius:4px;cursor:pointer;padding:2px 5px;}
+.msg .react-btn{left:auto;right:5px;top:auto;bottom:5px;background:#00ff88;color:black;padding:2px 5px;}
 input,select,button{padding:10px;margin:5px;border:none;border-radius:6px}
 button{background:#00aaff;color:white;cursor:pointer}
 .dark{background:#050816;color:white}
 .dark .chat{background:#111}
+#onlineUsers{margin:10px;font-size:14px}
 </style>
 </head>
 <body>
 
 <h2>💬 پیام‌رسان حرفه‌ای IRN</h2>
+<div id="onlineUsers">👤 کاربران آنلاین: 0</div>
 
 <div>
 <input id="name" placeholder="نام شما">
@@ -30,7 +33,6 @@ button{background:#00aaff;color:white;cursor:pointer}
 </div>
 
 <div class="chat" id="messages"></div>
-
 <audio id="notifySound" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
@@ -56,13 +58,24 @@ if(!userId){
   localStorage.setItem("userId", userId);
 }
 
-// ثبت کاربر در Collection users
-function saveUser(){
+// ثبت کاربر و وضعیت آنلاین
+function saveUser(status="online"){
   const name = document.getElementById("name").value.trim();
   if(!name) return;
-  usersRef.doc(userId).set({name});
+  usersRef.doc(userId).set({name,status},{merge:true});
 }
-document.getElementById("name").addEventListener("change",saveUser);
+document.getElementById("name").addEventListener("change",()=>saveUser("online"));
+saveUser("online");
+
+// وقتی صفحه بسته شد، وضعیت آفلاین شود
+window.addEventListener("beforeunload",()=>saveUser("offline"));
+
+// شمارش کاربران آنلاین
+usersRef.onSnapshot(snap=>{
+  let online = 0;
+  snap.forEach(u=>{if(u.data().status==="online") online++;});
+  document.getElementById("onlineUsers").innerText = `👤 کاربران آنلاین: ${online}`;
+});
 
 // ارسال پیام
 function sendMessage(){
@@ -72,10 +85,9 @@ function sendMessage(){
   if(!name || !text){ alert("نام و پیام را وارد کن"); return; }
 
   messagesRef.add({
-    name, text, userId, receiverId,
+    name, text, userId, receiverId, reactions:{},
     time: firebase.firestore.FieldValue.serverTimestamp()
   });
-
   document.getElementById("text").value="";
 }
 
@@ -90,14 +102,14 @@ messagesRef.orderBy("time").onSnapshot(snapshot =>{
   box.innerHTML = "";
   snapshot.forEach(docSnap=>{
     const m = docSnap.data();
-    if(m.receiverId && m.receiverId!==userId && m.userId!==userId) return; // فقط پیام عمومی یا خصوصی خودت
+    if(m.receiverId && m.receiverId!==userId && m.userId!==userId) return;
     let div = document.createElement("div");
     div.className="msg";
     const timeStr = m.time ? new Date(m.time.seconds*1000).toLocaleTimeString() : "";
     div.innerHTML=`<b>${m.name}</b> [${timeStr}]: ${m.text}`;
 
+    // حذف پیام خود
     if(m.userId === userId){
-      // حذف پیام خود
       let delBtn = document.createElement("button");
       delBtn.innerText="❌";
       delBtn.onclick = ()=>{ messagesRef.doc(docSnap.id).delete(); };
@@ -113,6 +125,18 @@ messagesRef.orderBy("time").onSnapshot(snapshot =>{
       };
       div.appendChild(editBtn);
     }
+
+    // ری‌اکشن
+    let reactBtn = document.createElement("button");
+    reactBtn.className="react-btn";
+    reactBtn.innerText="❤️ " + (m.reactions[userId] ? 1 : 0);
+    reactBtn.onclick = ()=>{
+      let newReactions = m.reactions || {};
+      newReactions[userId] = newReactions[userId]?0:1;
+      messagesRef.doc(docSnap.id).update({reactions:newReactions});
+    };
+    div.appendChild(reactBtn);
+
     box.appendChild(div);
   });
 
