@@ -3,23 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Galaxy Ultimate Hacker Edition</title>
+<title>IRN Galaxy Hacker Terminal</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg1:#050816; --bg2:#0b1a2f; --card:#ffffffdd; --text:#fff;
-}
+:root{--bg1:#050816;--bg2:#0b1a2f;--card:#ffffffdd;--text:#fff;}
 .dark{--bg1:#0f2027;--bg2:#203a43;--card:#000000aa;--text:#fff;}
 .glass .card{background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);}
-body{margin:0;font-family:'Vazirmatn',sans-serif;color:var(--text);text-align:center;
-background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));
-background-size:400% 400%;animation:bg 20s ease infinite;transition:.5s;overflow-x:hidden;}
+body{margin:0;font-family:'Vazirmatn',sans-serif;color:var(--text);text-align:center;background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));background-size:400% 400%;animation:bg 20s ease infinite;transition:.5s;overflow-x:hidden;}
 @keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 .container{padding:20px;}
 .card{margin:15px auto;padding:20px;border-radius:16px;max-width:520px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fade .8s;}
 @keyframes fade{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 button,input,textarea,select{padding:10px;border:none;border-radius:10px;margin:6px;width:80%;}
-button{background:#111;color:#fff;cursor:pointer;transition:.3s;}button:hover{background:#444;}
+button{background:#111;color:#fff;cursor:pointer;transition:.3s;}
+button:hover{background:#444;}
 .footer{padding:15px;background:#0005;color:#fff;margin-top:30px;border-top:1px solid #fff3;}
 .info{font-size:14px;margin-top:6px;}
 .stats{margin:10px 0;padding:10px;background:#fff;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);color:#000;}
@@ -29,13 +26,27 @@ button{background:#111;color:#fff;cursor:pointer;transition:.3s;}button:hover{ba
 .user{background:#c0e6ff;}
 .bot{background:#ffd9c0;}
 .chatbox{max-height:300px;overflow-y:auto;text-align:left;}
-canvas{background:#111;border-radius:10px;}
+#loginScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000e;color:white;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:9999;}
+#loginScreen input{padding:12px;border-radius:8px;font-size:16px;text-align:center;margin-top:6px;}
+#loginScreen button{padding:12px 25px;margin-top:10px;border-radius:8px;cursor:pointer;background:#111;color:white;}
+#loginScreen p{margin-top:10px;color:#ff5555;}
+#terminal{background:#000;color:#0f0;font-family:monospace;text-align:left;padding:10px;height:300px;overflow-y:auto;border-radius:12px;margin-top:10px;}
+#terminal input{background:#000;color:#0f0;font-family:monospace;border:none;width:95%;padding:6px;}
 </style>
 </head>
 <body>
 
-<div class="container">
-<h1>🚀 خوش آمدی به IRN Galaxy Ultimate Hacker Edition</h1>
+<!-- فرم ورود -->
+<div id="loginScreen">
+  <h1>👋 لطفاً نام خود را وارد کنید</h1>
+  <input id="userNameInput" placeholder="مثال: ABOLFAZL">
+  <button onclick="checkName()">ورود</button>
+  <p id="loginMsg"></p>
+</div>
+
+<div class="container" id="mainContent" style="display:none;">
+
+<h1>🚀 خوش آمدی به IRN Galaxy Hacker Terminal</h1>
 
 <div class="card stats">
 📊 بازدید کل سایت: <span id="views">0</span> |
@@ -61,20 +72,6 @@ canvas{background:#111;border-radius:10px;}
 </div>
 
 <div class="card">
-<h3>⏳ تایمر</h3>
-<input id="timerInput" placeholder="ثانیه">
-<button onclick="startTimer()">شروع</button>
-<p id="timerDisplay"></p>
-</div>
-
-<div class="card">
-<h3>🧮 ماشین حساب</h3>
-<input id="calcInput" placeholder="مثال: 2+2*5">
-<button onclick="calc()">محاسبه</button>
-<p id="calcResult"></p>
-</div>
-
-<div class="card">
 <h3>🎲 سرگرمی و مینی‌گیم‌ها</h3>
 <button onclick="coin()">پرتاب سکه</button>
 <button onclick="password()">رمز قوی</button>
@@ -90,21 +87,16 @@ canvas{background:#111;border-radius:10px;}
 </div>
 
 <div class="card">
+<h3>🖥 ترمینال هکری</h3>
+<div id="terminal"></div>
+<input id="terminalInput" placeholder="کد جاوااسکریپت یا print('hello')">
+</div>
+
+<div class="card">
 <h3>📅 تقویم</h3>
 <p id="iranDate"></p>
 <p id="gregorianDate"></p>
 <p id="ramadanDay"></p>
-</div>
-
-<div class="card">
-<h3>🖥️ Hacker Terminal</h3>
-<div id="terminal" style="background:black;color:#0f0;padding:10px;height:260px;overflow:auto;font-family:monospace;"></div>
-<input id="cmd" placeholder="دستور بنویس..." onkeydown="if(event.key==='Enter') runCmd()">
-</div>
-
-<div class="card">
-<h3>📊 Security Graph</h3>
-<canvas id="securityChart" width="300" height="200"></canvas>
 </div>
 
 </div>
@@ -114,10 +106,26 @@ canvas{background:#111;border-radius:10px;}
 </footer>
 
 <script>
-// سال
+// -------------------- فرم ورود --------------------
+function checkName() {
+  const input = document.getElementById("userNameInput").value.trim();
+  const msg = document.getElementById("loginMsg");
+  const validFormat = /^[A-Za-zآ-ی]{2,20}$/;
+  if(!validFormat.test(input)){
+    msg.innerText = "❌ فرمت نام اشتباه است! متاسفانه شما نمی‌توانید وارد شوید.";
+    return;
+  }
+  msg.style.color = "#00ff88";
+  msg.innerText = `✅ خوش آمدی ${input}! خوشحالم از دیدنت 🌟 به امید نمره 20!`;
+  setTimeout(()=>{
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("mainContent").style.display="block";
+  },2000);
+}
+
+// -------------------- سایت اصلی --------------------
 year.innerText=new Date().getFullYear();
 
-// ساعت و تاریخ ایران
 setInterval(()=>{
 let d=new Date();
 time.innerText="🕒 ساعت ایران: "+d.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
@@ -125,37 +133,24 @@ date.innerText="📅 تاریخ: "+d.toLocaleDateString("fa-IR",{timeZone:"Asia/
 updateCalendar();
 },1000);
 
-// دستگاه
 device.innerText=/Mobi/.test(navigator.userAgent)?"📱 موبایل":"💻 کامپیوتر";
 
-// باتری
 navigator.getBattery?.().then(b=>{battery.innerText="🔋 باتری: "+Math.round(b.level*100)+"%";});
 
-// آنلاین
 function updateOnline(){online.innerText=navigator.onLine?"🟢 آنلاین":"🔴 آفلاین";}
 window.addEventListener("online",updateOnline);
 window.addEventListener("offline",updateOnline);
 updateOnline();
 
-// رزولوشن
 resolution.innerText="📺 رزولوشن: "+screen.width+"×"+screen.height;
 
-// دارک مود و شیشه‌ای
 function toggleMode(){document.body.classList.toggle("dark");}
 function toggleGlass(){document.body.classList.toggle("glass");}
-
-// پس‌زمینه
 function changeBg(){let url=prompt("لینک عکس:");if(url) document.body.style.background=`url(${url}) center/cover fixed`;}
 
 // یادداشت
 note.value=localStorage.note||"";
 function saveNote(){localStorage.note=note.value; alert("ذخیره شد");}
-
-// تایمر
-function startTimer(){let t=parseInt(timerInput.value);let i=setInterval(()=>{if(t<=0){clearInterval(i);timerDisplay.innerText="⏰ تمام!";return;}timerDisplay.innerText=t+" ثانیه";t--;},1000);}
-
-// ماشین حساب
-function calc(){try{calcResult.innerText="="+eval(calcInput.value);}catch{calcResult.innerText="خطا";}}
 
 // سرگرمی
 function coin(){funResult.innerText=Math.random()<.5?"شیر 🦁":"خط 🪙";}
@@ -164,9 +159,9 @@ function laugh(){funResult.innerText="😂🤣😆😹";}
 
 // هوش مصنوعی یادگیرنده
 let knowledge=JSON.parse(localStorage.getItem("ai_knowledge"))||{
-"سلام":"👋 سلام! چطوری؟",
-"ساعت":"🕒 ساعت ایران: "+new Date().toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"}),
-"تاریخ":"📅 تاریخ امروز: "+new Date().toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"})
+  "سلام":"👋 سلام! چطوری؟",
+  "ساعت":"🕒 ساعت ایران: "+new Date().toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"}),
+  "تاریخ":"📅 تاریخ امروز: "+new Date().toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"})
 };
 function addMessage(msg,cls){const box=document.getElementById("chatBox");let div=document.createElement("div");div.className="message "+cls;div.innerText=msg;box.appendChild(div);box.scrollTop=box.scrollHeight;}
 function askAI(){
@@ -181,11 +176,13 @@ if(ans && ans.trim()!==""){knowledge[input]=ans;localStorage.setItem("ai_knowled
 addMessage(response,"bot");
 }
 
-// آمار بازدید از 895 نفر
-let views=parseInt(localStorage.getItem("views")||895)+1;localStorage.setItem("views",views);document.getElementById("views").innerText=views;
-let msgCount=JSON.parse(localStorage.getItem("messages"))?.length||0;document.getElementById("msgCount").innerText=msgCount;
+// آمار بازدید
+let views=parseInt(localStorage.getItem("views")||895)+1;localStorage.setItem("views",views);
+document.getElementById("views").innerText=views;
+let msgCount=JSON.parse(localStorage.getItem("messages"))?.length||0;
+document.getElementById("msgCount").innerText=msgCount;
 
-// تقویم ایرانی ساده و مناسبت‌ها
+// تقویم ایرانی و میلادی
 function updateCalendar(){
   let d=new Date();
   let gY=d.getFullYear(),gM=d.getMonth()+1,gD=d.getDate();
@@ -196,46 +193,35 @@ function updateCalendar(){
 }
 function persianDate(d){
   const weekdays=["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه","شنبه"];
+  // تبدیل تقریبی میلادی به شمسی
   let jd=Math.floor((d.getTime()/86400000)+2440587.5);
   let j=new Date(jd*86400000-62135596800000);
   return {y:j.getFullYear(),m:j.getMonth()+1,d:j.getDate(),weekday:weekdays[d.getDay()]};
 }
 
-// ترمینال هکری
+// -------------------- ترمینال هکری --------------------
 const term=document.getElementById("terminal");
-const cmdInput=document.getElementById("cmd");
-function tprint(text){term.innerHTML+=text+"<br>";term.scrollTop=term.scrollHeight;}
-tprint("IRN Cyber Terminal v3.0 | Type 'help'");
-function runCmd(){
-  const cmd=cmdInput.value.trim().toLowerCase();
-  tprint("> "+cmd); cmdInput.value="";
-  if(cmd==="help"){tprint("Commands: scan, ip, network, vpn, security, python, clear");}
-  else if(cmd==="scan"){
-    tprint("Scanning system...");
-    setTimeout(()=>tprint("CPU Threads: "+navigator.hardwareConcurrency),500);
-    setTimeout(()=>tprint("Memory: "+(navigator.deviceMemory||"Unknown")+" GB"),800);
-    setTimeout(()=>tprint("Platform: "+navigator.platform),1100);
-    setTimeout(()=>tprint("Scan Complete ✔"),1500);
+const termInput=document.getElementById("terminalInput");
+termInput.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    const cmd=termInput.value.trim();
+    if(!cmd) return;
+    // JS ساده
+    try{
+      if(cmd.startsWith("print(")){
+        let val=cmd.match(/print\((.*)\)/)[1];
+        term.innerHTML+="&gt; "+val+"<br>";
+      } else {
+        let result=eval(cmd);
+        term.innerHTML+="&gt; "+result+"<br>";
+      }
+    } catch(err){
+      term.innerHTML+="&gt; ❌ خطا: "+err+"<br>";
+    }
+    term.scrollTop=term.scrollHeight;
+    termInput.value="";
   }
-  else if(cmd==="ip"){tprint("Local IP: 192.168."+Math.floor(Math.random()*255)+"."+Math.floor(Math.random()*255));}
-  else if(cmd==="network"){let type=navigator.connection?.effectiveType||"unknown"; tprint("Connection: "+type); tprint("Online: "+navigator.onLine);}
-  else if(cmd==="vpn"){tprint(Math.random()>0.6?"Possible VPN detected ⚠":"No VPN detected ✔");}
-  else if(cmd==="security"){let score=Math.floor(Math.random()*40)+60; tprint("Security Score: "+score+"/100"); drawChart(score);}
-  else if(cmd==="python"){let code=prompt("Python-like code:"); if(code){try{if(code.includes("print")){let msg=code.match(/\((.*?)\)/)[1]; tprint(msg.replace(/['"]/g,""));}else{tprint("Unsupported");}}catch{tprint("Error");}}}
-  else if(cmd==="clear"){term.innerHTML="";}
-  else{tprint("Unknown command");}
-}
-
-// نمودار امنیت
-function drawChart(score){
-  const canvas=document.getElementById("securityChart");
-  const ctx=canvas.getContext("2d");
-  ctx.clearRect(0,0,300,200);
-  ctx.fillStyle="lime";
-  ctx.fillRect(50,200-score*1.5,50,score*1.5);
-  ctx.fillStyle="white";
-  ctx.fillText("Security",50,190);
-}
+});
 </script>
 </body>
-</html>
+  </html>
