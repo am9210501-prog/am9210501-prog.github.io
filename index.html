@@ -1,25 +1,6 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-<meta charset="UTF-8">
-<title>چت تست</title>
-</head>
-<body>
-
-<h2>💬 چت تست</h2>
-
-<input id="name" placeholder="نام">
-<input id="msg" placeholder="پیام">
-<button onclick="send()">ارسال</button>
-
-<div id="chat"></div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import {
-  getFirestore, collection, addDoc,
-  query, orderBy, onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
@@ -30,25 +11,42 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const chatBox = document.getElementById("chat");
+// فرض می‌کنیم uid کاربر جاری اینه
+const currentUser = { uid: "USER_UID_HERE" };
 
-function send(){
-  addDoc(collection(db,"messages"),{
-    name: document.getElementById("name").value || "ناشناس",
-    text: document.getElementById("msg").value,
+const chatBox = document.getElementById("chatBox");
+
+// ارسال پیام
+async function sendMessage(text){
+  if(!text) return;
+  await addDoc(collection(db,"messages"),{
+    text: text,
+    senderId: currentUser.uid,
+    receiverId: null, // عمومی
     time: Date.now()
   });
 }
 
+// دریافت پیام‌ها و نمایش با دکمه حذف
 const q = query(collection(db,"messages"), orderBy("time"));
-onSnapshot(q, snap=>{
-  chatBox.innerHTML="";
-  snap.forEach(doc=>{
-    const d = doc.data();
-    chatBox.innerHTML += `<p><b>${d.name}</b>: ${d.text}</p>`;
+onSnapshot(q, snap => {
+  chatBox.innerHTML = "";
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${d.senderId}</b>: ${d.text}`;
+    
+    // اگر پیام برای کاربر جاری است، دکمه حذف اضافه شود
+    if(d.senderId === currentUser.uid){
+      const delBtn = document.createElement("button");
+      delBtn.innerText = "❌ حذف";
+      delBtn.onclick = async () => {
+        await deleteDoc(doc(db,"messages",docSnap.id));
+      };
+      div.appendChild(delBtn);
+    }
+
+    chatBox.appendChild(div);
   });
 });
-</script>
-
-</body>
-</html>
+               </script>
