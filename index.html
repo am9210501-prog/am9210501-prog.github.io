@@ -3,113 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Ultimate</title>
+<title>IRN Chat</title>
 <style>
-body{font-family:sans-serif;background:#111;color:#fff;margin:0;padding:0;text-align:center;}
-#register, #chatSection{max-width:500px;margin:20px auto;padding:20px;border-radius:10px;background:#222;}
-input, button{padding:10px;margin:5px;width:90%;border-radius:8px;border:none;}
-button{cursor:pointer;background:#555;color:#fff;}
-#chatBox{max-height:300px;overflow-y:auto;text-align:left;margin-top:10px;}
-.message{padding:8px;margin:5px;border-radius:6px;background:#333;}
-.message.self{background:#0a84ff;}
-.message button{margin-left:10px;padding:2px 5px;background:red;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+body{font-family:tahoma;text-align:center;background:#0b1a2f;color:white}
+.chat{max-width:500px;margin:auto;background:#111;padding:15px;border-radius:10px}
+.msg{background:#222;margin:5px;padding:8px;border-radius:6px;text-align:right}
+input,button{padding:10px;margin:5px;border:none;border-radius:6px}
+button{background:#00aaff;color:white;cursor:pointer}
 </style>
 </head>
 <body>
 
-<div id="register">
-  <h2>ثبت‌نام</h2>
-  <input id="regName" placeholder="نام خود را وارد کنید (مثال: محمد)">
-  <input id="regPhone" placeholder="شماره یا آیدی (اختیاری)">
-  <button onclick="registerUser()">ثبت‌نام</button>
-</div>
+<h2>💬 پیام‌رسان IRN</h2>
 
-<div id="chatSection" style="display:none;">
-  <h2>پیام‌رسان</h2>
-  <input id="msgInput" placeholder="پیام خود را بنویسید...">
-  <button onclick="sendMessage()">ارسال پیام عمومی</button>
-  <div id="chatBox"></div>
-</div>
+<div class="chat">
+<input id="name" placeholder="نام شما">
+<input id="text" placeholder="پیام شما">
+<button onclick="sendMessage()">ارسال</button>
 
-<audio id="notifySound" src="https://www.myinstants.com/media/sounds/facebook-notification.mp3"></audio>
+<div id="messages"></div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
   authDomain: "irn-chat.firebaseapp.com",
   projectId: "irn-chat",
+  storageBucket: "irn-chat.firebasestorage.app",
+  messagingSenderId: "247317938517",
+  appId: "1:247317938517:web:2343d222bebb00ebd8afdc"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let currentUser = null;
+const messagesRef = collection(db, "messages");
 
-// ثبت‌نام کاربر
-async function registerUser() {
-  const name = document.getElementById("regName").value.trim();
-  const phone = document.getElementById("regPhone").value.trim();
-  if(!name){ alert("نام را وارد کنید!"); return; }
+window.sendMessage = async function() {
+  const name = document.getElementById("name").value;
+  const text = document.getElementById("text").value;
+  if(!name || !text) return alert("نام و پیام را وارد کن");
 
-  try{
-    const docRef = await addDoc(collection(db,"users"), {name, phone});
-    currentUser = { uid: docRef.id, name };
-    document.getElementById("register").style.display = "none";
-    document.getElementById("chatSection").style.display = "block";
-    alert(`به سایت خوش آمدی، ${name}!`);
-    loadMessages();
-  }catch(e){ console.error(e); alert("خطا در ثبت‌نام! دوباره تلاش کنید."); }
-}
-
-// ارسال پیام عمومی
-async function sendMessage(){
-  const text = document.getElementById("msgInput").value.trim();
-  if(!text || !currentUser) return;
-  await addDoc(collection(db,"messages"),{
+  await addDoc(messagesRef, {
+    name,
     text,
-    senderId: currentUser.uid,
-    receiverId: null,
-    time: Date.now()
+    time: new Date()
   });
-  document.getElementById("msgInput").value="";
-}
 
-// دریافت و نمایش پیام‌ها + دکمه حذف برای پیام‌های خود کاربر
-function loadMessages(){
-  const chatBox = document.getElementById("chatBox");
-  const sound = document.getElementById("notifySound");
-  const q = query(collection(db,"messages"), orderBy("time"));
+  document.getElementById("text").value="";
+};
 
-  onSnapshot(q, snap=>{
-    chatBox.innerHTML="";
-    snap.forEach(docSnap=>{
-      const d = docSnap.data();
-      const div = document.createElement("div");
-      div.className="message"+(d.senderId===currentUser.uid?" self":"");
-      div.textContent=`${d.senderId===currentUser.uid?"شما":d.senderId}: ${d.text}`;
-      
-      // دکمه حذف برای پیام خود کاربر
-      if(d.senderId===currentUser.uid){
-        const delBtn = document.createElement("button");
-        delBtn.innerText="❌";
-        delBtn.onclick = async ()=>{
-          await deleteDoc(doc(db,"messages",docSnap.id));
-        };
-        div.appendChild(delBtn);
-      }
+const q = query(messagesRef, orderBy("time"));
 
-      chatBox.appendChild(div);
-    });
-    // صدا فقط برای پیام‌های جدید که خود کاربر نفرستاده
-    if(snap.docChanges().some(c=>c.type==="added" && c.doc.data().senderId!==currentUser.uid)){
-      sound.play();
-    }
-    chatBox.scrollTop = chatBox.scrollHeight;
+onSnapshot(q, snapshot => {
+  const box = document.getElementById("messages");
+  box.innerHTML="";
+  snapshot.forEach(doc => {
+    const m = doc.data();
+    box.innerHTML += `<div class="msg"><b>${m.name}:</b> ${m.text}</div>`;
   });
-}
+});
 </script>
+
 </body>
 </html>
