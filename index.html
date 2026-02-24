@@ -7,7 +7,8 @@
 <style>
 body{font-family:tahoma;text-align:center;background:#0b1a2f;color:white}
 .chat{max-width:500px;margin:auto;background:#111;padding:15px;border-radius:10px}
-.msg{background:#222;margin:5px;padding:8px;border-radius:6px;text-align:right}
+.msg{background:#222;margin:5px;padding:8px;border-radius:6px;text-align:right;position:relative}
+.msg button{position:absolute;left:5px;top:5px;background:red;color:white;border:none;border-radius:4px;cursor:pointer;padding:2px 5px;}
 input,button{padding:10px;margin:5px;border:none;border-radius:6px}
 button{background:#00aaff;color:white;cursor:pointer}
 </style>
@@ -26,7 +27,7 @@ button{background:#00aaff;color:white;cursor:pointer}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
@@ -39,31 +40,53 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 const messagesRef = collection(db, "messages");
 
+// برای شناسایی پیام‌های کاربر، uid موقت می‌سازیم (هر بار که وارد شد)
+let userId = localStorage.getItem("userId");
+if(!userId) {
+  userId = Math.random().toString(36).substr(2,9);
+  localStorage.setItem("userId", userId);
+}
+
 window.sendMessage = async function() {
-  const name = document.getElementById("name").value;
-  const text = document.getElementById("text").value;
+  const name = document.getElementById("name").value.trim();
+  const text = document.getElementById("text").value.trim();
   if(!name || !text) return alert("نام و پیام را وارد کن");
 
   await addDoc(messagesRef, {
     name,
     text,
+    userId,
     time: new Date()
   });
 
   document.getElementById("text").value="";
 };
 
+// نمایش پیام‌ها با دکمه حذف پیام خود کاربر
 const q = query(messagesRef, orderBy("time"));
 
 onSnapshot(q, snapshot => {
   const box = document.getElementById("messages");
   box.innerHTML="";
-  snapshot.forEach(doc => {
-    const m = doc.data();
-    box.innerHTML += `<div class="msg"><b>${m.name}:</b> ${m.text}</div>`;
+  snapshot.forEach(docSnap => {
+    const m = docSnap.data();
+    const div = document.createElement("div");
+    div.className="msg";
+    div.innerHTML=`<b>${m.name}:</b> ${m.text}`;
+    
+    // اگر پیام برای کاربر جاری است، دکمه حذف اضافه می‌کنیم
+    if(m.userId === userId){
+      const delBtn = document.createElement("button");
+      delBtn.innerText = "❌";
+      delBtn.onclick = async ()=>{
+        await deleteDoc(doc(db,"messages",docSnap.id));
+      };
+      div.appendChild(delBtn);
+    }
+
+    box.appendChild(div);
   });
 });
 </script>
