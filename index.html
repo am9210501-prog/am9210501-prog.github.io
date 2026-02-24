@@ -3,109 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Galaxy Ultimate - اصلاح شده</title>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+<title>پیام‌رسان ساده</title>
 <style>
-:root{--bg1:#050816;--bg2:#0b1a2f;--card:#ffffffdd;--text:#fff;}
-.dark{--bg1:#0f2027;--bg2:#203a43;--card:#000000aa;--text:#fff;}
-.glass .card{background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);}
-body{margin:0;font-family:'Vazirmatn',sans-serif;color:var(--text);text-align:center;
-background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));
-background-size:400% 400%;animation:bg 20s ease infinite;transition:.5s;overflow-x:hidden;}
-@keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.container{padding:20px;}
-.card{margin:15px auto;padding:20px;border-radius:16px;max-width:520px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fade .8s;}
-@keyframes fade{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-button,input,textarea,select{padding:10px;border:none;border-radius:10px;margin:6px;width:80%;}
-button{background:#111;color:#fff;cursor:pointer;transition:.3s;}button:hover{background:#444;}
-.footer{padding:15px;background:#0005;color:#fff;margin-top:30px;border-top:1px solid #fff3;}
-.info{font-size:14px;margin-top:6px;}
-.stats{margin:10px 0;padding:10px;background:#fff;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);color:#000;}
-.dark .stats{background:#222;color:white;}
-.message{padding:10px;border-radius:10px;margin:6px;box-shadow:0 3px 8px rgba(0,0,0,.2);background:#fff;}
-.dark .message{background:#333;color:white;}
-.user{background:#c0e6ff;}
-.bot{background:#ffd9c0;}
-.chatbox{max-height:300px;overflow-y:auto;text-align:left;}
+body{font-family:sans-serif;text-align:center;padding:20px;background:#111;color:#fff;}
+input,button{padding:10px;margin:5px;border-radius:5px;}
+#messages{max-height:300px;overflow-y:auto;margin-top:20px;border:1px solid #555;padding:10px;}
+.message{margin:5px 0;padding:5px;border-radius:5px;background:#222;}
+.user{background:#0af;}
 </style>
 </head>
 <body>
 
-<div class="container">
-
-<h1 id="welcome">🚀 خوش آمدی به IRN Galaxy Ultimate</h1>
-
-<div class="card stats">
-📊 بازدید کل سایت: <span id="views">0</span> |
-💬 تعداد پیام‌ها: <span id="msgCount">0</span>
-</div>
-
-<div class="card">
-<div id="time"></div>
-<div id="date"></div>
-<div class="info" id="device"></div>
-<div class="info" id="battery"></div>
-<div class="info" id="online"></div>
-<div class="info" id="resolution"></div>
-<button onclick="toggleMode()">🌙 دارک مود</button>
-<button onclick="toggleGlass()">✨ حالت شیشه‌ای</button>
-<button onclick="changeBg()">🖼 تغییر پس‌زمینه</button>
-</div>
-
-<div class="card">
-<h3>📝 دفترچه یادداشت</h3>
-<textarea id="note" placeholder="یادداشت شما..."></textarea>
-<button onclick="saveNote()">ذخیره</button>
-</div>
-
-<div class="card">
-<h3>⏳ تایمر</h3>
-<input id="timerInput" placeholder="ثانیه">
-<button onclick="startTimer()">شروع</button>
-<p id="timerDisplay"></p>
-</div>
-
-<div class="card">
-<h3>🧮 ماشین حساب</h3>
-<input id="calcInput" placeholder="مثال: 2+2*5">
-<button onclick="calc()">محاسبه</button>
-<p id="calcResult"></p>
-</div>
-
-<div class="card">
-<h3>🎲 سرگرمی و مینی‌گیم‌ها</h3>
-<button onclick="coin()">پرتاب سکه</button>
-<button onclick="password()">رمز قوی</button>
-<button onclick="laugh()">😂 بخند</button>
-<p id="funResult"></p>
-</div>
-
-<div class="card">
-<h3>🤖 چت‌بات یادگیرنده</h3>
+<h1>پیام‌رسان ساده</h1>
 <input id="username" placeholder="نام شما">
-<input id="messageInput" placeholder="پیام بنویس...">
-<button onclick="sendMessage()">ارسال پیام</button>
-<div class="chatbox" id="messages"></div>
-</div>
+<br>
+<input id="messageInput" placeholder="پیام خود را بنویسید">
+<button onclick="sendMessage()">ارسال</button>
 
-<div class="card">
-<h3>📅 تقویم</h3>
-<p id="iranDate"></p>
-<p id="gregorianDate"></p>
-<p id="ramadanDay"></p>
-</div>
+<div id="messages"></div>
 
-</div>
-
-<footer class="footer">
-© <span id="year"></span> تمامی حقوق این سایت متعلق به ABOLFAZL است
-</footer>
-
-<!-- Firebase SDK -->
 <script type="module">
+// Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
+// پیکربندی Firebase خودت
 const firebaseConfig = {
   apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
   authDomain: "irn-chat.firebaseapp.com",
@@ -115,87 +37,37 @@ const firebaseConfig = {
   appId: "1:247317938517:web:2343d222bebb00ebd8afdc"
 };
 
+// اتصال به Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// پیام‌رسان
-const messagesRef = collection(db,"messages");
+// پیام‌ها
+const messagesRef = collection(db, "messages");
 const q = query(messagesRef, orderBy("timestamp","asc"));
+
+// نمایش زنده پیام‌ها
 onSnapshot(q, snapshot=>{
   const messagesDiv = document.getElementById("messages");
-  messagesDiv.innerHTML="";
+  messagesDiv.innerHTML = "";
   snapshot.forEach(doc=>{
-    const m=doc.data();
-    const div=document.createElement("div");
-    div.className="message user";
-    div.innerHTML=`<b>${m.user}</b>: ${m.text}`;
+    const m = doc.data();
+    const div = document.createElement("div");
+    div.className = "message user";
+    div.innerText = m.user + ": " + m.text;
     messagesDiv.appendChild(div);
   });
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 });
 
+// ارسال پیام
 function sendMessage(){
-  const user=document.getElementById("username").value.trim()||"ناشناس";
-  const text=document.getElementById("messageInput").value.trim();
+  const user = document.getElementById("username").value.trim() || "ناشناس";
+  const text = document.getElementById("messageInput").value.trim();
   if(!text) return;
-  addDoc(messagesRef,{user,text,timestamp:serverTimestamp()});
+  addDoc(messagesRef, {user, text, timestamp: serverTimestamp()});
   document.getElementById("messageInput").value="";
-}
-
-// دیگر امکانات
-year.innerText=new Date().getFullYear();
-note.value=localStorage.note||"";
-function saveNote(){localStorage.note=note.value;alert("ذخیره شد");}
-
-function startTimer(){let t=parseInt(document.getElementById("timerInput").value);let i=setInterval(()=>{if(t<=0){clearInterval(i);document.getElementById("timerDisplay").innerText="⏰ تمام!";return;}document.getElementById("timerDisplay").innerText=t+" ثانیه";t--;},1000);}
-
-function calc(){try{document.getElementById("calcResult").innerText="="+eval(document.getElementById("calcInput").value);}catch{document.getElementById("calcResult").innerText="خطا";}}
-
-function coin(){document.getElementById("funResult").innerText=Math.random()<.5?"شیر 🦁":"خط 🪙";}
-function password(){document.getElementById("funResult").innerText=Math.random().toString(36).slice(-10);}
-function laugh(){document.getElementById("funResult").innerText="😂🤣😆😹";}
-
-function toggleMode(){document.body.classList.toggle("dark");}
-function toggleGlass(){document.body.classList.toggle("glass");}
-function changeBg(){let url=prompt("لینک عکس:");if(url) document.body.style.background=`url(${url}) center/cover fixed`;}
-
-// اطلاعات سیستم
-setInterval(()=>{
-  let d=new Date();
-  document.getElementById("time").innerText="🕒 ساعت ایران: "+d.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
-  document.getElementById("date").innerText="📅 تاریخ: "+d.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran",weekday:"long"});
-  device.innerText=/Mobi/.test(navigator.userAgent)?"📱 موبایل":"💻 کامپیوتر";
-  navigator.getBattery?.().then(b=>{battery.innerText="🔋 باتری: "+Math.round(b.level*100)+"%";});
-  online.innerText=navigator.onLine?"🟢 آنلاین":"🔴 آفلاین";
-  resolution.innerText="📺 رزولوشن: "+screen.width+"×"+screen.height;
-  updateCalendar();
-},1000);
-
-// بازدید
-let views=parseInt(localStorage.getItem("views")||895)+1;
-localStorage.setItem("views",views);
-document.getElementById("views").innerText=views;
-document.getElementById("msgCount").innerText=0;
-
-// تقویم ساده
-function updateCalendar(){
-  let d=new Date();
-  let gY=d.getFullYear(),gM=d.getMonth()+1,gD=d.getDate();
-  gregorianDate.innerText="📅 Gregorian: "+gY+"/"+gM+"/"+gD;
-
-  let persian=toPersian(d);
-  iranDate.innerText="🕌 شمسی: "+persian.y+"/"+persian.m+"/"+persian.d+" ("+persian.weekday+")";
-  ramadanDay.innerText=(persian.m==9)?"🌙 ماه رمضان، روز "+persian.d:"";
-}
-
-// تبدیل تقریبی میلادی به شمسی
-function toPersian(d){
-  const weekdays=["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه","شنبه"];
-  let jd=Math.floor((d.getTime()/86400000)+2440587.5);
-  let j=new Date(jd*86400000-62135596800000);
-  return {y:j.getFullYear(),m:j.getMonth()+1,d:j.getDate(),weekday:weekdays[d.getDay()]};
 }
 </script>
 
 </body>
-  </html>
+</html>
