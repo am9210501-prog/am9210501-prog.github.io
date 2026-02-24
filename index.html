@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN کهکشانی با AI</title>
+<title>IRN کهکشانی پایدار</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg1:#0b0c1a;--bg2:#1a1c2f;--card:rgba(255,255,255,0.1);--text:#fff;}
@@ -15,13 +15,15 @@ button{cursor:pointer;background:#555;color:#fff;}
 .footer{position:relative;z-index:10;text-align:center;margin-top:30px;padding:15px;background:rgba(0,0,0,0.5);}
 .message{background:rgba(255,255,255,0.2);padding:10px;border-radius:12px;margin-top:10px;}
 .dark .message{background:rgba(0,0,0,0.3);}
+.stats{margin:10px 0;padding:10px;background:rgba(255,255,255,0.2);border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);}
+.dark .stats{background:rgba(0,0,0,0.3);}
 </style>
 </head>
 <body>
 <canvas id="bgCanvas"></canvas>
 <div class="container">
 <h1 id="welcome">👋 خوش آمدید به IRN کهکشانی</h1>
-<div class="card" id="stats">📊 بازدید کل: <span id="views">0</span></div>
+<div class="card stats">📊 بازدید کل: <span id="views">0</span></div>
 <div class="card">
 <div id="time"></div>
 <div id="date"></div>
@@ -49,6 +51,27 @@ button{cursor:pointer;background:#555;color:#fff;}
 <h3>📅 تقویم ایران و میلادی</h3>
 <div id="calendar"></div>
 </div>
+<div class="card">
+<h3>📝 دفترچه یادداشت</h3>
+<textarea id="note" placeholder="یادداشت شما..."></textarea>
+<button onclick="saveNote()">ذخیره</button>
+</div>
+<div class="card">
+<h3>🧮 ماشین حساب</h3>
+<input id="calcInput" placeholder="مثال: 2+2*5">
+<button onclick="calc()">محاسبه</button>
+<p id="calcResult"></p>
+</div>
+<div class="card">
+<h3>🎲 سرگرمی</h3>
+<button onclick="coin()">پرتاب سکه</button>
+<button onclick="password()">رمز قوی</button>
+<button onclick="laugh()">😂 بخند</button>
+<p id="funResult"></p>
+</div>
+<div class="card">
+<button onclick="focusMode()">🎯 حالت تمرکز</button>
+</div>
 </div>
 <footer class="footer">© <span id="year"></span> تمامی حقوق متعلق به ABOLFAZL است</footer>
 <script>
@@ -65,9 +88,17 @@ document.getElementById('year').innerText = new Date().getFullYear();// ساعت
 
 // تقویم function renderCalendar(){ let d=new Date(); let iranDate=new Intl.DateTimeFormat('fa-IR',{day:'numeric',month:'long',year:'numeric'}).format(d); let gregDate=d.toLocaleDateString(); document.getElementById('calendar').innerHTML='🇮🇷 '+iranDate+'<br>🌍 '+gregDate; } setInterval(renderCalendar,1000); renderCalendar();
 
-// WebGL کهکشانی let canvas=document.getElementById('bgCanvas'); let ctx=canvas.getContext('2d'); canvas.width=window.innerWidth;canvas.height=window.innerHeight; let stars=[];for(let i=0;i<300;i++){stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,z:Math.random()2+1});} function animate(){ ctx.fillStyle='black';ctx.fillRect(0,0,canvas.width,canvas.height); stars.forEach(s=>{ ctx.fillStyle='white';ctx.fillRect(s.x,s.y,s.z,s.z); s.y-=s.z0.5;if(s.y<0){s.y=canvas.height;s.x=Math.random()*canvas.width;} }); requestAnimationFrame(animate); } animate(); window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+// دفترچه یادداشت note.value=localStorage.note||''; function saveNote(){localStorage.note=note.value;alert('ذخیره شد');}
 
-// AI یادگیرنده let aiMemory=JSON.parse(localStorage.getItem('aiMemory')||'{}'); function addMessage(msg,cls){ let box=document.getElementById('chatBox'); let div=document.createElement('div'); div.className='message '+cls;div.innerText=msg; box.appendChild(div); box.scrollTop=box.scrollHeight; } function askAI(){ let input=document.getElementById('userInput').value.trim(); if(!input) return; addMessage(input,'user'); document.getElementById('userInput').value=''; let key=input.toLowerCase(); let response='😅 نمی‌دونم، بهم یاد بده!'; if(aiMemory[key]) response=aiMemory[key]; addMessage(response,'bot'); if(response==='😅 نمی‌دونم، بهم یاد بده!'){ let answer=prompt('چی میخوای جوابش باشه؟'); if(answer){aiMemory[key]=answer;localStorage.setItem('aiMemory',JSON.stringify(aiMemory)); addMessage('✅ یاد گرفتم!','bot');} } } </script>
+// ماشین حساب function calc(){try{calcResult.innerText='='+eval(calcInput.value);}catch{calcResult.innerText='خطا';}}
+
+// سرگرمی function coin(){funResult.innerText=Math.random()<0.5?'شیر 🦁':'خط 🪙';} function password(){funResult.innerText=Math.random().toString(36).slice(-10);} function laugh(){funResult.innerText='😂🤣😆😹';}
+
+// حالت تمرکز function focusMode(){document.body.innerHTML="<h1 style='margin-top:40vh'>🎯 حالت تمرکز فعال شد</h1>";}
+
+// Canvas کهکشانی let canvas=document.getElementById('bgCanvas'); let ctx=canvas.getContext('2d'); canvas.width=window.innerWidth;canvas.height=window.innerHeight; let stars=[];for(let i=0;i<300;i++){stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,z:Math.random()2+1});} function animate(){ ctx.fillStyle='black';ctx.fillRect(0,0,canvas.width,canvas.height); stars.forEach(s=>{ctx.fillStyle='white';ctx.fillRect(s.x,s.y,s.z,s.z);s.y-=s.z0.5;if(s.y<0){s.y=canvas.height;s.x=Math.random()*canvas.width;}}); requestAnimationFrame(animate); } animate(); window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+
+// AI یادگیرنده let aiMemory=JSON.parse(localStorage.getItem('aiMemory')||'{}'); function addMessage(msg,cls){ let box=document.getElementById('chatBox'); let div=document.createElement('div'); div.className='message '+cls;div.innerText=msg; box.appendChild(div); box.scrollTop=box.scrollHeight; } function askAI(){ let input=document.getElementById('userInput').value.trim(); if(!input)return; addMessage(input,'user'); document.getElementById('userInput').value=''; let key=input.toLowerCase(); let response='😅 نمی‌دونم، بهم یاد بده!'; if(aiMemory[key]) response=aiMemory[key]; addMessage(response,'bot'); if(response==='😅 نمی‌دونم، بهم یاد بده!'){ let answer=prompt('چی میخوای جوابش باشه؟'); if(answer){aiMemory[key]=answer;localStorage.setItem('aiMemory',JSON.stringify(aiMemory)); addMessage('✅ یاد گرفتم!','bot');} } } </script>
 
 </body>
   </html>
