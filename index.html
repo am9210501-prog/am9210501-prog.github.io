@@ -105,7 +105,7 @@ messagesRef.orderBy("time").onSnapshot(snapshot =>{
     if(m.receiverId && m.receiverId!==userId && m.userId!==userId) return;
     let div = document.createElement("div");
     div.className="msg";
-    const timeStr = m.time ? new Date(m.time.seconds*1000).toLocaleTimeString() : "";
+    const timeStr = m.time ? new Date(m.time.seconds*1000).toLocaleTimeString("fa-IR") : "";
     div.innerHTML=`<b>${m.name}</b> [${timeStr}]: ${m.text}`;
 
     // حذف پیام خود
@@ -129,7 +129,8 @@ messagesRef.orderBy("time").onSnapshot(snapshot =>{
     // ری‌اکشن
     let reactBtn = document.createElement("button");
     reactBtn.className="react-btn";
-    reactBtn.innerText="❤️ " + (m.reactions[userId] ? 1 : 0);
+    const userReact = m.reactions && m.reactions[userId] ? 1 : 0;
+    reactBtn.innerText="❤️ " + Object.values(m.reactions||{}).reduce((a,b)=>a+b,0);
     reactBtn.onclick = ()=>{
       let newReactions = m.reactions || {};
       newReactions[userId] = newReactions[userId]?0:1;
@@ -156,4 +157,4 @@ messagesRef.orderBy("time").onSnapshot(snapshot =>{
 });
 </script>
 </body>
-  </html>
+</html>
