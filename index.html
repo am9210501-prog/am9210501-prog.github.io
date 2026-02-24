@@ -22,51 +22,53 @@ input,button{padding:10px;margin:5px;border-radius:5px;}
 
 <div id="messages"></div>
 
-<script type="module">
-// Firebase SDK
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
+<script>
+  // پیکربندی Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
+    authDomain: "irn-chat.firebaseapp.com",
+    projectId: "irn-chat",
+    storageBucket: "irn-chat.firebasestorage.app",
+    messagingSenderId: "247317938517",
+    appId: "1:247317938517:web:2343d222bebb00ebd8afdc"
+  };
+  
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-// پیکربندی Firebase خودت
-const firebaseConfig = {
-  apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
-  authDomain: "irn-chat.firebaseapp.com",
-  projectId: "irn-chat",
-  storageBucket: "irn-chat.firebasestorage.app",
-  messagingSenderId: "247317938517",
-  appId: "1:247317938517:web:2343d222bebb00ebd8afdc"
-};
+  const messagesRef = db.collection("messages");
 
-// اتصال به Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+  // نمایش زنده پیام‌ها
+  messagesRef.orderBy("timestamp")
+    .onSnapshot(snapshot=>{
+      const messagesDiv = document.getElementById("messages");
+      messagesDiv.innerHTML = "";
+      snapshot.forEach(doc=>{
+        const m = doc.data();
+        const div = document.createElement("div");
+        div.className = "message user";
+        div.innerText = m.user + ": " + m.text;
+        messagesDiv.appendChild(div);
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
 
-// پیام‌ها
-const messagesRef = collection(db, "messages");
-const q = query(messagesRef, orderBy("timestamp","asc"));
-
-// نمایش زنده پیام‌ها
-onSnapshot(q, snapshot=>{
-  const messagesDiv = document.getElementById("messages");
-  messagesDiv.innerHTML = "";
-  snapshot.forEach(doc=>{
-    const m = doc.data();
-    const div = document.createElement("div");
-    div.className = "message user";
-    div.innerText = m.user + ": " + m.text;
-    messagesDiv.appendChild(div);
-  });
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-});
-
-// ارسال پیام
-function sendMessage(){
-  const user = document.getElementById("username").value.trim() || "ناشناس";
-  const text = document.getElementById("messageInput").value.trim();
-  if(!text) return;
-  addDoc(messagesRef, {user, text, timestamp: serverTimestamp()});
-  document.getElementById("messageInput").value="";
-}
+  // ارسال پیام
+  function sendMessage(){
+    const user = document.getElementById("username").value.trim() || "ناشناس";
+    const text = document.getElementById("messageInput").value.trim();
+    if(!text) return;
+    messagesRef.add({
+      user,
+      text,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById("messageInput").value="";
+  }
 </script>
 
 </body>
