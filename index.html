@@ -1,104 +1,213 @@
-<!DOCTYPE html><html lang="fa">
+<!DOCTYPE html>
+<html lang="fa">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN کهکشانی پایدار</title>
+<title>IRN Galaxy Ultimate</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg1:#0b0c1a;--bg2:#1a1c2f;--card:rgba(255,255,255,0.1);--text:#fff;}
-body{margin:0;font-family:'Vazirmatn',sans-serif;background:#000;overflow:hidden;color:var(--text);}
-.container{position:relative;z-index:10;padding:20px;max-width:600px;margin:auto;}
-.card{background:var(--card);backdrop-filter:blur(10px);padding:20px;margin:15px auto;border-radius:20px;box-shadow:0 15px 30px rgba(0,0,0,0.5);transition:0.4s;}
-h1{text-align:center;font-size:36px;margin-bottom:20px;}
-button,input,textarea{padding:12px;border-radius:12px;border:none;width:80%;margin-top:8px;font-size:16px;}
-button{cursor:pointer;background:#555;color:#fff;}
-.footer{position:relative;z-index:10;text-align:center;margin-top:30px;padding:15px;background:rgba(0,0,0,0.5);}
-.message{background:rgba(255,255,255,0.2);padding:10px;border-radius:12px;margin-top:10px;}
-.dark .message{background:rgba(0,0,0,0.3);}
-.stats{margin:10px 0;padding:10px;background:rgba(255,255,255,0.2);border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);}
-.dark .stats{background:rgba(0,0,0,0.3);}
+:root{
+  --bg1:#050816; --bg2:#0b1a2f; --card:#ffffffdd; --text:#fff;
+}
+.dark{
+  --bg1:#0f2027; --bg2:#203a43; --card:#000000aa; --text:#fff;
+}
+.glass .card{background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);}
+body{
+margin:0;font-family:'Vazirmatn',sans-serif;color:var(--text);text-align:center;
+background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg1),var(--bg2));
+background-size:400% 400%;animation:bg 20s ease infinite;transition:.5s;overflow-x:hidden;
+position:relative;
+}
+@keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+.container{padding:20px;position:relative;z-index:1;}
+.card{margin:15px auto;padding:20px;border-radius:16px;max-width:520px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fade .8s;}
+@keyframes fade{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+button,input,textarea,select{padding:10px;border:none;border-radius:10px;margin:6px;width:80%;}
+button{background:#111;color:#fff;cursor:pointer;transition:.3s;}
+button:hover{background:#444;}
+.footer{padding:15px;background:#0005;color:#fff;margin-top:30px;border-top:1px solid #fff3;font-size:14px;}
+.info{font-size:14px;margin-top:6px;}
+.stats{margin:10px 0;padding:10px;background:#fff;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);color:#000;}
+.dark .stats{background:#222;color:white;}
+.message{padding:10px;border-radius:10px;margin:6px;box-shadow:0 3px 8px rgba(0,0,0,.2);background:#fff;}
+.dark .message{background:#333;color:white;}
+.user{background:#c0e6ff;}
+.bot{background:#ffd9c0;}
+.chatbox{max-height:300px;overflow-y:auto;text-align:left;}
+/* ستاره‌ها */
+#stars{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;background:transparent;}
+.star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;opacity:0.8;animation:twinkle 2s infinite;}
+@keyframes twinkle{0%,100%{opacity:0.3;}50%{opacity:1;}}
 </style>
 </head>
 <body>
-<canvas id="bgCanvas"></canvas>
+
+<canvas id="stars"></canvas>
+
 <div class="container">
-<h1 id="welcome">👋 خوش آمدید به IRN کهکشانی</h1>
-<div class="card stats">📊 بازدید کل: <span id="views">0</span></div>
+<h1>🚀 خوش آمدی به IRN Galaxy Ultimate</h1>
+
+<div class="card stats">
+📊 بازدید کل سایت: <span id="views">0</span> |
+💬 تعداد پیام‌ها: <span id="msgCount">0</span>
+</div>
+
 <div class="card">
 <div id="time"></div>
 <div id="date"></div>
-<div id="device"></div>
-<div id="battery"></div>
-<div id="online"></div>
-<div id="resolution"></div>
+<div class="info" id="device"></div>
+<div class="info" id="battery"></div>
+<div class="info" id="online"></div>
+<div class="info" id="resolution"></div>
 <button onclick="toggleMode()">🌙 دارک مود</button>
 <button onclick="toggleGlass()">✨ حالت شیشه‌ای</button>
+<button onclick="changeBg()">🖼 تغییر پس‌زمینه</button>
 </div>
-<div class="card">
-<h3>🤖 چت هوشمند IRN</h3>
-<textarea id="userInput" rows="2" placeholder="سوال خود را بنویسید"></textarea>
-<br>
-<button onclick="askAI()">ارسال</button>
-<div id="chatBox"></div>
-</div>
-<div class="card">
-<h3>🎮 مینی‌گیم حدس عدد</h3>
-<input type="number" id="guessInput" placeholder="عدد 1 تا 10">
-<button onclick="playGame()">حدس بزن</button>
-<p id="gameResult"></p>
-</div>
-<div class="card">
-<h3>📅 تقویم ایران و میلادی</h3>
-<div id="calendar"></div>
-</div>
+
 <div class="card">
 <h3>📝 دفترچه یادداشت</h3>
 <textarea id="note" placeholder="یادداشت شما..."></textarea>
 <button onclick="saveNote()">ذخیره</button>
 </div>
+
+<div class="card">
+<h3>⏳ تایمر</h3>
+<input id="timerInput" placeholder="ثانیه">
+<button onclick="startTimer()">شروع</button>
+<p id="timerDisplay"></p>
+</div>
+
 <div class="card">
 <h3>🧮 ماشین حساب</h3>
 <input id="calcInput" placeholder="مثال: 2+2*5">
 <button onclick="calc()">محاسبه</button>
 <p id="calcResult"></p>
 </div>
+
 <div class="card">
-<h3>🎲 سرگرمی</h3>
+<h3>🎲 سرگرمی و مینی‌گیم‌ها</h3>
 <button onclick="coin()">پرتاب سکه</button>
 <button onclick="password()">رمز قوی</button>
 <button onclick="laugh()">😂 بخند</button>
+<button onclick="guessNumber()">🎯 حدس عدد</button>
 <p id="funResult"></p>
 </div>
+
 <div class="card">
-<button onclick="focusMode()">🎯 حالت تمرکز</button>
+<h3>🤖 چت‌بات یادگیرنده</h3>
+<textarea id="userInput" placeholder="سوال خود را بنویسید..."></textarea>
+<button onclick="askAI()">ارسال</button>
+<div class="chatbox" id="chatBox"></div>
 </div>
+
+<div class="card">
+<h3>📅 تقویم</h3>
+<p id="iranDate"></p>
+<p id="gregorianDate"></p>
+<p id="ramadanDay"></p>
 </div>
-<footer class="footer">© <span id="year"></span> تمامی حقوق متعلق به ABOLFAZL است</footer>
+
+</div>
+
+<footer class="footer">
+© <span id="year"></span> تمامی حقوق این سایت متعلق به ABOLFAZL است
+</footer>
+
 <script>
+// ستاره‌ها
+const canvas=document.getElementById("stars");
+const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+let starArr=[];
+for(let i=0;i<150;i++){starArr.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,size:Math.random()*2+1,speed:Math.random()*0.5+0.2});}
+function animateStars(){ctx.clearRect(0,0,canvas.width,canvas.height);for(let s of starArr){s.x-=s.speed;if(s.x<0)s.x=canvas.width;ctx.fillStyle="#fff";ctx.fillRect(s.x,s.y,s.size,s.size);}requestAnimationFrame(animateStars);}
+animateStars();
+window.addEventListener("resize",()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+
 // سال
-document.getElementById('year').innerText = new Date().getFullYear();// ساعت و تاریخ function updateTime(){ let d=new Date(); document.getElementById('time').innerText='🕒 '+d.toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'}); document.getElementById('date').innerText='📅 '+d.toLocaleDateString('fa-IR',{timeZone:'Asia/Tehran',weekday:'long'}); } setInterval(updateTime,1000); updateTime();
+year.innerText=new Date().getFullYear();
 
-// دستگاه document.getElementById('device').innerText=/Mobi/.test(navigator.userAgent)?'📱 موبایل':'💻 کامپیوتر'; navigator.getBattery?.().then(b=>{document.getElementById('battery').innerText='🔋 باتری: '+Math.round(b.level*100)+'%';}); function updateOnline(){document.getElementById('online').innerText=navigator.onLine?'🟢 آنلاین':'🔴 آفلاین';} window.addEventListener('online',updateOnline); window.addEventListener('offline',updateOnline); updateOnline(); document.getElementById('resolution').innerText='📺 رزولوشن: '+screen.width+'×'+screen.height;
+// ساعت و تاریخ ایران
+setInterval(()=>{
+let d=new Date();
+time.innerText="🕒 ساعت ایران: "+d.toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
+date.innerText="📅 تاریخ: "+d.toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran",weekday:"long"});
+updateCalendar();
+},1000);
 
-// دارک مود و شیشه‌ای function toggleMode(){document.body.classList.toggle('dark');} function toggleGlass(){document.body.classList.toggle('glass');}
+// دستگاه
+device.innerText=/Mobi/.test(navigator.userAgent)?"📱 موبایل":"💻 کامپیوتر";
 
-// بازدید let views=parseInt(localStorage.getItem('views')||895)+1; localStorage.setItem('views',views); document.getElementById('views').innerText=views;
+// باتری
+navigator.getBattery?.().then(b=>{battery.innerText="🔋 باتری: "+Math.round(b.level*100)+"%";});
 
-// مینی‌گیم function playGame(){ let guess=parseInt(document.getElementById('guessInput').value); if(!guess||guess<1||guess>10){alert('عدد 1 تا 10 وارد کنید!');return;} let rand=Math.floor(Math.random()*10)+1; document.getElementById('gameResult').innerText=guess===rand?'🎉 درست حدس زدی!':'❌ درست: '+rand; document.getElementById('guessInput').value=''; }
+// آنلاین
+function updateOnline(){online.innerText=navigator.onLine?"🟢 آنلاین":"🔴 آفلاین";}
+window.addEventListener("online",updateOnline);
+window.addEventListener("offline",updateOnline);
+updateOnline();
 
-// تقویم function renderCalendar(){ let d=new Date(); let iranDate=new Intl.DateTimeFormat('fa-IR',{day:'numeric',month:'long',year:'numeric'}).format(d); let gregDate=d.toLocaleDateString(); document.getElementById('calendar').innerHTML='🇮🇷 '+iranDate+'<br>🌍 '+gregDate; } setInterval(renderCalendar,1000); renderCalendar();
+// رزولوشن
+resolution.innerText="📺 رزولوشن: "+screen.width+"×"+screen.height;
 
-// دفترچه یادداشت note.value=localStorage.note||''; function saveNote(){localStorage.note=note.value;alert('ذخیره شد');}
+// دارک مود و شیشه‌ای
+function toggleMode(){document.body.classList.toggle("dark");}
+function toggleGlass(){document.body.classList.toggle("glass");}
 
-// ماشین حساب function calc(){try{calcResult.innerText='='+eval(calcInput.value);}catch{calcResult.innerText='خطا';}}
+// پس‌زمینه
+function changeBg(){let url=prompt("لینک عکس:");if(url) document.body.style.background=`url(${url}) center/cover fixed`;}
 
-// سرگرمی function coin(){funResult.innerText=Math.random()<0.5?'شیر 🦁':'خط 🪙';} function password(){funResult.innerText=Math.random().toString(36).slice(-10);} function laugh(){funResult.innerText='😂🤣😆😹';}
+// یادداشت
+note.value=localStorage.note||"";
+function saveNote(){localStorage.note=note.value; alert("ذخیره شد");}
 
-// حالت تمرکز function focusMode(){document.body.innerHTML="<h1 style='margin-top:40vh'>🎯 حالت تمرکز فعال شد</h1>";}
+// تایمر
+function startTimer(){let t=parseInt(timerInput.value);let i=setInterval(()=>{if(t<=0){clearInterval(i);timerDisplay.innerText="⏰ تمام!";return;}timerDisplay.innerText=t+" ثانیه";t--;},1000);}
 
-// Canvas کهکشانی let canvas=document.getElementById('bgCanvas'); let ctx=canvas.getContext('2d'); canvas.width=window.innerWidth;canvas.height=window.innerHeight; let stars=[];for(let i=0;i<300;i++){stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,z:Math.random()2+1});} function animate(){ ctx.fillStyle='black';ctx.fillRect(0,0,canvas.width,canvas.height); stars.forEach(s=>{ctx.fillStyle='white';ctx.fillRect(s.x,s.y,s.z,s.z);s.y-=s.z0.5;if(s.y<0){s.y=canvas.height;s.x=Math.random()*canvas.width;}}); requestAnimationFrame(animate); } animate(); window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+// ماشین حساب
+function calc(){try{calcResult.innerText="="+eval(calcInput.value);}catch{calcResult.innerText="خطا";}}
 
-// AI یادگیرنده let aiMemory=JSON.parse(localStorage.getItem('aiMemory')||'{}'); function addMessage(msg,cls){ let box=document.getElementById('chatBox'); let div=document.createElement('div'); div.className='message '+cls;div.innerText=msg; box.appendChild(div); box.scrollTop=box.scrollHeight; } function askAI(){ let input=document.getElementById('userInput').value.trim(); if(!input)return; addMessage(input,'user'); document.getElementById('userInput').value=''; let key=input.toLowerCase(); let response='😅 نمی‌دونم، بهم یاد بده!'; if(aiMemory[key]) response=aiMemory[key]; addMessage(response,'bot'); if(response==='😅 نمی‌دونم، بهم یاد بده!'){ let answer=prompt('چی میخوای جوابش باشه؟'); if(answer){aiMemory[key]=answer;localStorage.setItem('aiMemory',JSON.stringify(aiMemory)); addMessage('✅ یاد گرفتم!','bot');} } } </script>
+// سرگرمی
+function coin(){funResult.innerText=Math.random()<.5?"شیر 🦁":"خط 🪙";}
+function password(){funResult.innerText=Math.random().toString(36).slice(-10);}
+function laugh(){funResult.innerText="😂🤣😆😹";}
+function guessNumber(){let g=prompt("یک عدد بین 1 تا 10 حدس بزن:");let r=Math.floor(Math.random()*10)+1;funResult.innerText=g==r?"🎉 تبریک درست حدس زدی!":"❌ عدد درست "+r+" بود!";}
 
+// هوش مصنوعی یادگیرنده
+let knowledge=JSON.parse(localStorage.getItem("ai_knowledge"))||{
+"سلام":"👋 سلام! چطوری؟",
+"ساعت":"🕒 ساعت ایران: "+new Date().toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"}),
+"تاریخ":"📅 تاریخ امروز: "+new Date().toLocaleDateString("fa-IR",{timeZone:"Asia/Tehran"})
+};
+function addMessage(msg,cls){const box=document.getElementById("chatBox");let div=document.createElement("div");div.className="message "+cls;div.innerText=msg;box.appendChild(div);box.scrollTop=box.scrollHeight;}
+function askAI(){let input=document.getElementById("userInput").value.trim();if(!input)return;addMessage(input,"user");document.getElementById("userInput").value="";let response="";for(let key in knowledge){if(input.includes(key)){response=knowledge[key];break;}}if(!response){response="😅 متوجه نشدم. میخوای بهم یاد بدی؟";let ans=prompt("چی باید جواب بده؟");if(ans&&ans.trim()!==""){knowledge[input]=ans;localStorage.setItem("ai_knowledge",JSON.stringify(knowledge));response="✅ ممنون! حالا یاد گرفتم.";}}addMessage(response,"bot");}
+
+// آمار بازدید
+let views=parseInt(localStorage.getItem("views")||895)+1;
+localStorage.setItem("views",views);
+document.getElementById("views").innerText=views;
+let msgCount=JSON.parse(localStorage.getItem("messages"))?.length||0;
+document.getElementById("msgCount").innerText=msgCount;
+
+// تقویم ایرانی ساده و مناسبت‌ها
+function updateCalendar(){
+  let d=new Date();
+  let gY=d.getFullYear(),gM=d.getMonth()+1,gD=d.getDate();
+  gregorianDate.innerText="📅 Gregorian: "+gY+"/"+gM+"/"+gD;
+  let p=persianDate(d);
+  iranDate.innerText="🕌 شمسی: "+p.y+"/"+p.m+"/"+p.d+" ("+p.weekday+")";
+  if(p.m==9) ramadanDay.innerText="🌙 ماه رمضان، روز "+p.d; else ramadanDay.innerText="";
+}
+function persianDate(d){
+  const weekdays=["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه","شنبه"];
+  let jd=Math.floor((d.getTime()/86400000)+2440587.5);
+  let j=new Date(jd*86400000-62135596800000);
+  return {y:j.getFullYear(),m:j.getMonth()+1,d:j.getDate(),weekday:weekdays[d.getDay()]};
+}
+</script>
 </body>
   </html>
