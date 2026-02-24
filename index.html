@@ -3,32 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat</title>
+<title>پیام‌رسان حرفه‌ای IRN</title>
 <style>
-body{font-family:tahoma;text-align:center;background:#0b1a2f;color:white}
-.chat{max-width:500px;margin:auto;background:#111;padding:15px;border-radius:10px}
+body{font-family:tahoma;text-align:center;background:#0b1a2f;color:white;transition:.3s}
+.chat{max-width:600px;margin:auto;background:#111;padding:15px;border-radius:10px}
 .msg{background:#222;margin:5px;padding:8px;border-radius:6px;text-align:right;position:relative}
 .msg button{position:absolute;left:5px;top:5px;background:red;color:white;border:none;border-radius:4px;cursor:pointer;padding:2px 5px;}
-input,button{padding:10px;margin:5px;border:none;border-radius:6px}
+input,select,button{padding:10px;margin:5px;border:none;border-radius:6px}
 button{background:#00aaff;color:white;cursor:pointer}
+.dark{background:#050816;color:white}
+.dark .chat{background:#111}
 </style>
 </head>
 <body>
 
-<h2>💬 پیام‌رسان IRN</h2>
+<h2>💬 پیام‌رسان حرفه‌ای IRN</h2>
 
-<div class="chat">
+<div>
 <input id="name" placeholder="نام شما">
+<select id="receiver">
+  <option value="">عمومی</option>
+</select>
 <input id="text" placeholder="پیام شما">
 <button onclick="sendMessage()">ارسال</button>
-
-<div id="messages"></div>
+<button onclick="toggleDark()">🌙 دارک مود</button>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+<div class="chat" id="messages"></div>
 
+<audio id="notifySound" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
+
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
   authDomain: "irn-chat.firebaseapp.com",
@@ -38,58 +45,91 @@ const firebaseConfig = {
   appId: "1:247317938517:web:2343d222bebb00ebd8afdc"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const messagesRef = collection(db, "messages");
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const messagesRef = db.collection("messages");
+const usersRef = db.collection("users");
 
-// برای شناسایی پیام‌های کاربر، uid موقت می‌سازیم (هر بار که وارد شد)
 let userId = localStorage.getItem("userId");
-if(!userId) {
+if(!userId){
   userId = Math.random().toString(36).substr(2,9);
   localStorage.setItem("userId", userId);
 }
 
-window.sendMessage = async function() {
+// ثبت کاربر در Collection users
+function saveUser(){
+  const name = document.getElementById("name").value.trim();
+  if(!name) return;
+  usersRef.doc(userId).set({name});
+}
+document.getElementById("name").addEventListener("change",saveUser);
+
+// ارسال پیام
+function sendMessage(){
   const name = document.getElementById("name").value.trim();
   const text = document.getElementById("text").value.trim();
-  if(!name || !text) return alert("نام و پیام را وارد کن");
+  const receiverId = document.getElementById("receiver").value || null;
+  if(!name || !text){ alert("نام و پیام را وارد کن"); return; }
 
-  await addDoc(messagesRef, {
-    name,
-    text,
-    userId,
-    time: new Date()
+  messagesRef.add({
+    name, text, userId, receiverId,
+    time: firebase.firestore.FieldValue.serverTimestamp()
   });
 
   document.getElementById("text").value="";
-};
+}
 
-// نمایش پیام‌ها با دکمه حذف پیام خود کاربر
-const q = query(messagesRef, orderBy("time"));
+// دارک مود
+function toggleDark(){
+  document.body.classList.toggle("dark");
+}
 
-onSnapshot(q, snapshot => {
+// نمایش پیام‌ها
+messagesRef.orderBy("time").onSnapshot(snapshot =>{
   const box = document.getElementById("messages");
-  box.innerHTML="";
-  snapshot.forEach(docSnap => {
+  box.innerHTML = "";
+  snapshot.forEach(docSnap=>{
     const m = docSnap.data();
-    const div = document.createElement("div");
+    if(m.receiverId && m.receiverId!==userId && m.userId!==userId) return; // فقط پیام عمومی یا خصوصی خودت
+    let div = document.createElement("div");
     div.className="msg";
-    div.innerHTML=`<b>${m.name}:</b> ${m.text}`;
-    
-    // اگر پیام برای کاربر جاری است، دکمه حذف اضافه می‌کنیم
-    if(m.userId === userId){
-      const delBtn = document.createElement("button");
-      delBtn.innerText = "❌";
-      delBtn.onclick = async ()=>{
-        await deleteDoc(doc(db,"messages",docSnap.id));
-      };
-      div.appendChild(delBtn);
-    }
+    const timeStr = m.time ? new Date(m.time.seconds*1000).toLocaleTimeString() : "";
+    div.innerHTML=`<b>${m.name}</b> [${timeStr}]: ${m.text}`;
 
+    if(m.userId === userId){
+      // حذف پیام خود
+      let delBtn = document.createElement("button");
+      delBtn.innerText="❌";
+      delBtn.onclick = ()=>{ messagesRef.doc(docSnap.id).delete(); };
+      div.appendChild(delBtn);
+
+      // ویرایش پیام خود
+      let editBtn = document.createElement("button");
+      editBtn.style.left="40px";
+      editBtn.innerText="✏️";
+      editBtn.onclick = ()=>{
+        let newText = prompt("پیام خود را ویرایش کن:", m.text);
+        if(newText) messagesRef.doc(docSnap.id).update({text:newText});
+      };
+      div.appendChild(editBtn);
+    }
     box.appendChild(div);
+  });
+
+  // صدا نوتیفیکیشن برای پیام جدید
+  if(snapshot.docChanges().length>0){
+    document.getElementById("notifySound").play();
+  }
+
+  // بروزرسانی لیست کاربران برای بخش خصوصی
+  usersRef.get().then(snap=>{
+    const sel = document.getElementById("receiver");
+    sel.innerHTML='<option value="">عمومی</option>';
+    snap.forEach(u=>{
+      if(u.id!==userId) sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;
+    });
   });
 });
 </script>
-
 </body>
-</html>
+  </html>
