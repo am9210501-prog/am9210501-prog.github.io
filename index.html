@@ -3,72 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>پیام‌رسان ساده</title>
+<title>IRN Chat</title>
 <style>
-body{font-family:sans-serif;text-align:center;padding:20px;background:#111;color:#fff;}
-input,button{padding:10px;margin:5px;border-radius:5px;}
-#messages{max-height:300px;overflow-y:auto;margin-top:20px;border:1px solid #555;padding:10px;}
-.message{margin:5px 0;padding:5px;border-radius:5px;background:#222;}
-.user{background:#0af;}
+body{font-family:tahoma;text-align:center;background:#0b1a2f;color:white}
+.chat{max-width:500px;margin:auto;background:#111;padding:15px;border-radius:10px}
+.msg{background:#222;margin:5px;padding:8px;border-radius:6px;text-align:right}
+input,button{padding:10px;margin:5px;border:none;border-radius:6px}
+button{background:#00aaff;color:white;cursor:pointer}
 </style>
 </head>
 <body>
 
-<h1>پیام‌رسان ساده</h1>
-<input id="username" placeholder="نام شما">
-<br>
-<input id="messageInput" placeholder="پیام خود را بنویسید">
+<h2>💬 پیام‌رسان IRN</h2>
+
+<div class="chat">
+<input id="name" placeholder="نام شما">
+<input id="text" placeholder="پیام شما">
 <button onclick="sendMessage()">ارسال</button>
 
 <div id="messages"></div>
+</div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
-<script>
-  // پیکربندی Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
-    authDomain: "irn-chat.firebaseapp.com",
-    projectId: "irn-chat",
-    storageBucket: "irn-chat.firebasestorage.app",
-    messagingSenderId: "247317938517",
-    appId: "1:247317938517:web:2343d222bebb00ebd8afdc"
-  };
-  
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-  const messagesRef = db.collection("messages");
+const firebaseConfig = {
+  apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
+  authDomain: "irn-chat.firebaseapp.com",
+  projectId: "irn-chat",
+  storageBucket: "irn-chat.firebasestorage.app",
+  messagingSenderId: "247317938517",
+  appId: "1:247317938517:web:2343d222bebb00ebd8afdc"
+};
 
-  // نمایش زنده پیام‌ها
-  messagesRef.orderBy("timestamp")
-    .onSnapshot(snapshot=>{
-      const messagesDiv = document.getElementById("messages");
-      messagesDiv.innerHTML = "";
-      snapshot.forEach(doc=>{
-        const m = doc.data();
-        const div = document.createElement("div");
-        div.className = "message user";
-        div.innerText = m.user + ": " + m.text;
-        messagesDiv.appendChild(div);
-      });
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  // ارسال پیام
-  function sendMessage(){
-    const user = document.getElementById("username").value.trim() || "ناشناس";
-    const text = document.getElementById("messageInput").value.trim();
-    if(!text) return;
-    messagesRef.add({
-      user,
-      text,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById("messageInput").value="";
-  }
+const messagesRef = collection(db, "messages");
+
+window.sendMessage = async function() {
+  const name = document.getElementById("name").value;
+  const text = document.getElementById("text").value;
+  if(!name || !text) return alert("نام و پیام را وارد کن");
+
+  await addDoc(messagesRef, {
+    name,
+    text,
+    time: new Date()
+  });
+
+  document.getElementById("text").value="";
+};
+
+const q = query(messagesRef, orderBy("time"));
+
+onSnapshot(q, snapshot => {
+  const box = document.getElementById("messages");
+  box.innerHTML="";
+  snapshot.forEach(doc => {
+    const m = doc.data();
+    box.innerHTML += `<div class="msg"><b>${m.name}:</b> ${m.text}</div>`;
+  });
+});
 </script>
 
 </body>
