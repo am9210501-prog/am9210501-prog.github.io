@@ -18,6 +18,9 @@ button{background:#00aaff;color:white;cursor:pointer}
 .reply-box{background:#333;padding:5px;margin-bottom:5px;border-radius:5px;font-size:12px;color:#fff3cd}
 #typingStatus{font-size:12px;color:#aaa;margin-bottom:5px}
 #onlineUsers{font-size:12px;color:#0f0;margin-bottom:5px}
+#messagesPublic, #messagesPrivate{max-height:300px;overflow-y:auto;padding:5px;border-radius:5px;margin-bottom:10px;}
+#messagesPublic{background:#111;}
+#messagesPrivate{background:#222;}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
@@ -31,15 +34,19 @@ button{background:#00aaff;color:white;cursor:pointer}
 </div>
 
 <div class="chat">
-<div id="onlineUsers"></div>
-<div id="typingStatus"></div>
-<div id="replyBox"></div>
+  <div id="onlineUsers"></div>
+  <div id="typingStatus"></div>
+  <div id="replyBox"></div>
 
-<select id="receiver"><option value="">عمومی</option></select>
-<input id="text" placeholder="پیام...">
-<button onclick="sendMessage()">ارسال</button>
+  <input id="text" placeholder="پیام...">
+  <select id="receiver"><option value="">عمومی</option></select>
+  <button onclick="sendMessage()">ارسال</button>
 
-<div id="messages"></div>
+  <h3>پیام‌های عمومی</h3>
+  <div id="messagesPublic"></div>
+
+  <h3>پیام‌های خصوصی</h3>
+  <div id="messagesPrivate"></div>
 </div>
 
 <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
@@ -127,22 +134,14 @@ function sendMessage(){
 // نمایش پیام‌ها
 let firstLoad=true;
 messagesRef.orderBy("time").onSnapshot(snapshot=>{
-  const box=document.getElementById("messages");
-  box.innerHTML="";
-  const selectedReceiver = document.getElementById("receiver").value || null;
+  const boxPublic=document.getElementById("messagesPublic");
+  const boxPrivate=document.getElementById("messagesPrivate");
+  boxPublic.innerHTML="";
+  boxPrivate.innerHTML="";
 
   snapshot.forEach(docSnap=>{
     const m=docSnap.data();
     const id=docSnap.id;
-
-    // فیلتر پیام‌ها بر اساس انتخاب عمومی/خصوصی
-    if(selectedReceiver) {
-      // پیام خصوصی بین خودمان و گیرنده انتخاب شده
-      if(!((m.userId===userId && m.receiverId===selectedReceiver) || (m.userId===selectedReceiver && m.receiverId===userId))) return;
-    } else {
-      // حالت عمومی فقط پیام‌های عمومی نمایش داده شود
-      if(m.receiverId) return;
-    }
 
     let div=document.createElement("div");
     div.className="msg";
@@ -177,26 +176,30 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>setReply(id);
     div.querySelector(".reactions").appendChild(replyBtn);
 
-    box.appendChild(div);
+    // تفکیک عمومی و خصوصی
+    if(m.receiverId){
+      if(m.userId===userId || m.receiverId===userId) boxPrivate.appendChild(div);
+    } else {
+      boxPublic.appendChild(div);
+    }
   });
 
-  // نوتیفیکیشن‌ها
+  // نوتیفیکیشن
   if(!firstLoad && snapshot.docChanges().length){
-    const change=snapshot.docChanges()[0].doc.data();
-    const changeId = snapshot.docChanges()[0].doc.id;
+    snapshot.docChanges().forEach(changeDoc=>{
+      const change = changeDoc.doc.data();
+      let showNotification = false;
 
-    let showNotification = false;
-    if(selectedReceiver) {
-      // فقط اگر پیام خصوصی مربوطه باشد
-      showNotification = ((change.userId===selectedReceiver && change.receiverId===userId) || (change.userId===userId && change.receiverId===selectedReceiver));
-    } else {
-      // پیام عمومی
-      showNotification = !change.receiverId;
-    }
+      if(change.receiverId){
+        showNotification = ((change.userId===userId || change.receiverId===userId));
+      } else {
+        showNotification = true;
+      }
 
-    if(showNotification && change.userId!==userId && Notification.permission==="granted")
-      new Notification(`پیام جدید از ${change.name}`,{body:change.text});
-    if(showNotification && change.userId!==userId) document.getElementById("notifSound").play();
+      if(showNotification && change.userId!==userId && Notification.permission==="granted")
+        new Notification(`پیام جدید از ${change.name}`,{body:change.text});
+      if(showNotification && change.userId!==userId) document.getElementById("notifSound").play();
+    });
   }
   firstLoad=false;
 
@@ -224,7 +227,13 @@ function react(id,type){
 
 // تغییر نام
 function changeName(){
-  const n=prompt("نام جدید:"); if(n){username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n});}
+  const n=prompt("نام جدید:"); 
+  if(n){
+    username=n; 
+    localStorage.setItem("chatName",n); 
+    document.getElementById("displayName").innerText=n; 
+    usersRef.doc(userId).update({name:n});
+  }
 }
 </script>
 </body>
