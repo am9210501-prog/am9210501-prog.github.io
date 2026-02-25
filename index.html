@@ -1,120 +1,165 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-  <meta charset="UTF-8">
-  <title>IRN Chat</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRN Chat Pro</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d6efd">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d6efd">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #0b1a2f;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column-reverse; /* پیام جدید بالا */
-      padding: 10px;
-    }
-
-    .msg {
-      padding: 8px 12px;
-      border-radius: 10px;
-      margin: 4px 0;
-      max-width: 75%;
-    }
-
-    .public {
-      background: #1f6feb;
-      align-self: center;
-    }
-
-    .private-sent {
-      background: #2ea043;
-      align-self: flex-end;
-    }
-
-    .private-received {
-      background: #444c56;
-      align-self: flex-start;
-    }
-
-    #inputBox {
-      display: flex;
-      padding: 10px;
-      background: #161b22;
-    }
-
-    input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      margin-right: 5px;
-    }
-
-    button {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 6px;
-      background: #0d6efd;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+<style>
+body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;}
+.top-bar{background:#0d6efd;padding:10px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.top-bar button{background:white;color:#0d6efd;border:none;padding:5px 8px;border-radius:5px;cursor:pointer;margin-left:5px}
+.chat{max-width:700px;margin:auto;padding:10px}
+.msg{background:#222;margin:8px;padding:10px;border-radius:10px;animation:fade .3s}
+.public{border-right:4px solid #0d6efd;}
+.private{border-right:4px solid #ffc107;}
+.msg small{color:#aaa;font-size:12px}
+.reactions span{margin-left:8px;cursor:pointer}
+input,select,button{padding:10px;margin:5px;border:none;border-radius:6px}
+button{background:#00aaff;color:white;cursor:pointer}
+.reply-box{background:#333;padding:5px;margin-bottom:5px;border-radius:5px;font-size:12px;color:#fff3cd}
+.section-title{margin-top:15px;font-weight:bold;color:#0f0}
+#typingStatus,#onlineUsers{font-size:12px;color:#aaa;margin-bottom:5px}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
+</style>
 </head>
 <body>
 
-<div id="messages"></div>
-
-<div id="inputBox">
-  <input id="msgInput" placeholder="پیام..." />
-  <button onclick="sendMessage()">ارسال</button>
+<div class="top-bar">
+  <span>👤 <strong id="displayName"></strong></span>
+  <button onclick="changeName()">تغییر نام</button>
 </div>
 
-<script>
-const messagesDiv = document.getElementById("messages");
+<div class="chat">
+<div id="onlineUsers"></div>
+<div id="typingStatus"></div>
+<div id="replyBox"></div>
 
-function addMessage(text, type="public") {
-  const div = document.createElement("div");
-  div.className = "msg " + type;
-  div.textContent = text;
-  messagesDiv.prepend(div); // پیام جدید بالا
-}
+<select id="receiver"><option value="">عمومی</option></select>
+<input id="text" placeholder="پیام...">
+<button onclick="sendMessage()">ارسال</button>
 
-// تست نمونه
-addMessage("پیام عمومی", "public");
-addMessage("پیام خصوصی ارسالی", "private-sent");
-addMessage("پیام خصوصی دریافتی", "private-received");
+<div class="section-title">📢 پیام‌های عمومی</div>
+<div id="publicMessages"></div>
 
-function sendMessage() {
-  const input = document.getElementById("msgInput");
-  if (!input.value.trim()) return;
-  addMessage(input.value, "public");
-  input.value = "";
-}
+<div class="section-title">🔒 پیام‌های خصوصی</div>
+<div id="privateMessages"></div>
+</div>
 
-/* =======================
-   Service Worker (PWA)
-======================= */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js")
-      .then(() => console.log("✅ PWA فعال شد"))
-      .catch(err => console.log("❌ خطا:", err));
+<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
+
+<!-- Firebase 12+ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, orderBy, query, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
+  authDomain: "irn-chat.firebaseapp.com",
+  projectId: "irn-chat",
+  storageBucket: "irn-chat.firebasestorage.app",
+  messagingSenderId: "247317938517",
+  appId: "1:247317938517:web:2343d222bebb00ebd8afdc",
+  measurementId: "G-W6DR1SDWS6"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const messagesRef = collection(db,"messages");
+const usersRef = collection(db,"users");
+
+/* 👤 کاربر */
+let userId = localStorage.getItem("userId") || Math.random().toString(36).substr(2,9);
+localStorage.setItem("userId", userId);
+
+let username = localStorage.getItem("chatName") || prompt("نام شما؟") || "کاربر";
+localStorage.setItem("chatName", username);
+document.getElementById("displayName").innerText = username;
+
+await setDoc(doc(usersRef,userId), {name:username, online:true});
+window.addEventListener("beforeunload", ()=>setDoc(doc(usersRef,userId), {online:false}, {merge:true}));
+
+/* ✉️ ارسال پیام */
+let replyTo=null;
+async function sendMessage(){
+  const text=document.getElementById("text").value.trim();
+  const receiverId=document.getElementById("receiver").value||null;
+  if(!text) return alert("پیام خالی است");
+
+  await addDoc(messagesRef, {
+    name:username,
+    text,
+    userId,
+    receiverId,
+    replyTo,
+    time: serverTimestamp()
   });
+
+  document.getElementById("text").value="";
+  replyTo=null;
+  document.getElementById("replyBox").innerText="";
+}
+
+/* 📩 نمایش پیام‌ها */
+const q = query(messagesRef, orderBy("time"));
+onSnapshot(q, snapshot=>{
+  const pub = document.getElementById("publicMessages");
+  const pri = document.getElementById("privateMessages");
+  pub.innerHTML="";
+  pri.innerHTML="";
+
+  snapshot.docs.forEach(docSnap=>{
+    const m = docSnap.data();
+    const div = document.createElement("div");
+    div.className = "msg "+(m.receiverId?"private":"public");
+    const timeStr = m.time ? new Date(m.time.seconds*1000).toLocaleTimeString("fa-IR") : "";
+    div.innerHTML=`<b>${m.name}</b> ⏰ ${timeStr}<br>${m.text}`;
+
+    if(m.receiverId){
+      if(m.userId===userId || m.receiverId===userId) pri.prepend(div);
+    } else {
+      pub.prepend(div);
+    }
+  });
+});
+
+/* لیست کاربران */
+async function updateUsers(){
+  const sel = document.getElementById("receiver");
+  sel.innerHTML='<option value="">عمومی</option>';
+  const snap = await getDocs(usersRef);
+  snap.forEach(u=>{
+    if(u.id!==userId) sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;
+  });
+}
+setInterval(updateUsers,2000);
+
+/* تغییر نام */
+function changeName(){
+  const n=prompt("نام جدید:");
+  if(n){
+    username=n;
+    localStorage.setItem("chatName",n);
+    document.getElementById("displayName").innerText=n;
+    setDoc(doc(usersRef,userId), {name:n}, {merge:true});
+  }
+}
+
+/* 🔔 نوتیفیکیشن */
+if ("Notification" in window && Notification.permission!=="granted"){
+  Notification.requestPermission();
+}
+
+/* 🔧 Service Worker */
+if ("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js");
 }
 </script>
 
