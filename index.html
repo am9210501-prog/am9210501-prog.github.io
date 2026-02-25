@@ -129,12 +129,20 @@ let firstLoad=true;
 messagesRef.orderBy("time").onSnapshot(snapshot=>{
   const box=document.getElementById("messages");
   box.innerHTML="";
+  const selectedReceiver = document.getElementById("receiver").value || null;
+
   snapshot.forEach(docSnap=>{
     const m=docSnap.data();
     const id=docSnap.id;
 
-    // پیام خصوصی فیلتر
-    if(m.receiverId && m.receiverId!==userId && m.userId!==userId) return;
+    // فیلتر پیام‌ها بر اساس انتخاب عمومی/خصوصی
+    if(selectedReceiver) {
+      // پیام خصوصی بین خودمان و گیرنده انتخاب شده
+      if(!((m.userId===userId && m.receiverId===selectedReceiver) || (m.userId===selectedReceiver && m.receiverId===userId))) return;
+    } else {
+      // حالت عمومی فقط پیام‌های عمومی نمایش داده شود
+      if(m.receiverId) return;
+    }
 
     let div=document.createElement("div");
     div.className="msg";
@@ -172,10 +180,23 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     box.appendChild(div);
   });
 
+  // نوتیفیکیشن‌ها
   if(!firstLoad && snapshot.docChanges().length){
     const change=snapshot.docChanges()[0].doc.data();
-    if(change.userId!==userId && Notification.permission==="granted") new Notification(`پیام جدید از ${change.name}`,{body:change.text});
-    if(snapshot.docChanges()[0].doc.data().userId!==userId) document.getElementById("notifSound").play();
+    const changeId = snapshot.docChanges()[0].doc.id;
+
+    let showNotification = false;
+    if(selectedReceiver) {
+      // فقط اگر پیام خصوصی مربوطه باشد
+      showNotification = ((change.userId===selectedReceiver && change.receiverId===userId) || (change.userId===userId && change.receiverId===selectedReceiver));
+    } else {
+      // پیام عمومی
+      showNotification = !change.receiverId;
+    }
+
+    if(showNotification && change.userId!==userId && Notification.permission==="granted")
+      new Notification(`پیام جدید از ${change.name}`,{body:change.text});
+    if(showNotification && change.userId!==userId) document.getElementById("notifSound").play();
   }
   firstLoad=false;
 
