@@ -73,14 +73,29 @@ if(!userId){
 }
 
 let username = localStorage.getItem("chatName");
-if(!username){
-  username = prompt("برای تجربه بهتر لطفاً نام واقعی خود را وارد کنید") || "کاربر ناشناس";
-  localStorage.setItem("chatName", username);
-}
-document.getElementById("displayName").innerText = username;
 
-// ذخیره کاربر و آنلاین بودن
-usersRef.doc(userId).set({name:username, online:true});
+async function askUsername(){
+  let name = username;
+  let exists = true;
+  while(!name || exists){
+    name = prompt("برای تجربه بهتر لطفاً نام واقعی خود را وارد کنید") || "کاربر ناشناس";
+    const snapshot = await usersRef.where("name","==",name).get();
+    exists = !snapshot.empty && (!userId || snapshot.docs.some(d=>d.id !== userId));
+    if(exists) alert("این نام قبلاً استفاده شده است، لطفاً نام دیگری وارد کنید.");
+  }
+  username = name;
+  localStorage.setItem("chatName", username);
+  document.getElementById("displayName").innerText = username;
+  usersRef.doc(userId).set({name:username, online:true});
+}
+
+if(!username){
+  askUsername();
+} else {
+  document.getElementById("displayName").innerText = username;
+  usersRef.doc(userId).set({name:username, online:true});
+}
+
 window.addEventListener("beforeunload", ()=>usersRef.doc(userId).update({online:false}));
 
 // درخواست نوتیفیکیشن
@@ -146,7 +161,6 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     let div=document.createElement("div");
     div.className="msg";
 
-    // ریپلای
     if(m.replyTo){
       const replied=snapshot.docs.find(d=>d.id===m.replyTo)?.data();
       div.innerHTML+=`<div class="reply-box">↪ پاسخ به ${replied?.name}: ${replied?.text}</div>`;
@@ -156,13 +170,11 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     div.innerHTML+=`<div class="msg-header"><b>${m.name}</b> ⏰ ${timeStr}</div>`;
     div.innerHTML+=`<div class="msg-text">${m.text}</div>`;
 
-    // ری‌اکشن
     div.innerHTML+=`<div class="reactions">
       <span onclick="react('${id}','❤️')">❤️ ${m.reactions?.heart?.length||0}</span>
       <span onclick="react('${id}','👍')">👍 ${m.reactions?.like?.length||0}</span>
     </div>`;
 
-    // حذف و ویرایش فقط خود پیام
     if(m.userId===userId){
       const del=document.createElement("button"); del.textContent="❌ حذف"; del.onclick=()=>messagesRef.doc(id).delete();
       const edit=document.createElement("button"); edit.textContent="✏️"; edit.onclick=()=>{
@@ -172,11 +184,9 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
       div.querySelector(".reactions").appendChild(edit);
     }
 
-    // ریپلای
     const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>setReply(id);
     div.querySelector(".reactions").appendChild(replyBtn);
 
-    // تفکیک عمومی و خصوصی، پیام جدید بالا نمایش داده شود
     if(m.receiverId){
       if(m.userId===userId || m.receiverId===userId) boxPrivate.prepend(div);
     } else {
@@ -184,7 +194,6 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     }
   });
 
-  // نوتیفیکیشن
   if(!firstLoad && snapshot.docChanges().length){
     snapshot.docChanges().forEach(changeDoc=>{
       const change = changeDoc.doc.data();
@@ -203,7 +212,6 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
   }
   firstLoad=false;
 
-  // لیست کاربران برای پیام خصوصی
   usersRef.get().then(snap=>{
     const sel=document.getElementById("receiver");
     sel.innerHTML='<option value="">عمومی</option>';
@@ -225,15 +233,21 @@ function react(id,type){
   });
 }
 
-// تغییر نام
-function changeName(){
-  const n=prompt("نام جدید:"); 
-  if(n){
-    username=n; 
-    localStorage.setItem("chatName",n); 
-    document.getElementById("displayName").innerText=n; 
-    usersRef.doc(userId).update({name:n});
+// تغییر نام با بررسی تکراری
+async function changeName(){
+  let name = null;
+  let exists = true;
+  while(!name || exists){
+    name = prompt("نام جدید:");
+    if(!name) return;
+    const snapshot = await usersRef.where("name","==",name).get();
+    exists = !snapshot.empty && snapshot.docs.some(d=>d.id !== userId);
+    if(exists) alert("این نام قبلاً استفاده شده است، لطفاً نام دیگری وارد کنید.");
   }
+  username=name;
+  localStorage.setItem("chatName",name);
+  document.getElementById("displayName").innerText=name;
+  usersRef.doc(userId).update({name:name});
 }
 </script>
 </body>
