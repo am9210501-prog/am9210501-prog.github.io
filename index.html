@@ -16,7 +16,7 @@ body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;}
 .top-bar{background:#0d6efd;padding:10px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:14px}
 .top-bar button{background:white;color:#0d6efd;border:none;padding:5px 8px;border-radius:5px;cursor:pointer;margin-left:5px}
 .chat{max-width:700px;margin:auto;padding:10px}
-.msg{background:#222;margin:8px;padding:10px;border-radius:10px;animation:fade .3s}
+.msg{background:#222;margin:8px;padding:10px;border-radius:10px;animation:fade .3s; word-break: break-word;}
 .public{border-right:4px solid #0d6efd;}
 .private{border-right:4px solid #ffc107;}
 .msg small{color:#aaa;font-size:12px}
@@ -83,13 +83,14 @@ let username = localStorage.getItem("chatName") || prompt("نام شما؟") || 
 localStorage.setItem("chatName", username);
 document.getElementById("displayName").innerText = username;
 
-await setDoc(doc(usersRef,userId), {name:username, online:true});
+setDoc(doc(usersRef,userId), {name:username, online:true}, {merge:true});
 window.addEventListener("beforeunload", ()=>setDoc(doc(usersRef,userId), {online:false}, {merge:true}));
 
 /* ✉️ ارسال پیام */
 let replyTo=null;
 async function sendMessage(){
-  const text=document.getElementById("text").value.trim();
+  const textEl = document.getElementById("text");
+  const text=textEl.value.trim();
   const receiverId=document.getElementById("receiver").value||null;
   if(!text) return alert("پیام خالی است");
 
@@ -102,7 +103,7 @@ async function sendMessage(){
     time: serverTimestamp()
   });
 
-  document.getElementById("text").value="";
+  textEl.value="";
   replyTo=null;
   document.getElementById("replyBox").innerText="";
 }
@@ -162,6 +163,5 @@ if ("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js");
 }
 </script>
-
 </body>
 </html>
