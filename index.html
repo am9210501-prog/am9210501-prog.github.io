@@ -54,7 +54,6 @@ button{background:#00aaff;color:white;cursor:pointer}
 
 <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
 
-<!-- Firebase 12+ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, orderBy, query, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
@@ -137,7 +136,7 @@ async function updateUsers(){
   sel.innerHTML='<option value="">عمومی</option>';
   const snap = await getDocs(usersRef);
   snap.forEach(u=>{
-    if(u.id!==userId) sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;
+    if(u.id!==userId) sel.innerHTML+=`<option value="${u.data().name}">${u.data().name}</option>`;
   });
 }
 setInterval(updateUsers,2000);
@@ -163,5 +162,6 @@ if ("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js");
 }
 </script>
+
 </body>
-</html>
+  </html>
