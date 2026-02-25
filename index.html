@@ -1,77 +1,168 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
-  <meta charset="UTF-8">
-  <title>IRN Chat Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRN Chat Pro</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0f172a">
-
-  <!-- Manifest -->
-  <link rel="manifest" href="manifest.json">
-
-  <!-- Icon -->
-  <link rel="icon" href="icon-192.png">
-
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #0f172a;
-      color: white;
-      text-align: center;
-    }
-
-    header {
-      background: #020617;
-      padding: 15px;
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    #installBtn {
-      display: none;
-      background: #22c55e;
-      border: none;
-      padding: 12px 18px;
-      margin: 15px;
-      border-radius: 12px;
-      font-size: 16px;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+<style>
+body{font-family:tahoma;background:#0b1a2f;color:white;margin:0}
+.top-bar{background:#0d6efd;padding:10px;display:flex;justify-content:space-between}
+.chat{max-width:700px;margin:auto;padding:10px}
+.msg{background:#222;margin:8px;padding:10px;border-radius:10px}
+#messagesPublic,#messagesPrivate{max-height:300px;overflow:auto;margin-bottom:10px;padding:5px}
+#messagesPublic{background:#111}
+#messagesPrivate{background:#222}
+.reply-box{background:#333;padding:5px;margin-bottom:5px;border-radius:5px;color:#fff3cd}
+</style>
 </head>
+
 <body>
 
-<header>💬 IRN Chat Pro</header>
+<div class="top-bar">
+  👤 <strong id="displayName"></strong>
+  <button onclick="changeName()">تغییر نام</button>
+</div>
 
-<button id="installBtn">📲 نصب اپلیکیشن</button>
+<div class="chat">
+  <div id="onlineUsers"></div>
+  <div id="typingStatus"></div>
+  <div id="replyBox"></div>
 
-<p>چت شما اینجاست...</p>
+  <input id="text" placeholder="پیام...">
+  <select id="receiver"><option value="">عمومی</option></select>
+  <button onclick="sendMessage()">ارسال</button>
+
+  <h3>پیام‌های عمومی</h3>
+  <div id="messagesPublic"></div>
+
+  <h3>پیام‌های خصوصی</h3>
+  <div id="messagesPrivate"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // ثبت سرویس ورکر
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
+const firebaseConfig={
+  apiKey:"AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
+  authDomain:"irn-chat.firebaseapp.com",
+  projectId:"irn-chat"
+};
+firebase.initializeApp(firebaseConfig);
 
-  // نصب اپ
-  let deferredPrompt;
-  const btn = document.getElementById("installBtn");
+const db=firebase.firestore();
+const messagesRef=db.collection("messages");
+const usersRef=db.collection("users");
 
-  window.addEventListener("beforeinstallprompt", e => {
+let userId=localStorage.getItem("userId")||Math.random().toString(36).substr(2,9);
+localStorage.setItem("userId",userId);
+
+let username=localStorage.getItem("chatName");
+if(!username){
+  username=prompt("نام خود را وارد کنید")||"کاربر";
+  localStorage.setItem("chatName",username);
+}
+displayName.innerText=username;
+
+let lastMessageTime=0;
+
+// ذخیره کاربر
+usersRef.doc(userId).set({
+  name:username,
+  online:true,
+  lastSeen:Date.now()
+});
+
+// هنگام خروج
+window.addEventListener("beforeunload",()=>{
+  usersRef.doc(userId).update({
+    online:false,
+    lastSeen:Date.now()
+  });
+});
+
+// ارسال با Enter
+text.addEventListener("keydown",e=>{
+  if(e.key==="Enter" && !e.shiftKey){
     e.preventDefault();
-    deferredPrompt = e;
-    btn.style.display = "inline-block";
+    sendMessage();
+  }
+});
+
+// نمایش آنلاین‌ها + آخرین بازدید
+usersRef.onSnapshot(snap=>{
+  let html="آنلاین:<br>";
+  receiver.innerHTML='<option value="">عمومی</option>';
+
+  snap.forEach(doc=>{
+    const u=doc.data();
+    const lastSeen=u.lastSeen?Math.floor((Date.now()-u.lastSeen)/60000):0;
+    const status=u.online?"🟢 آنلاین":`⏱ ${lastSeen} دقیقه پیش`;
+
+    html+=`${u.name} (${status})<br>`;
+
+    if(doc.id!==userId)
+      receiver.innerHTML+=`<option value="${doc.id}">${u.name}</option>`;
   });
 
-  btn.addEventListener("click", async () => {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
+  onlineUsers.innerHTML=html;
+});
+
+// ارسال پیام
+function sendMessage(){
+  const textMsg=text.value.trim();
+  const receiverId=receiver.value||null;
+
+  if(!textMsg) return;
+
+  // ضد اسپم
+  if(Date.now()-lastMessageTime<2000){
+    alert("لطفاً کمی صبر کنید");
+    return;
+  }
+  lastMessageTime=Date.now();
+
+  messagesRef.add({
+    name:username,
+    text:textMsg,
+    userId,
+    receiverId,
+    time:firebase.firestore.FieldValue.serverTimestamp()
   });
+
+  text.value="";
+}
+
+// نمایش پیام‌ها
+messagesRef.orderBy("time").onSnapshot(snapshot=>{
+  messagesPublic.innerHTML="";
+  messagesPrivate.innerHTML="";
+
+  snapshot.forEach(doc=>{
+    const m=doc.data();
+    const div=document.createElement("div");
+    div.className="msg";
+    div.innerHTML=`<b>${m.name}</b><br>${m.text}`;
+
+    if(m.receiverId){
+      if(m.userId===userId||m.receiverId===userId)
+        messagesPrivate.prepend(div);
+    }else{
+      messagesPublic.prepend(div);
+    }
+  });
+});
+
+// تغییر نام
+function changeName(){
+  const n=prompt("نام جدید:");
+  if(!n) return;
+  username=n;
+  localStorage.setItem("chatName",n);
+  displayName.innerText=n;
+  usersRef.doc(userId).update({name:n});
+}
 </script>
-
 </body>
   </html>
