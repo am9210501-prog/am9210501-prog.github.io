@@ -4,84 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IRN Chat Pro</title>
-
 <style>
-body{
-  font-family:tahoma;
-  background:#0b1a2f;
-  color:white;
-  margin:0;
-  transition:0.3s;
-}
-.light body{background:#f4f4f4;color:#000;}
-
-.top-bar{
-  background:#0d6efd;
-  padding:10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
+body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;}
+.top-bar{background:#0d6efd;padding:10px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.top-bar button{background:white;color:#0d6efd;border:none;padding:5px 8px;border-radius:5px;cursor:pointer;margin-left:5px}
 .chat{max-width:700px;margin:auto;padding:10px}
-
-.msg{
-  background:#222;
-  margin:8px;
-  padding:10px;
-  border-radius:10px;
-}
-
-input,select,button{
-  padding:10px;
-  margin:5px;
-  border:none;
-  border-radius:6px;
-}
-
+.msg{background:#222;margin:8px;padding:10px;border-radius:10px;position:relative;animation:fade .3s}
+.msg small{color:#aaa;font-size:12px}
+.msg .actions{margin-top:5px}
+.reactions span{margin-left:8px;cursor:pointer}
+input,select,button{padding:10px;margin:5px;border:none;border-radius:6px}
 button{background:#00aaff;color:white;cursor:pointer}
-
-#messagesPublic,#messagesPrivate{
-  max-height:250px;
-  overflow-y:auto;
-  background:#111;
-  padding:5px;
-  border-radius:5px;
-}
-
-.light #messagesPublic{background:#ddd;}
-.light #messagesPrivate{background:#ccc;}
-
-.search{width:95%}
-.emoji{cursor:pointer;font-size:18px;margin:2px}
+.reply-box{background:#333;padding:5px;margin-bottom:5px;border-radius:5px;font-size:12px;color:#fff3cd}
+#typingStatus{font-size:12px;color:#aaa;margin-bottom:5px}
+#onlineUsers{font-size:12px;color:#0f0;margin-bottom:5px}
+#messagesPublic, #messagesPrivate{max-height:300px;overflow-y:auto;padding:5px;border-radius:5px;margin-bottom:10px;}
+#messagesPublic{background:#111;}
+#messagesPrivate{background:#222;}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
-
 <body>
 
 <div class="top-bar">
   <span>👤 <strong id="displayName"></strong></span>
   <div>
-    <button onclick="toggleTheme()">🌙</button>
     <button onclick="changeName()">تغییر نام</button>
   </div>
 </div>
 
 <div class="chat">
-
-  🔍 <input id="search" class="search" placeholder="جستجوی پیام..." oninput="filterMessages()">
-
   <div id="onlineUsers"></div>
+  <div id="typingStatus"></div>
+  <div id="replyBox"></div>
 
   <input id="text" placeholder="پیام...">
-  <div>
-    😊
-    <span class="emoji" onclick="addEmoji('😀')">😀</span>
-    <span class="emoji" onclick="addEmoji('😂')">😂</span>
-    <span class="emoji" onclick="addEmoji('❤️')">❤️</span>
-    <span class="emoji" onclick="addEmoji('🔥')">🔥</span>
-  </div>
-
   <select id="receiver"><option value="">عمومی</option></select>
   <button onclick="sendMessage()">ارسال</button>
 
@@ -90,8 +47,9 @@ button{background:#00aaff;color:white;cursor:pointer}
 
   <h3>پیام‌های خصوصی</h3>
   <div id="messagesPrivate"></div>
-
 </div>
+
+<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
@@ -102,11 +60,11 @@ const firebaseConfig = {
   authDomain: "irn-chat.firebaseapp.com",
   projectId: "irn-chat"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const messagesRef = db.collection("messages");
 const usersRef = db.collection("users");
+const typingRef = db.collection("typing");
 
 let userId = localStorage.getItem("userId");
 if(!userId){
@@ -116,112 +74,167 @@ if(!userId){
 
 let username = localStorage.getItem("chatName");
 if(!username){
-  username = prompt("نام شما؟") || "کاربر";
+  username = prompt("برای تجربه بهتر لطفاً نام واقعی خود را وارد کنید") || "کاربر ناشناس";
   localStorage.setItem("chatName", username);
 }
-displayName.innerText = username;
+document.getElementById("displayName").innerText = username;
 
-// ثبت کاربر
+// ذخیره کاربر و آنلاین بودن
 usersRef.doc(userId).set({name:username, online:true});
 window.addEventListener("beforeunload", ()=>usersRef.doc(userId).update({online:false}));
 
-// آنلاین‌ها
-setInterval(()=>{
-  usersRef.where("online","==",true).get().then(snap=>{
-    let names=[];
-    snap.forEach(d=>names.push(d.data().name));
-    onlineUsers.innerText="آنلاین: "+names.join(" ، ");
-  });
-},2000);
+// درخواست نوتیفیکیشن
+if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
 
-// ایموجی
-function addEmoji(e){ text.value += e; }
+// تایپینگ
+document.getElementById("text").addEventListener("input", ()=>{
+  typingRef.doc(userId).set({name:username});
+  setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
+});
+onSnapshotTyping = typingRef.onSnapshot(snap=>{
+  let names=[];
+  snap.forEach(d=>{ if(d.id!==userId) names.push(d.data().name) });
+  document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
+});
+
+// آنلاین‌ها
+function renderOnline(){
+  usersRef.where("online","==",true).get().then(snap=>{
+    let html="";
+    snap.forEach(u=>{html+=u.data().name+" "});
+    document.getElementById("onlineUsers").innerText="آنلاین: "+html;
+  });
+}
+setInterval(renderOnline,2000);
+
+// ریپلای
+let replyTo = null;
+function setReply(id){ replyTo=id; document.getElementById("replyBox").innerText="در حال پاسخ به پیام..."; }
 
 // ارسال پیام
 function sendMessage(){
-  const t=text.value.trim();
-  const receiver=receiver.value||null;
-
-  if(!t) return alert("پیام خالی است");
-  if(t.length>500) return alert("پیام خیلی طولانی است");
+  const text=document.getElementById("text").value.trim();
+  const receiverId=document.getElementById("receiver").value || null;
+  if(!text) return alert("پیام وارد نشده");
 
   messagesRef.add({
     name:username,
-    text:t,
+    text,
     userId,
-    receiverId:receiver,
-    seenBy:[userId],
+    receiverId,
+    reactions:{heart:[],like:[]},
+    replyTo,
     time: firebase.firestore.FieldValue.serverTimestamp()
   });
-
-  text.value="";
+  document.getElementById("text").value="";
+  replyTo=null;
+  document.getElementById("replyBox").innerText="";
 }
 
 // نمایش پیام‌ها
-let allMessages=[];
-messagesRef.orderBy("time").onSnapshot(snap=>{
-  messagesPublic.innerHTML="";
-  messagesPrivate.innerHTML="";
-  allMessages=[];
+let firstLoad=true;
+messagesRef.orderBy("time").onSnapshot(snapshot=>{
+  const boxPublic=document.getElementById("messagesPublic");
+  const boxPrivate=document.getElementById("messagesPrivate");
+  boxPublic.innerHTML="";
+  boxPrivate.innerHTML="";
 
-  snap.forEach(doc=>{
-    const m=doc.data();
-    const id=doc.id;
-    allMessages.push({id,...m});
-
-    // seen
-    if(m.receiverId===userId && !m.seenBy.includes(userId)){
-      messagesRef.doc(id).update({seenBy:[...m.seenBy,userId]});
-    }
+  snapshot.forEach(docSnap=>{
+    const m=docSnap.data();
+    const id=docSnap.id;
 
     let div=document.createElement("div");
     div.className="msg";
 
-    let seen = m.receiverId && m.seenBy.length>1 ? "✔✔" : "✔";
+    // ریپلای
+    if(m.replyTo){
+      const replied=snapshot.docs.find(d=>d.id===m.replyTo)?.data();
+      div.innerHTML+=`<div class="reply-box">↪ پاسخ به ${replied?.name}: ${replied?.text}</div>`;
+    }
 
-    div.innerHTML=`<b>${m.name}</b>: ${m.text} <small>${seen}</small>`;
+    const timeStr = m.time?new Date(m.time.seconds*1000).toLocaleTimeString("fa-IR"):"";
+    div.innerHTML+=`<div class="msg-header"><b>${m.name}</b> ⏰ ${timeStr}</div>`;
+    div.innerHTML+=`<div class="msg-text">${m.text}</div>`;
 
+    // ری‌اکشن
+    div.innerHTML+=`<div class="reactions">
+      <span onclick="react('${id}','❤️')">❤️ ${m.reactions?.heart?.length||0}</span>
+      <span onclick="react('${id}','👍')">👍 ${m.reactions?.like?.length||0}</span>
+    </div>`;
+
+    // حذف و ویرایش فقط خود پیام
+    if(m.userId===userId){
+      const del=document.createElement("button"); del.textContent="❌ حذف"; del.onclick=()=>messagesRef.doc(id).delete();
+      const edit=document.createElement("button"); edit.textContent="✏️"; edit.onclick=()=>{
+        const t=prompt("ویرایش:", m.text); if(t) messagesRef.doc(id).update({text:t});
+      };
+      div.querySelector(".reactions").appendChild(del);
+      div.querySelector(".reactions").appendChild(edit);
+    }
+
+    // ریپلای
+    const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>setReply(id);
+    div.querySelector(".reactions").appendChild(replyBtn);
+
+    // تفکیک عمومی و خصوصی، پیام جدید بالا نمایش داده شود
     if(m.receiverId){
-      if(m.receiverId===userId || m.userId===userId)
-        messagesPrivate.prepend(div);
+      if(m.userId===userId || m.receiverId===userId) boxPrivate.prepend(div);
     } else {
-      messagesPublic.prepend(div);
+      boxPublic.prepend(div);
     }
   });
 
-  // لیست کاربران
-  usersRef.get().then(s=>{
-    receiver.innerHTML='<option value="">عمومی</option>';
-    s.forEach(u=>{
-      if(u.id!==userId)
-        receiver.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;
+  // نوتیفیکیشن
+  if(!firstLoad && snapshot.docChanges().length){
+    snapshot.docChanges().forEach(changeDoc=>{
+      const change = changeDoc.doc.data();
+      let showNotification = false;
+
+      if(change.receiverId){
+        showNotification = ((change.userId===userId || change.receiverId===userId));
+      } else {
+        showNotification = true;
+      }
+
+      if(showNotification && change.userId!==userId && Notification.permission==="granted")
+        new Notification(`پیام جدید از ${change.name}`,{body:change.text});
+      if(showNotification && change.userId!==userId) document.getElementById("notifSound").play();
     });
+  }
+  firstLoad=false;
+
+  // لیست کاربران برای پیام خصوصی
+  usersRef.get().then(snap=>{
+    const sel=document.getElementById("receiver");
+    sel.innerHTML='<option value="">عمومی</option>';
+    snap.forEach(u=>{if(u.id!==userId) sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;});
   });
 });
 
-// جستجو
-function filterMessages(){
-  const q=search.value.toLowerCase();
-  document.querySelectorAll(".msg").forEach(m=>{
-    m.style.display=m.innerText.toLowerCase().includes(q)?"block":"none";
-  });
-}
+// ری‌اکشن هر کاربر فقط یک بار
+function react(id,type){
+  messagesRef.doc(id).get().then(docSnap=>{
+    const data=docSnap.data();
+    const reactions=data.reactions || {heart:[],like:[]};
+    const field=type==='❤️'?'heart':'like';
+    if(!reactions[field]) reactions[field]=[];
 
-// تم
-function toggleTheme(){
-  document.body.classList.toggle("light");
+    const idx=reactions[field].indexOf(userId);
+    if(idx===-1) reactions[field].push(userId); else reactions[field].splice(idx,1);
+    messagesRef.doc(id).update({reactions});
+  });
 }
 
 // تغییر نام
 function changeName(){
-  const n=prompt("نام جدید:");
+  const n=prompt("نام جدید:"); 
   if(n){
-    username=n;
-    localStorage.setItem("chatName",n);
-    displayName.innerText=n;
+    username=n; 
+    localStorage.setItem("chatName",n); 
+    document.getElementById("displayName").innerText=n; 
     usersRef.doc(userId).update({name:n});
   }
 }
 </script>
 </body>
-</html>
+  </html>
