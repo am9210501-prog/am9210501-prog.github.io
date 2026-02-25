@@ -176,11 +176,11 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>setReply(id);
     div.querySelector(".reactions").appendChild(replyBtn);
 
-    // تفکیک عمومی و خصوصی
+    // تفکیک عمومی و خصوصی، پیام جدید بالا نمایش داده شود
     if(m.receiverId){
-      if(m.userId===userId || m.receiverId===userId) boxPrivate.appendChild(div);
+      if(m.userId===userId || m.receiverId===userId) boxPrivate.prepend(div);
     } else {
-      boxPublic.appendChild(div);
+      boxPublic.prepend(div);
     }
   });
 
