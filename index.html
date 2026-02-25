@@ -21,6 +21,7 @@ button{background:#00aaff;color:white;cursor:pointer}
 #messagesPublic, #messagesPrivate{max-height:300px;overflow-y:auto;padding:5px;border-radius:5px;margin-bottom:10px;}
 #messagesPublic{background:#111;}
 #messagesPrivate{background:#222;}
+.onlineUser{display:block;margin:2px 0;}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
@@ -66,6 +67,7 @@ const messagesRef = db.collection("messages");
 const usersRef = db.collection("users");
 const typingRef = db.collection("typing");
 
+// کاربر
 let userId = localStorage.getItem("userId");
 if(!userId){
   userId = Math.random().toString(36).substr(2,9);
@@ -83,7 +85,7 @@ document.getElementById("displayName").innerText = username;
 usersRef.doc(userId).set({name:username, online:true});
 window.addEventListener("beforeunload", ()=>usersRef.doc(userId).update({online:false}));
 
-// درخواست نوتیفیکیشن
+// نوتیفیکیشن
 if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
 
 // تایپینگ
@@ -91,21 +93,32 @@ document.getElementById("text").addEventListener("input", ()=>{
   typingRef.doc(userId).set({name:username});
   setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
 });
-onSnapshotTyping = typingRef.onSnapshot(snap=>{
+typingRef.onSnapshot(snap=>{
   let names=[];
   snap.forEach(d=>{ if(d.id!==userId) names.push(d.data().name) });
   document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
 });
 
-// آنلاین‌ها
-function renderOnline(){
+// آنلاین‌ها و لیست کاربران خصوصی (همه کاربران آنلاین)
+function renderUsers(){
   usersRef.where("online","==",true).get().then(snap=>{
-    let html="";
-    snap.forEach(u=>{html+=u.data().name+" "});
-    document.getElementById("onlineUsers").innerText="آنلاین: "+html;
+    const onlineDiv=document.getElementById("onlineUsers");
+    const sel=document.getElementById("receiver");
+    onlineDiv.innerHTML="آنلاین: ";
+    sel.innerHTML='<option value="">عمومی</option>';
+    snap.forEach(u=>{
+      if(u.id!==userId){
+        const span=document.createElement("span");
+        span.textContent=u.data().name;
+        span.className="onlineUser";
+        onlineDiv.appendChild(span);
+        onlineDiv.appendChild(document.createTextNode(" | "));
+        sel.innerHTML += `<option value="${u.id}">${u.data().name}</option>`;
+      }
+    });
   });
 }
-setInterval(renderOnline,2000);
+setInterval(renderUsers,2000);
 
 // ریپلای
 let replyTo = null;
@@ -128,7 +141,7 @@ function sendMessage(){
   });
   document.getElementById("text").value="";
   replyTo=null;
-  document.getElementById("replyBox").innerText="";
+  if(!receiverId) document.getElementById("replyBox").innerText="";
 }
 
 // نمایش پیام‌ها
@@ -142,11 +155,9 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
   snapshot.forEach(docSnap=>{
     const m=docSnap.data();
     const id=docSnap.id;
-
     let div=document.createElement("div");
     div.className="msg";
 
-    // ریپلای
     if(m.replyTo){
       const replied=snapshot.docs.find(d=>d.id===m.replyTo)?.data();
       div.innerHTML+=`<div class="reply-box">↪ پاسخ به ${replied?.name}: ${replied?.text}</div>`;
@@ -156,13 +167,11 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     div.innerHTML+=`<div class="msg-header"><b>${m.name}</b> ⏰ ${timeStr}</div>`;
     div.innerHTML+=`<div class="msg-text">${m.text}</div>`;
 
-    // ری‌اکشن
     div.innerHTML+=`<div class="reactions">
       <span onclick="react('${id}','❤️')">❤️ ${m.reactions?.heart?.length||0}</span>
       <span onclick="react('${id}','👍')">👍 ${m.reactions?.like?.length||0}</span>
     </div>`;
 
-    // حذف و ویرایش فقط خود پیام
     if(m.userId===userId){
       const del=document.createElement("button"); del.textContent="❌ حذف"; del.onclick=()=>messagesRef.doc(id).delete();
       const edit=document.createElement("button"); edit.textContent="✏️"; edit.onclick=()=>{
@@ -172,11 +181,10 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
       div.querySelector(".reactions").appendChild(edit);
     }
 
-    // ریپلای
     const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>setReply(id);
     div.querySelector(".reactions").appendChild(replyBtn);
 
-    // تفکیک عمومی و خصوصی، پیام جدید بالا نمایش داده شود
+    // تفکیک پیام
     if(m.receiverId){
       if(m.userId===userId || m.receiverId===userId) boxPrivate.prepend(div);
     } else {
@@ -184,17 +192,13 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     }
   });
 
-  // نوتیفیکیشن
   if(!firstLoad && snapshot.docChanges().length){
     snapshot.docChanges().forEach(changeDoc=>{
       const change = changeDoc.doc.data();
       let showNotification = false;
-
       if(change.receiverId){
         showNotification = ((change.userId===userId || change.receiverId===userId));
-      } else {
-        showNotification = true;
-      }
+      } else { showNotification = true; }
 
       if(showNotification && change.userId!==userId && Notification.permission==="granted")
         new Notification(`پیام جدید از ${change.name}`,{body:change.text});
@@ -202,16 +206,9 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     });
   }
   firstLoad=false;
-
-  // لیست کاربران برای پیام خصوصی
-  usersRef.get().then(snap=>{
-    const sel=document.getElementById("receiver");
-    sel.innerHTML='<option value="">عمومی</option>';
-    snap.forEach(u=>{if(u.id!==userId) sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;});
-  });
 });
 
-// ری‌اکشن هر کاربر فقط یک بار
+// ری‌اکشن
 function react(id,type){
   messagesRef.doc(id).get().then(docSnap=>{
     const data=docSnap.data();
@@ -227,11 +224,11 @@ function react(id,type){
 
 // تغییر نام
 function changeName(){
-  const n=prompt("نام جدید:"); 
+  const n=prompt("نام جدید:");
   if(n){
-    username=n; 
-    localStorage.setItem("chatName",n); 
-    document.getElementById("displayName").innerText=n; 
+    username=n;
+    localStorage.setItem("chatName",n);
+    document.getElementById("displayName").innerText=n;
     usersRef.doc(userId).update({name:n});
   }
 }
