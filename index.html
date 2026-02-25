@@ -4,29 +4,45 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IRN Chat Pro</title>
-
 <style>
-body{font-family:tahoma;text-align:center;background:#0b1a2f;color:white}
-.chat{max-width:600px;margin:auto;background:#111;padding:15px;border-radius:10px}
-.msg{background:#222;margin:8px;padding:10px;border-radius:8px;text-align:right}
-.msg-header{font-size:14px;margin-bottom:5px}
-.msg-text{font-size:16px;margin-bottom:6px}
-.msg-actions{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
+body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;}
+.top-bar{background:#0d6efd;padding:10px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.top-bar button{background:white;color:#0d6efd;border:none;padding:5px 8px;border-radius:5px;cursor:pointer;margin-left:5px}
+.chat{max-width:700px;margin:auto;padding:10px}
+.msg{background:#222;margin:8px;padding:10px;border-radius:10px;position:relative;animation:fade .3s}
+.msg small{color:#aaa;font-size:12px}
+.msg .actions{margin-top:5px}
 .reactions span{margin-left:8px;cursor:pointer}
 input,select,button{padding:10px;margin:5px;border:none;border-radius:6px}
 button{background:#00aaff;color:white;cursor:pointer}
+.reply-box{background:#333;padding:5px;margin-bottom:5px;border-radius:5px;font-size:12px;color:#fff3cd}
+#typingStatus{font-size:12px;color:#aaa;margin-bottom:5px}
+#onlineUsers{font-size:12px;color:#0f0;margin-bottom:5px}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
 <body>
 
-<h2>💬 IRN Chat</h2>
+<div class="top-bar">
+  <span>👤 <strong id="displayName"></strong></span>
+  <div>
+    <button onclick="changeName()">تغییر نام</button>
+  </div>
+</div>
 
-<input id="name" placeholder="نام شما">
+<div class="chat">
+<div id="onlineUsers"></div>
+<div id="typingStatus"></div>
+<div id="replyBox"></div>
+
 <select id="receiver"><option value="">عمومی</option></select>
-<input id="text" placeholder="پیام شما">
+<input id="text" placeholder="پیام...">
 <button onclick="sendMessage()">ارسال</button>
 
-<div class="chat" id="messages"></div>
+<div id="messages"></div>
+</div>
+
+<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
@@ -35,13 +51,13 @@ button{background:#00aaff;color:white;cursor:pointer}
 const firebaseConfig = {
   apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
   authDomain: "irn-chat.firebaseapp.com",
-  projectId: "irn-chat",
+  projectId: "irn-chat"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const messagesRef = db.collection("messages");
 const usersRef = db.collection("users");
+const typingRef = db.collection("typing");
 
 let userId = localStorage.getItem("userId");
 if(!userId){
@@ -49,110 +65,146 @@ if(!userId){
   localStorage.setItem("userId", userId);
 }
 
-// 🔔 درخواست اجازه نوتیفیکیشن
-if ("Notification" in window && Notification.permission !== "granted") {
-  Notification.requestPermission();
+let username = localStorage.getItem("chatName");
+if(!username){
+  username = prompt("برای تجربه بهتر لطفاً نام واقعی خود را وارد کنید") || "کاربر ناشناس";
+  localStorage.setItem("chatName", username);
 }
+document.getElementById("displayName").innerText = username;
 
-// ذخیره کاربر
-function saveUser(){
-  const name = document.getElementById("name").value.trim();
-  if(!name) return;
-  usersRef.doc(userId).set({name});
+// ذخیره کاربر و آنلاین بودن
+usersRef.doc(userId).set({name:username, online:true});
+window.addEventListener("beforeunload", ()=>usersRef.doc(userId).update({online:false}));
+
+// درخواست نوتیفیکیشن
+if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
+
+// تایپینگ
+document.getElementById("text").addEventListener("input", ()=>{
+  typingRef.doc(userId).set({name:username});
+  setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
+});
+onSnapshotTyping = typingRef.onSnapshot(snap=>{
+  let names=[];
+  snap.forEach(d=>{ if(d.id!==userId) names.push(d.data().name) });
+  document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
+});
+
+// آنلاین‌ها
+function renderOnline(){
+  usersRef.where("online","==",true).get().then(snap=>{
+    let html="";
+    snap.forEach(u=>{html+=u.data().name+" "});
+    document.getElementById("onlineUsers").innerText="آنلاین: "+html;
+  });
 }
-document.getElementById("name").addEventListener("change", saveUser);
+setInterval(renderOnline,2000);
+
+// ریپلای
+let replyTo = null;
+function setReply(id){ replyTo=id; document.getElementById("replyBox").innerText="در حال پاسخ به پیام..."; }
 
 // ارسال پیام
 function sendMessage(){
-  const name = document.getElementById("name").value.trim();
-  const text = document.getElementById("text").value.trim();
-  const receiverId = document.getElementById("receiver").value || null;
-  if(!name || !text) return alert("نام و پیام را وارد کن");
+  const text=document.getElementById("text").value.trim();
+  const receiverId=document.getElementById("receiver").value || null;
+  if(!text) return alert("پیام وارد نشده");
 
   messagesRef.add({
-    name,text,userId,receiverId,
-    reactions:{},
+    name:username,
+    text,
+    userId,
+    receiverId,
+    reactions:{heart:[],like:[]},
+    replyTo,
     time: firebase.firestore.FieldValue.serverTimestamp()
   });
   document.getElementById("text").value="";
+  replyTo=null;
+  document.getElementById("replyBox").innerText="";
 }
 
 // نمایش پیام‌ها
-let firstLoad = true;
-
-messagesRef.orderBy("time").onSnapshot(snapshot =>{
-  const box = document.getElementById("messages");
+let firstLoad=true;
+messagesRef.orderBy("time").onSnapshot(snapshot=>{
+  const box=document.getElementById("messages");
   box.innerHTML="";
-
   snapshot.forEach(docSnap=>{
-    const m = docSnap.data();
+    const m=docSnap.data();
+    const id=docSnap.id;
 
-    // فیلتر خصوصی
+    // پیام خصوصی فیلتر
     if(m.receiverId && m.receiverId!==userId && m.userId!==userId) return;
 
-    let div = document.createElement("div");
+    let div=document.createElement("div");
     div.className="msg";
 
-    const timeStr = m.time ? new Date(m.time.seconds*1000).toLocaleTimeString("fa-IR") : "";
-
-    div.innerHTML = `
-      <div class="msg-header"><b>${m.name}</b> ⏰ ${timeStr}</div>
-      <div class="msg-text">${m.text}</div>
-      <div class="msg-actions">
-        <div class="reactions">
-          <span onclick="react('${docSnap.id}','❤️')">❤️ ${m.reactions?.heart || 0}</span>
-          <span onclick="react('${docSnap.id}','👍')">👍 ${m.reactions?.like || 0}</span>
-        </div>
-      </div>
-    `;
-
-    // حذف پیام خود
-    if(m.userId === userId){
-      const delBtn = document.createElement("button");
-      delBtn.textContent="❌ حذف";
-      delBtn.onclick=()=>messagesRef.doc(docSnap.id).delete();
-      div.querySelector(".msg-actions").appendChild(delBtn);
+    // ریپلای
+    if(m.replyTo){
+      const replied=snapshot.docs.find(d=>d.id===m.replyTo)?.data();
+      div.innerHTML+=`<div class="reply-box">↪ پاسخ به ${replied?.name}: ${replied?.text}</div>`;
     }
+
+    const timeStr = m.time?new Date(m.time.seconds*1000).toLocaleTimeString("fa-IR"):"";
+    div.innerHTML+=`<div class="msg-header"><b>${m.name}</b> ⏰ ${timeStr}</div>`;
+    div.innerHTML+=`<div class="msg-text">${m.text}</div>`;
+
+    // ری‌اکشن
+    div.innerHTML+=`<div class="reactions">
+      <span onclick="react('${id}','❤️')">❤️ ${m.reactions?.heart?.length||0}</span>
+      <span onclick="react('${id}','👍')">👍 ${m.reactions?.like?.length||0}</span>
+    </div>`;
+
+    // حذف و ویرایش فقط خود پیام
+    if(m.userId===userId){
+      const del=document.createElement("button"); del.textContent="❌ حذف"; del.onclick=()=>messagesRef.doc(id).delete();
+      const edit=document.createElement("button"); edit.textContent="✏️"; edit.onclick=()=>{
+        const t=prompt("ویرایش:", m.text); if(t) messagesRef.doc(id).update({text:t});
+      };
+      div.querySelector(".reactions").appendChild(del);
+      div.querySelector(".reactions").appendChild(edit);
+    }
+
+    // ریپلای
+    const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>setReply(id);
+    div.querySelector(".reactions").appendChild(replyBtn);
 
     box.appendChild(div);
   });
 
-  // 🔔 نوتیفیکیشن فقط برای پیام جدید
   if(!firstLoad && snapshot.docChanges().length){
-    const change = snapshot.docChanges()[0];
-    const msg = change.doc.data();
-    if(msg.userId !== userId && Notification.permission === "granted"){
-      new Notification(`پیام جدید از ${msg.name}`, {
-        body: msg.text,
-        icon: "https://cdn-icons-png.flaticon.com/512/2462/2462719.png"
-      });
-    }
+    const change=snapshot.docChanges()[0].doc.data();
+    if(change.userId!==userId && Notification.permission==="granted") new Notification(`پیام جدید از ${change.name}`,{body:change.text});
+    if(snapshot.docChanges()[0].doc.data().userId!==userId) document.getElementById("notifSound").play();
   }
-
-  firstLoad = false;
+  firstLoad=false;
 
   // لیست کاربران برای پیام خصوصی
   usersRef.get().then(snap=>{
-    const sel = document.getElementById("receiver");
+    const sel=document.getElementById("receiver");
     sel.innerHTML='<option value="">عمومی</option>';
-    snap.forEach(u=>{
-      if(u.id!==userId)
-        sel.innerHTML += `<option value="${u.id}">${u.data().name}</option>`;
-    });
+    snap.forEach(u=>{if(u.id!==userId) sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;});
   });
 });
 
-// واکنش‌ها
+// ری‌اکشن هر کاربر فقط یک بار
 function react(id,type){
-  const field = type === "❤️" ? "heart" : "like";
-  messagesRef.doc(id).get().then(doc=>{
-    const data = doc.data();
-    const reactions = data.reactions || {};
-    reactions[field] = (reactions[field]||0)+1;
+  messagesRef.doc(id).get().then(docSnap=>{
+    const data=docSnap.data();
+    const reactions=data.reactions || {heart:[],like:[]};
+    const field=type==='❤️'?'heart':'like';
+    if(!reactions[field]) reactions[field]=[];
+
+    const idx=reactions[field].indexOf(userId);
+    if(idx===-1) reactions[field].push(userId); else reactions[field].splice(idx,1);
     messagesRef.doc(id).update({reactions});
   });
 }
-</script>
 
+// تغییر نام
+function changeName(){
+  const n=prompt("نام جدید:"); if(n){username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n});}
+}
+</script>
 </body>
 </html>
