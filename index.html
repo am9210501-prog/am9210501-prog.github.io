@@ -3,225 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Messenger Pro</title>
+<title>IRN Chat</title>
 
 <style>
-body{font-family:tahoma;background:#0b1a2f;color:white;margin:0}
-.top-bar{background:#0d6efd;padding:10px;display:flex;justify-content:space-between;align-items:center}
-.chat{max-width:700px;margin:auto;padding:15px}
-.msg{background:#222;margin:8px;padding:10px;border-radius:10px;animation:fade .3s}
-.msg small{color:#aaa}
-.reactions span{margin-left:8px;cursor:pointer}
-input,select,button{padding:10px;margin:5px;border:none;border-radius:6px}
+body{font-family:tahoma;text-align:center;background:#0b1a2f;color:white}
+.chat{max-width:520px;margin:auto;background:#111;padding:15px;border-radius:10px}
+.msg{background:#222;margin:5px;padding:8px;border-radius:6px;text-align:right;position:relative}
+.delete{position:absolute;left:5px;top:5px;color:red;cursor:pointer}
+input,button{padding:10px;margin:5px;border:none;border-radius:6px}
 button{background:#00aaff;color:white;cursor:pointer}
-.dark{background:#050816}
-@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <span>👤 <strong id="displayName"></strong></span>
-  <div>
-    <button onclick="changeName()">تغییر نام</button>
-    <button onclick="toggleDark()">🌙</button>
-  </div>
-</div>
+<h2>💬 پیام‌رسان IRN</h2>
 
 <div class="chat">
-
-<div id="onlineUsers">👥 آنلاین: 0</div>
-<div id="typingStatus" style="font-size:14px;color:#aaa"></div>
-
-<select id="receiver"><option value="">عمومی</option></select>
-<input id="text" placeholder="پیام...">
+<input id="name" placeholder="نام شما">
+<input id="text" placeholder="پیام شما">
 <button onclick="sendMessage()">ارسال</button>
 
 <div id="messages"></div>
-
 </div>
 
-<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, onSnapshot,
+  query, orderBy, serverTimestamp, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
-
-<script>
 const firebaseConfig = {
   apiKey: "AIzaSyBQdlikBbxE0_U_meQ2PiNas3dlt6-OvPA",
   authDomain: "irn-chat.firebaseapp.com",
-  projectId: "irn-chat"
+  projectId: "irn-chat",
+  storageBucket: "irn-chat.firebasestorage.app",
+  messagingSenderId: "247317938517",
+  appId: "1:247317938517:web:2343d222bebb00ebd8afdc"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const messagesRef = db.collection("messages");
-const usersRef = db.collection("users");
-const typingRef = db.collection("typing");
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const messagesRef = collection(db, "messages");
 
-// ===== نام کاربر =====
-let username = localStorage.getItem("chatName");
-if(!username){
-  username = prompt("نام واقعی خود را وارد کنید:");
-  localStorage.setItem("chatName", username || "کاربر");
-}
-document.getElementById("displayName").innerText = username;
-
-function changeName(){
-  const n = prompt("نام جدید:");
-  if(n){
-    username = n;
-    localStorage.setItem("chatName", n);
-    document.getElementById("displayName").innerText = n;
-  }
-}
-
-// ===== آنلاین =====
-const userId = localStorage.getItem("uid") || Date.now().toString();
-localStorage.setItem("uid", userId);
-usersRef.doc(userId).set({name:username,online:true});
-
-window.addEventListener("beforeunload",()=>{
-  usersRef.doc(userId).update({online:false});
-});
-
-usersRef.onSnapshot(s=>{
-  let count=0;
-  s.forEach(d=>{if(d.data().online) count++;});
-  document.getElementById("onlineUsers").innerText="👥 آنلاین: "+count;
-});
-
-// ===== تایپ =====
-document.getElementById("text").addEventListener("input",()=>{
-  typingRef.doc(userId).set({name:username});
-  setTimeout(()=>typingRef.doc(userId).delete(),1500);
-});
-
-typingRef.onSnapshot(s=>{
-  let arr=[];
-  s.forEach(d=>{ if(d.id!==userId) arr.push(d.data().name);});
-  document.getElementById("typingStatus").innerText =
-    arr.length ? arr.join(" و ")+" در حال تایپ..." : "";
-});
-
-// ===== ارسال پیام =====
-function sendMessage(){
+window.sendMessage = async function() {
+  const name = document.getElementById("name").value.trim();
   const text = document.getElementById("text").value.trim();
-  const receiverId = document.getElementById("receiver").value || null;
-  if(!text) return;
 
-  messagesRef.add({
-    name:username,
+  if(!name || !text){
+    alert("نام و پیام را وارد کن");
+    return;
+  }
+
+  await addDoc(messagesRef, {
+    name,
     text,
-    userId,
-    receiverId,
-    reactions:{},
-    seenBy:[userId],
-    replyTo:null,
-    time:firebase.firestore.FieldValue.serverTimestamp()
+    time: serverTimestamp()
   });
 
   document.getElementById("text").value="";
-}
+};
 
-// ===== نمایش پیام =====
-let firstLoad=true;
-messagesRef.orderBy("time").onSnapshot(snapshot=>{
-  const box=document.getElementById("messages");
-  box.innerHTML="";
+const q = query(messagesRef, orderBy("time"));
 
-  snapshot.forEach(doc=>{
-    const m=doc.data();
-    if(m.receiverId && m.receiverId!==userId && m.userId!==userId) return;
+onSnapshot(q, snapshot => {
+  const box = document.getElementById("messages");
+  box.innerHTML = "";
 
-    // ثبت دیده شدن
-    if(!m.seenBy.includes(userId)){
-      messagesRef.doc(doc.id).update({
-        seenBy: firebase.firestore.FieldValue.arrayUnion(userId)
-      });
-    }
+  snapshot.forEach(documentItem => {
+    const m = documentItem.data();
+    const id = documentItem.id;
 
-    let div=document.createElement("div");
-    div.className="msg";
-
-    const time=m.time? new Date(m.time.seconds*1000).toLocaleTimeString("fa-IR"):"";
-    const seen=m.seenBy.length>1?"✓✓":"✓";
-
-    div.innerHTML=`
-      <b>${m.name}</b> <small>${time}</small> ${seen}<br>
-      ${m.replyTo?`<small>↪ پاسخ</small><br>`:""}
-      ${m.text}
-      <div class="reactions">
-        ❤️ ${m.reactions.heart||0}
-        👍 ${m.reactions.like||0}
-        😂 ${m.reactions.laugh||0}
+    box.innerHTML += `
+      <div class="msg">
+        <span class="delete" onclick="deleteMessage('${id}')">🗑</span>
+        <b>${m.name}:</b> ${m.text}
       </div>
     `;
-
-    // حذف
-    if(m.userId===userId){
-      const del=document.createElement("button");
-      del.textContent="❌";
-      del.onclick=()=>messagesRef.doc(doc.id).delete();
-      div.appendChild(del);
-
-      const edit=document.createElement("button");
-      edit.textContent="✏️";
-      edit.onclick=()=>{
-        const t=prompt("ویرایش:",m.text);
-        if(t) messagesRef.doc(doc.id).update({text:t});
-      };
-      div.appendChild(edit);
-    }
-
-    // ریپلای
-    const reply=document.createElement("button");
-    reply.textContent="↩️";
-    reply.onclick=()=>{
-      document.getElementById("text").value="↪ "+m.text;
-    };
-    div.appendChild(reply);
-
-    // ری‌اکشن
-    div.onclick=()=>{
-      messagesRef.doc(doc.id).update({
-        "reactions.heart": (m.reactions.heart||0)+1
-      });
-    };
-
-    box.appendChild(div);
-  });
-
-  // 🔔 صدا + نوتیفیکیشن
-  if(!firstLoad && snapshot.docChanges().length){
-    document.getElementById("notifSound").play();
-    const msg=snapshot.docChanges()[0].doc.data();
-    if(Notification.permission==="granted" && msg.userId!==userId){
-      new Notification("پیام جدید از "+msg.name,{body:msg.text});
-    }
-  }
-  firstLoad=false;
-
-  // لیست کاربران
-  usersRef.get().then(s=>{
-    const sel=document.getElementById("receiver");
-    sel.innerHTML='<option value="">عمومی</option>';
-    s.forEach(u=>{
-      if(u.id!==userId)
-        sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;
-    });
   });
 });
 
-// درخواست نوتیفیکیشن
-if("Notification" in window && Notification.permission!=="granted"){
-  Notification.requestPermission();
-}
-
-// دارک مود
-function toggleDark(){
-  document.body.classList.toggle("dark");
-}
+window.deleteMessage = async function(id){
+  await deleteDoc(doc(db, "messages", id));
+};
 </script>
+
 </body>
-  </html>
+</html>
