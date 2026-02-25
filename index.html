@@ -1,29 +1,25 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>IRN Chat Pro</title>
 
-  <!-- ریسپانسیو -->
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
 
-  <!-- رنگ تم -->
-  <meta name="theme-color" content="#0f172a" />
+  <!-- Manifest -->
+  <link rel="manifest" href="manifest.json">
 
-  <!-- اتصال به مانیفست -->
-  <link rel="manifest" href="manifest.json" />
-
-  <!-- آیکون -->
-  <link rel="icon" href="icon-192.png" />
+  <!-- Icon -->
+  <link rel="icon" href="icon-192.png">
 
   <style>
     body {
+      margin: 0;
       font-family: sans-serif;
       background: #0f172a;
       color: white;
       text-align: center;
-      margin: 0;
-      padding: 0;
     }
 
     header {
@@ -37,16 +33,12 @@
       display: none;
       background: #22c55e;
       border: none;
-      padding: 10px 15px;
-      margin: 10px;
-      border-radius: 10px;
+      padding: 12px 18px;
+      margin: 15px;
+      border-radius: 12px;
       font-size: 16px;
       color: white;
       cursor: pointer;
-    }
-
-    #chatBox {
-      padding: 15px;
     }
   </style>
 </head>
@@ -54,34 +46,27 @@
 
 <header>💬 IRN Chat Pro</header>
 
-<!-- دکمه نصب -->
 <button id="installBtn">📲 نصب اپلیکیشن</button>
 
-<div id="chatBox">
-  <p>چت شما اینجاست...</p>
-</div>
+<p>چت شما اینجاست...</p>
 
-<!-- ثبت سرویس ورکر -->
 <script>
+  // ثبت سرویس ورکر
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log("Service Worker Registered"));
+    navigator.serviceWorker.register('sw.js');
   }
-</script>
 
-<!-- اسکریپت نصب PWA -->
-<script>
+  // نصب اپ
   let deferredPrompt;
-  const installBtn = document.getElementById('installBtn');
+  const btn = document.getElementById("installBtn");
 
-  window.addEventListener('beforeinstallprompt', (e) => {
+  window.addEventListener("beforeinstallprompt", e => {
     e.preventDefault();
     deferredPrompt = e;
-    installBtn.style.display = 'inline-block';
+    btn.style.display = "inline-block";
   });
 
-  installBtn.addEventListener('click', async () => {
-    installBtn.style.display = 'none';
+  btn.addEventListener("click", async () => {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     deferredPrompt = null;
@@ -89,4 +74,4 @@
 </script>
 
 </body>
-</html>
+  </html>
