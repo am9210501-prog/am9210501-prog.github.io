@@ -1,26 +1,11 @@
 {
-  "id": "/",
   "name": "IRN Chat Pro",
-  "short_name": "IRN Chat",
-  "description": "چت آنلاین عمومی و خصوصی",
-  "start_url": "./index.html",
+  "short_name": "IRNChat",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0b1a2f",
   "theme_color": "#0d6efd",
-  "orientation": "portrait",
-  "categories": ["communication", "social"],
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
-}
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAABgGlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGBgYHhh/0P/AyAAAwgqGAUACM1AgwAAAAlwSFlzAAAOwwAADsMBx2+oZAAAQABJREFUeF7tnQeMZVcdxn/3tvv9eZc+8l66wnaJikUpCwENhAkpi0SwsBCbAiLKsU8WWRtrBIiIwJXhVqS0BRZQVZBBZJSxgJKU4lU8hUUCEht1Wlnb3v6ffG6bfvdu57nHnDsw53u/Xu2bn3Pveb+69V+k1kA4xgIYwIYY0AgzCGBjD0H7YElKWF6cQD+AzYcQFQb3r6I+7pQ6wz2CeReL7e9q6V65RfqM/IXPA18b+H13Jefg0gDR18H9i8a0B6P2/AVyFb8BHoKu5+5ZL5gZb5q+5+0d/jW4JfIN8Qb0FzoP3P6D0QXaX2d8nO5GPAfdHFHfZP/gHwF3gz8DF7MZ/IH7mN/gf0h7U+n0cfBV8Hvwz+H+5zjfsfWB/AL+Tv2L8GvAL3zJ+h/kV6zR/TJ+NPgC+K+Ah4Pz3K/S/4L+Sv3d6zG/wc+Cd4G/iT+Jb8UPgS+G34e/Ij4M/5z+xf2p+wf4hfxL+H9wR/F3zI/hb+R/pf5vC4Z3gl+NPwQ/EsE24V+A9eAfy//b3uHeG/Yy4Fnwz+P/gx+H3zS+I74I/jX8UvgV8M/4V/B74J/gD+Bvwn8a/jH8C/xR+JPgB8IX4f+Nv4h/AvwZ+FPgI/GL4gvgJ8KP4V8A/0p+j3yR/jb4DvgR+Kv4C8MP4f/Dv8oPA3+Xf1p/Bf5m/gb+M/49fgl+JP5H+Df6H/iX+B/xM/2L+Jf5F/gP+X/Gb8PvwV+5v8x/hL+OPwT+N/gj+Dv4Nfgh/5X+R/hv+KfgX+2v4nfgb/B/xr+1fwK/gL+z/4h/A/4kP8B/ij+Df+Zfxn+P/hv+Bv4X/gT+Of4T/4X+Gf4R/Gf8R/gZ+Nv4h/gT+Jf4T/gP+R/hP/df4T/gB+Ef8X/gD+IPwQ/gT+Ff4L/gD+GP8X/gP+Mf4N/gD+FP8f/gX+Jf8N/gH+If8D/gD+G/4P/gT+Jf4H/gD+If8F/gD+KP8T/gT+Kv4N/gD+Jf4Z/gT+Lf4J/gD+Jf4P/gD+L/4D/gX+M/4P/gD+Jf4N/gD+IP8A/gD+Lf4T/gH+I/4X/gH+FP4B/gH+KP4B/gH+Mf8G/gH+Ff4F/gH+Kv4A/gH+Lf4D/gD+L/4L/gD+Lf4T/gD+M/4F/gD+Ff4E/gD+IP4G/gD+G/4H/gD+Mv4H/gD+Mf4H/gD+Mf4I/gD+Nv4J/gD+Nv4J/gD+N/4J/gD+N/4J/gD+OP4J/gD+OP4J/gD+P/4J/gD+P/4J/gD+P/4K/gD+Pf4K/gD+Pv4K/gD+Pf4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv4K/gD+Qv
