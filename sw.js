@@ -1,7 +1,21 @@
 self.addEventListener('install', event => {
-  console.log('Service Worker نصب شد');
+  console.log('[SW] نصب شد');
+  event.waitUntil(
+    caches.open('chat-cache-v1').then(cache => {
+      return cache.addAll([
+        './',
+        './index.html',
+        './manifest.json',
+        './sw.js',
+        './icon-192.png',
+        './icon-512.png'
+      ]);
+    })
+  );
 });
 
 self.addEventListener('fetch', event => {
-  // برای آینده می‌توان کش اضافه کرد، فعلاً فقط لاگ می‌دهد
+  event.respondWith(
+    caches.match(event.request).then(response => response || fetch(event.request))
+  );
 });
