@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IRN Chat Pro</title>
+
+<!-- لینک به manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d6efd">
+
 <style>
 body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;}
 .top-bar{background:#0d6efd;padding:10px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:14px}
@@ -51,6 +56,7 @@ button{background:#00aaff;color:white;cursor:pointer}
 
 <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
@@ -66,20 +72,15 @@ const messagesRef = db.collection("messages");
 const usersRef = db.collection("users");
 const typingRef = db.collection("typing");
 
-let userId = localStorage.getItem("userId");
-if(!userId){
-  userId = Math.random().toString(36).substr(2,9);
-  localStorage.setItem("userId", userId);
-}
+// شناسایی کاربر
+let userId = localStorage.getItem("userId") || Math.random().toString(36).substr(2,9);
+localStorage.setItem("userId", userId);
 
-let username = localStorage.getItem("chatName");
-if(!username){
-  username = prompt("برای تجربه بهتر لطفاً نام واقعی خود را وارد کنید") || "کاربر ناشناس";
-  localStorage.setItem("chatName", username);
-}
+let username = localStorage.getItem("chatName") || prompt("نام واقعی خود را وارد کنید") || "کاربر ناشناس";
+localStorage.setItem("chatName", username);
 document.getElementById("displayName").innerText = username;
 
-// ذخیره کاربر و آنلاین بودن
+// ثبت کاربر آنلاین
 usersRef.doc(userId).set({name:username, online:true});
 window.addEventListener("beforeunload", ()=>usersRef.doc(userId).update({online:false}));
 
@@ -91,7 +92,7 @@ document.getElementById("text").addEventListener("input", ()=>{
   typingRef.doc(userId).set({name:username});
   setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
 });
-onSnapshotTyping = typingRef.onSnapshot(snap=>{
+typingRef.onSnapshot(snap=>{
   let names=[];
   snap.forEach(d=>{ if(d.id!==userId) names.push(d.data().name) });
   document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
@@ -165,9 +166,7 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     // حذف و ویرایش فقط خود پیام
     if(m.userId===userId){
       const del=document.createElement("button"); del.textContent="❌ حذف"; del.onclick=()=>messagesRef.doc(id).delete();
-      const edit=document.createElement("button"); edit.textContent="✏️"; edit.onclick=()=>{
-        const t=prompt("ویرایش:", m.text); if(t) messagesRef.doc(id).update({text:t});
-      };
+      const edit=document.createElement("button"); edit.textContent="✏️"; edit.onclick=()=>{ const t=prompt("ویرایش:", m.text); if(t) messagesRef.doc(id).update({text:t}); };
       div.querySelector(".reactions").appendChild(del);
       div.querySelector(".reactions").appendChild(edit);
     }
@@ -176,7 +175,7 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>setReply(id);
     div.querySelector(".reactions").appendChild(replyBtn);
 
-    // تفکیک عمومی و خصوصی، پیام جدید بالا نمایش داده شود
+    // تفکیک عمومی و خصوصی، پیام جدید بالا
     if(m.receiverId){
       if(m.userId===userId || m.receiverId===userId) boxPrivate.prepend(div);
     } else {
@@ -189,25 +188,18 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     snapshot.docChanges().forEach(changeDoc=>{
       const change = changeDoc.doc.data();
       let showNotification = false;
-
-      if(change.receiverId){
-        showNotification = ((change.userId===userId || change.receiverId===userId));
-      } else {
-        showNotification = true;
-      }
-
-      if(showNotification && change.userId!==userId && Notification.permission==="granted")
-        new Notification(`پیام جدید از ${change.name}`,{body:change.text});
+      if(change.receiverId){ showNotification = (change.userId===userId || change.receiverId===userId); } else { showNotification = true; }
+      if(showNotification && change.userId!==userId && Notification.permission==="granted") new Notification(`پیام جدید از ${change.name}`,{body:change.text});
       if(showNotification && change.userId!==userId) document.getElementById("notifSound").play();
     });
   }
   firstLoad=false;
 
-  // لیست کاربران برای پیام خصوصی
-  usersRef.get().then(snap=>{
+  // لیست کاربران برای پیام خصوصی (فقط آنلاین)
+  usersRef.where("online","==",true).get().then(snap=>{
     const sel=document.getElementById("receiver");
     sel.innerHTML='<option value="">عمومی</option>';
-    snap.forEach(u=>{if(u.id!==userId) sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`;});
+    snap.forEach(u=>{ if(u.id!==userId) sel.innerHTML+=`<option value="${u.id}">${u.data().name}</option>`; });
   });
 });
 
@@ -218,7 +210,6 @@ function react(id,type){
     const reactions=data.reactions || {heart:[],like:[]};
     const field=type==='❤️'?'heart':'like';
     if(!reactions[field]) reactions[field]=[];
-
     const idx=reactions[field].indexOf(userId);
     if(idx===-1) reactions[field].push(userId); else reactions[field].splice(idx,1);
     messagesRef.doc(id).update({reactions});
@@ -227,14 +218,15 @@ function react(id,type){
 
 // تغییر نام
 function changeName(){
-  const n=prompt("نام جدید:"); 
-  if(n){
-    username=n; 
-    localStorage.setItem("chatName",n); 
-    document.getElementById("displayName").innerText=n; 
-    usersRef.doc(userId).update({name:n});
-  }
+  const n=prompt("نام جدید:");
+  if(n){ username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n}); }
+}
+
+// ثبت Service Worker
+if ("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").then(()=>console.log("Service Worker ثبت شد")).catch(err=>console.error("Service Worker ثبت نشد:",err));
 }
 </script>
+
 </body>
 </html>
