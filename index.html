@@ -15,13 +15,14 @@ body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;displa
 .chat-input input{flex:1;padding:10px;border-radius:6px;border:none;margin-right:5px;}
 .chat-input button{padding:10px;border:none;border-radius:6px;background:#00aaff;color:white;cursor:pointer;}
 #privateBtn,#backBtn{padding:15px;margin:5px;border:none;border-radius:8px;background:#0d6efd;color:white;font-size:16px;cursor:pointer;}
+#privateBtn .unread-badge{background:red;color:white;border-radius:10px;padding:2px 6px;font-size:12px;margin-left:5px;}
 .sidebar{width:250px;background:#111;border-right:1px solid #444;display:flex;flex-direction:column;overflow-y:auto;}
 .sidebar h3{margin:5px;padding:5px;border-bottom:1px solid #444;}
 .sidebar .userItem{padding:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
 .sidebar .userItem:hover{background:#0d6efd;}
 .online-dot{width:10px;height:10px;border-radius:50%;background:#0f0;display:inline-block;margin-left:5px;}
 .privateChatWindow{flex:1;display:flex;flex-direction:column;}
-#privateUnread{color:#ff0;margin-left:5px;}
+.unread-badge{background:red;color:white;border-radius:10px;padding:2px 6px;font-size:12px;margin-left:5px;}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
@@ -116,41 +117,39 @@ usersRef.onSnapshot(snap=>{
   });
   renderPrivateUsers(usersCache);
 });
+
+// ===== Unread Counter =====
+let unreadPrivateCount = 0;
+messagesRef.where("receiverId","==",userId).where("seen","==",false).onSnapshot(snap=>{
+  unreadPrivateCount = snap.size;
+  document.getElementById("privateUnread").innerText = `(${unreadPrivateCount})`;
+});
+
+// ===== Render Users Function =====
 function renderPrivateUsers(users){
   const listDiv=document.getElementById("privateUserList");
   listDiv.innerHTML="";
   users.forEach(u=>{
     const div=document.createElement("div");
     div.className="userItem";
-    div.innerHTML=`<span>${u.name}</span>${u.online?'<span class="online-dot"></span>':''}`;
+    const nameSpan=document.createElement("span"); nameSpan.textContent=u.name;
+    const rightSide=document.createElement("span");
+    if(u.online){const dot=document.createElement("span");dot.className="online-dot";rightSide.appendChild(dot);}
+    // Count unread messages from this user
+    messagesRef.where("receiverId","==",userId).where("userId","==",u.id).where("seen","==",false).get().then(snap=>{
+      if(snap.size>0){
+        const badge=document.createElement("span"); badge.className="unread-badge"; badge.innerText=snap.size; rightSide.appendChild(badge);
+      }
+    });
+    div.appendChild(nameSpan); div.appendChild(rightSide);
     div.onclick=()=>selectPrivateUser(u.id,u.name);
     listDiv.appendChild(div);
   });
 }
-document.getElementById("privateSearch").addEventListener("input",()=>{
-  const q=document.getElementById("privateSearch").value.toLowerCase();
-  const filtered=usersCache.filter(u=>u.name.toLowerCase().includes(q));
-  renderPrivateUsers(filtered);
-});
 
 // ===== Private Chat =====
 let selectedPrivateUser=null;
-function selectPrivateUser(id,name){
-  selectedPrivateUser={id,name};
-
-  // --- Mark all messages from this user as seen immediately ---
-  messagesRef
-    .where("receiverId","==",userId)
-    .where("userId","==",id)
-    .where("seen","==",false)
-    .get()
-    .then(snap=>{
-      snap.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); });
-    });
-
-  loadPrivateMessages();
-}
-
+function selectPrivateUser(id,name){ selectedPrivateUser={id,name}; loadPrivateMessages();}
 function loadPrivateMessages(){
   const box=document.getElementById("privateMessages");
   if(!selectedPrivateUser) return;
@@ -168,55 +167,36 @@ function loadPrivateMessages(){
         const like=document.createElement("span");like.textContent=`👍 ${m.reactions?.like?.length||0}`;like.style.cursor="pointer";like.onclick=()=>toggleReaction(docSnap.id,'like');
         reactionDiv.appendChild(heart);reactionDiv.appendChild(like);msgDiv.appendChild(reactionDiv);
         // Delete & Reply
-        if(m.userId===userId){
-          const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
-          const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("privateText").value=`↪ ${m.text} `;
-          msgDiv.appendChild(del); msgDiv.appendChild(reply);
-        }
-        box.appendChild(msgDiv);
-        box.scrollTop=box.scrollHeight;
+        if(m.userId===userId){const del=document.createElement("button");del.textContent="❌";del.onclick=()=>messagesRef.doc(docSnap.id).delete();
+          const reply=document.createElement("button");reply.textContent="↩️";reply.onclick=()=>document.getElementById("privateText").value=`↪ ${m.text}`; msgDiv.appendChild(del); msgDiv.appendChild(reply);}
+        box.appendChild(msgDiv); box.scrollTop=box.scrollHeight;
+        if(m.receiverId===userId && !m.seen) messagesRef.doc(docSnap.id).update({seen:true});
       }
     });
   });
 }
-
 function sendPrivateMessage(){
   if(!selectedPrivateUser) return alert("کاربر را انتخاب کنید");
   const input=document.getElementById("privateText");
   const text=input.value.trim();
   if(!text) return;
-  messagesRef.add({
-    name:username,
-    text,
-    userId,
-    receiverId:selectedPrivateUser.id,
-    reactions:{heart:[],like:[]},
-    replyTo:null,
-    time:firebase.firestore.FieldValue.serverTimestamp(),
-    seen:false
-  });
+  messagesRef.add({name:username,text,userId,receiverId:selectedPrivateUser.id,reactions:{heart:[],like:[]},replyTo:null,time:firebase.firestore.FieldValue.serverTimestamp(),seen:false});
   input.value="";
 }
 
 // ===== Public Messages =====
 messagesRef.orderBy("time").onSnapshot(snapshot=>{
-  const box=document.getElementById("messagesPublic");
-  box.innerHTML="";
+  const box=document.getElementById("messagesPublic"); box.innerHTML="";
   snapshot.forEach(docSnap=>{
     const m=docSnap.data();
     if(!m.receiverId){
-      const div=document.createElement("div");
-      div.className="msg";
-      div.innerHTML=`${m.name}: ${m.text}`;
+      const div=document.createElement("div"); div.className="msg"; div.innerHTML=`${m.name}: ${m.text}`;
       const reactionDiv=document.createElement("div");reactionDiv.className="reactions";
       const heart=document.createElement("span");heart.textContent=`❤️ ${m.reactions?.heart?.length||0}`;heart.style.cursor="pointer";heart.onclick=()=>toggleReaction(docSnap.id,'heart');
       const like=document.createElement("span");like.textContent=`👍 ${m.reactions?.like?.length||0}`;like.style.cursor="pointer";like.onclick=()=>toggleReaction(docSnap.id,'like');
       reactionDiv.appendChild(heart);reactionDiv.appendChild(like);div.appendChild(reactionDiv);
-      if(m.userId===userId){
-        const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
-        const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("text").value=`↪ ${m.text} `;
-        div.appendChild(del); div.appendChild(reply);
-      }
+      if(m.userId===userId){const del=document.createElement("button");del.textContent="❌";del.onclick=()=>messagesRef.doc(docSnap.id).delete();
+      const reply=document.createElement("button");reply.textContent="↩️";reply.onclick=()=>document.getElementById("text").value=`↪ ${m.text}`;div.appendChild(del);div.appendChild(reply);}
       box.prepend(div);
     }
   });
@@ -226,16 +206,7 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
 function sendPublicMessage(){
   const text=document.getElementById("text").value.trim();
   if(!text) return alert("پیام وارد نشده");
-  messagesRef.add({
-    name:username,
-    text,
-    userId,
-    receiverId:null,
-    reactions:{heart:[],like:[]},
-    replyTo:null,
-    time:firebase.firestore.FieldValue.serverTimestamp(),
-    seen:false
-  });
+  messagesRef.add({name:username,text,userId,receiverId:null,reactions:{heart:[],like:[]},replyTo:null,time:firebase.firestore.FieldValue.serverTimestamp(),seen:false});
   document.getElementById("text").value="";
 }
 
@@ -244,26 +215,18 @@ function toggleReaction(msgId,type){
   messagesRef.doc(msgId).get().then(docSnap=>{
     const data=docSnap.data();
     if(!data.reactions) data.reactions={heart:[],like:[]};
-    const arr=data.reactions[type];
-    const idx=arr.indexOf(userId);
+    const arr=data.reactions[type]; const idx=arr.indexOf(userId);
     if(idx===-1) arr.push(userId); else arr.splice(idx,1);
     messagesRef.doc(msgId).update({reactions:data.reactions});
   });
 }
 
 // ===== Change Name =====
-function changeName(){
-  const n=prompt("نام جدید:");
-  if(n){ username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n});}
-}
+function changeName(){ const n=prompt("نام جدید:"); if(n){ username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n});}}
 
-// ===== Notifications & Unread Count =====
+// ===== Notifications =====
 if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
-let unreadPrivateCount=0;
-messagesRef.where("receiverId","==",userId).where("seen","==",false).onSnapshot(snap=>{
-  unreadPrivateCount = snap.size;
-  document.getElementById("privateUnread").innerText = `(${unreadPrivateCount})`;
-});
+
 </script>
 </body>
-  </html>
+</html>
