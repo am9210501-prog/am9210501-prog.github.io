@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - دو صفحه‌ای</title>
+<title>IRN Chat Pro - نهایی</title>
 <style>
 body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;display:flex;flex-direction:column;height:100vh;}
 #publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
@@ -11,6 +11,7 @@ body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;displa
 .msg{background:#222;margin:5px;padding:5px;border-radius:6px;position:relative;animation:fade .3s;}
 .msg .reactions span{cursor:pointer;margin-left:5px;}
 .msg .reply-box{background:#333;padding:3px;font-size:12px;color:#fff3cd;margin-bottom:3px;border-radius:3px;}
+.msg .edit-box{background:#444;padding:3px;font-size:12px;color:#ffeb3b;margin-bottom:3px;border-radius:3px;}
 .chat-input{display:flex;}
 .chat-input input{flex:1;padding:10px;border-radius:6px;border:none;margin-right:5px;}
 .chat-input button{padding:10px;border:none;border-radius:6px;background:#00aaff;color:white;cursor:pointer;}
@@ -85,92 +86,57 @@ usersRef.doc(userId).set({name:username, online:true});
 window.addEventListener("beforeunload",()=>usersRef.doc(userId).update({online:false}));
 
 // ===== Typing Status =====
-document.getElementById("text").addEventListener("input", ()=>{
-  typingRef.doc(userId).set({name:username});
-  setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
-});
+document.getElementById("text").addEventListener("input", ()=>{ typingRef.doc(userId).set({name:username}); setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500); });
 typingRef.onSnapshot(snap=>{
-  let names=[];
-  snap.forEach(d=>{ if(d.id!==userId) names.push(d.data().name) });
+  let names=[]; snap.forEach(d=>{ if(d.id!==userId) names.push(d.data().name) });
   document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
 });
 
-// ===== Private View Toggle =====
+// ===== Public / Private Toggle =====
 const publicView=document.getElementById("publicView");
 const privateView=document.getElementById("privateView");
-document.getElementById("privateBtn").onclick=()=>{
-  publicView.style.display="none";
-  privateView.style.display="flex";
-}
-document.getElementById("backBtn").onclick=()=>{
-  publicView.style.display="flex";
-  privateView.style.display="none";
-}
+document.getElementById("privateBtn").onclick=()=>{ publicView.style.display="none"; privateView.style.display="flex"; }
+document.getElementById("backBtn").onclick=()=>{ publicView.style.display="flex"; privateView.style.display="none"; }
 
 // ===== Online Users & Search =====
 let usersCache=[];
 usersRef.onSnapshot(snap=>{
   usersCache=[];
-  const listDiv=document.getElementById("privateUserList");
-  listDiv.innerHTML="";
-  snap.forEach(u=>{
-    if(u.id!==userId){
-      const data=u.data();
-      usersCache.push({id:u.id,name:data.name,online:data.online});
-    }
-  });
+  const listDiv=document.getElementById("privateUserList"); listDiv.innerHTML="";
+  snap.forEach(u=>{ if(u.id!==userId){ const data=u.data(); usersCache.push({id:u.id,name:data.name,online:data.online}); } });
   renderPrivateUsers(usersCache);
 });
-
-function renderPrivateUsers(users){
-  const listDiv=document.getElementById("privateUserList");
-  listDiv.innerHTML="";
-  users.forEach(u=>{
-    const div=document.createElement("div");
-    div.className="userItem";
-    div.innerHTML=`<span>${u.name}</span>${u.online?'<span class="online-dot"></span>':''}`;
-    div.onclick=()=>selectPrivateUser(u.id,u.name);
-    listDiv.appendChild(div);
-  });
-}
-
-document.getElementById("privateSearch").addEventListener("input",()=>{
-  const q=document.getElementById("privateSearch").value.toLowerCase();
-  const filtered=usersCache.filter(u=>u.name.toLowerCase().includes(q));
-  renderPrivateUsers(filtered);
-});
+function renderPrivateUsers(users){ const listDiv=document.getElementById("privateUserList"); listDiv.innerHTML=""; users.forEach(u=>{ const div=document.createElement("div"); div.className="userItem"; div.innerHTML=`<span>${u.name}</span>${u.online?'<span class="online-dot"></span>':''}`; div.onclick=()=>selectPrivateUser(u.id,u.name); listDiv.appendChild(div); }); }
+document.getElementById("privateSearch").addEventListener("input",()=>{ const q=document.getElementById("privateSearch").value.toLowerCase(); const filtered=usersCache.filter(u=>u.name.toLowerCase().includes(q)); renderPrivateUsers(filtered); });
 
 // ===== Private Chat =====
-let selectedPrivateUser=null;
-function selectPrivateUser(id,name){
-  selectedPrivateUser={id,name};
-  loadPrivateMessages();
-}
-
+let selectedPrivateUser=null; let replyToPrivate=null;
+function selectPrivateUser(id,name){ selectedPrivateUser={id,name}; loadPrivateMessages(); }
 function loadPrivateMessages(){
-  const box=document.getElementById("privateMessages");
-  if(!selectedPrivateUser) return;
+  const box=document.getElementById("privateMessages"); if(!selectedPrivateUser) return;
   messagesRef.orderBy("time").onSnapshot(snapshot=>{
-    box.innerHTML="";
-    snapshot.forEach(docSnap=>{
-      const m=docSnap.data();
+    box.innerHTML=""; snapshot.forEach(docSnap=>{
+      const m=docSnap.data(); const mid=docSnap.id;
       if((m.userId===userId && m.receiverId===selectedPrivateUser.id) || (m.userId===selectedPrivateUser.id && m.receiverId===userId)){
-        const msgDiv=document.createElement("div");
-        msgDiv.className="msg";
-        msgDiv.innerText=`${m.name}: ${m.text} ${m.seen?"✅":""}`;
+        const msgDiv=document.createElement("div"); msgDiv.className="msg";
+        // Reply box
+        let replyHTML="";
+        if(m.replyTo){ const replyDoc=snapshot.docs.find(d=>d.id===m.replyTo); if(replyDoc) replyHTML=`<div class="reply-box">↪ پاسخ به ${replyDoc.data().name}: ${replyDoc.data().text}</div>`; }
+        msgDiv.innerHTML=replyHTML+`${m.name}: ${m.text} ${m.seen?"✅":""}`;
         // Reactions
         let reactionsHTML=`<div class="reactions">❤️ ${m.reactions?.heart?.length||0} 👍 ${m.reactions?.like?.length||0}</div>`;
         msgDiv.innerHTML+=reactionsHTML;
-        // Delete & Reply
+        // Delete/Edit/Reply
         if(m.userId===userId){
-          const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
-          const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("privateText").value=`↪ ${m.text} `;
-          msgDiv.appendChild(del); msgDiv.appendChild(reply);
+          const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(mid).delete();
+          const edit=document.createElement("button"); edit.textContent="✏️"; edit.onclick=()=>{
+            const t=prompt("ویرایش پیام:",m.text); if(t) messagesRef.doc(mid).update({text:t});
+          }
+          const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>{replyToPrivate=mid; document.getElementById("privateText").value=`↪ ${m.text} `;}
+          msgDiv.appendChild(del); msgDiv.appendChild(edit); msgDiv.appendChild(replyBtn);
         }
-        box.appendChild(msgDiv);
-        box.scrollTop=box.scrollHeight;
-        // Seen
-        if(m.receiverId===userId && !m.seen) messagesRef.doc(docSnap.id).update({seen:true});
+        box.appendChild(msgDiv); box.scrollTop=box.scrollHeight;
+        if(m.receiverId===userId && !m.seen) messagesRef.doc(mid).update({seen:true});
       }
     });
   });
@@ -178,72 +144,49 @@ function loadPrivateMessages(){
 
 function sendPrivateMessage(){
   if(!selectedPrivateUser) return alert("کاربر را انتخاب کنید");
-  const input=document.getElementById("privateText");
-  const text=input.value.trim();
-  if(!text) return;
-  messagesRef.add({
-    name:username,
-    text,
-    userId,
-    receiverId:selectedPrivateUser.id,
-    reactions:{heart:[],like:[]},
-    replyTo:null,
-    time:firebase.firestore.FieldValue.serverTimestamp(),
-    seen:false
-  });
-  input.value="";
+  const input=document.getElementById("privateText"); const text=input.value.trim(); if(!text) return;
+  messagesRef.add({name:username,text,userId,receiverId:selectedPrivateUser.id,reactions:{heart:[],like:[]},replyTo:replyToPrivate,time:firebase.firestore.FieldValue.serverTimestamp(),seen:false});
+  input.value=""; replyToPrivate=null;
 }
 
-// ===== Public Messages =====
+// ===== Public Chat =====
+let replyToPublic=null;
 messagesRef.orderBy("time").onSnapshot(snapshot=>{
-  const box=document.getElementById("messagesPublic");
-  box.innerHTML="";
+  const box=document.getElementById("messagesPublic"); box.innerHTML="";
   snapshot.forEach(docSnap=>{
-    const m=docSnap.data();
+    const m=docSnap.data(); const mid=docSnap.id;
     if(!m.receiverId){
-      const div=document.createElement("div");
-      div.className="msg";
-      div.innerText=`${m.name}: ${m.text}`;
-      // Reactions/Delete/Reply
+      const msgDiv=document.createElement("div"); msgDiv.className="msg";
+      let replyHTML="";
+      if(m.replyTo){ const replyDoc=snapshot.docs.find(d=>d.id===m.replyTo); if(replyDoc) replyHTML=`<div class="reply-box">↪ پاسخ به ${replyDoc.data().name}: ${replyDoc.data().text}</div>`;}
+      msgDiv.innerHTML=replyHTML+`${m.name}: ${m.text}`;
       let reactionsHTML=`<div class="reactions">❤️ ${m.reactions?.heart?.length||0} 👍 ${m.reactions?.like?.length||0}</div>`;
-      div.innerHTML+=reactionsHTML;
+      msgDiv.innerHTML+=reactionsHTML;
       if(m.userId===userId){
-        const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
-        const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("text").value=`↪ ${m.text} `;
-        div.appendChild(del); div.appendChild(reply);
+        const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(mid).delete();
+        const edit=document.createElement("button"); edit.textContent="✏️"; edit.onclick=()=>{ const t=prompt("ویرایش پیام:",m.text); if(t) messagesRef.doc(mid).update({text:t}); }
+        const replyBtn=document.createElement("button"); replyBtn.textContent="↩️"; replyBtn.onclick=()=>{replyToPublic=mid; document.getElementById("text").value=`↪ ${m.text} `;}
+        msgDiv.appendChild(del); msgDiv.appendChild(edit); msgDiv.appendChild(replyBtn);
       }
-      box.prepend(div);
+      box.prepend(msgDiv);
+      // Notification
+      if(m.userId!==userId){ document.getElementById("notifSound").play(); if(Notification.permission==="granted") new Notification(`پیام جدید از ${m.name}`,{body:m.text}); }
     }
   });
 });
 
 // ===== Send Public Message =====
 function sendPublicMessage(){
-  const text=document.getElementById("text").value.trim();
-  if(!text) return alert("پیام وارد نشده");
-  messagesRef.add({
-    name:username,
-    text,
-    userId,
-    receiverId:null,
-    reactions:{heart:[],like:[]},
-    replyTo:null,
-    time:firebase.firestore.FieldValue.serverTimestamp(),
-    seen:false
-  });
-  document.getElementById("text").value="";
+  const input=document.getElementById("text"); const text=input.value.trim(); if(!text) return alert("پیام وارد نشده");
+  messagesRef.add({name:username,text,userId,receiverId:null,reactions:{heart:[],like:[]},replyTo:replyToPublic,time:firebase.firestore.FieldValue.serverTimestamp(),seen:false});
+  input.value=""; replyToPublic=null;
 }
 
 // ===== Change Name =====
-function changeName(){
-  const n=prompt("نام جدید:");
-  if(n){
-    username=n;
-    localStorage.setItem("chatName",n);
-    document.getElementById("displayName").innerText=n;
-    usersRef.doc(userId).update({name:n});
-  }
-}
+function changeName(){ const n=prompt("نام جدید:"); if(n){ username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n}); } }
+
+// ===== Notification Permission =====
+if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
 </script>
 </body>
-  </html>
+          </html>
