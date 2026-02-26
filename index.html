@@ -3,40 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - کامل</title>
+<title>IRN Chat Pro - دو صفحه‌ای</title>
 <style>
-body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;display:flex;}
+body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;display:flex;flex-direction:column;height:100vh;}
+#publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
+.messages{flex:1;overflow-y:auto;padding:5px;border-radius:6px;background:#111;margin-bottom:5px;}
+.msg{background:#222;margin:5px;padding:5px;border-radius:6px;position:relative;animation:fade .3s;}
+.msg .reactions span{cursor:pointer;margin-left:5px;}
+.msg .reply-box{background:#333;padding:3px;font-size:12px;color:#fff3cd;margin-bottom:3px;border-radius:3px;}
+.chat-input{display:flex;}
+.chat-input input{flex:1;padding:10px;border-radius:6px;border:none;margin-right:5px;}
+.chat-input button{padding:10px;border:none;border-radius:6px;background:#00aaff;color:white;cursor:pointer;}
+#privateBtn,#backBtn{padding:15px;margin:5px;border:none;border-radius:8px;background:#0d6efd;color:white;font-size:16px;cursor:pointer;}
 .sidebar{width:250px;background:#111;border-right:1px solid #444;display:flex;flex-direction:column;overflow-y:auto;}
 .sidebar h3{margin:5px;padding:5px;border-bottom:1px solid #444;}
 .sidebar .userItem{padding:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
 .sidebar .userItem:hover{background:#0d6efd;}
 .online-dot{width:10px;height:10px;border-radius:50%;background:#0f0;display:inline-block;margin-left:5px;}
-.main{flex:1;padding:10px;display:flex;flex-direction:column;}
-.chat-input{display:flex;}
-.chat-input input{flex:1;padding:10px;border-radius:6px;border:none;margin-right:5px;}
-.chat-input button{padding:10px;border:none;border-radius:6px;background:#00aaff;color:white;cursor:pointer;}
-.messages{flex:1;overflow-y:auto;margin-bottom:5px;padding:5px;border-radius:6px;background:#111;}
-.msg{background:#222;margin:5px;padding:5px;border-radius:6px;position:relative;animation:fade .3s;}
-.msg .reactions span{cursor:pointer;margin-left:5px;}
-.msg .reply-box{background:#333;padding:3px;font-size:12px;color:#fff3cd;margin-bottom:3px;border-radius:3px;}
+.privateChatWindow{flex:1;display:flex;flex-direction:column;}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
 <body>
 
-<div class="sidebar">
-  <h3>چت خصوصی</h3>
-  <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:5px;border-radius:5px;border:none;">
-  <div id="privateUserList"></div>
-</div>
-
-<div class="main">
-  <div id="displayNameDiv">👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
+<!-- ==== Public View ==== -->
+<div id="publicView">
+  <div>👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
   <div id="typingStatus" style="font-size:12px;color:#aaa;"></div>
   <div class="messages" id="messagesPublic"></div>
   <div class="chat-input">
     <input id="text" placeholder="پیام عمومی...">
     <button onclick="sendPublicMessage()">ارسال</button>
+  </div>
+  <button id="privateBtn">💬 چت خصوصی</button>
+</div>
+
+<!-- ==== Private View ==== -->
+<div id="privateView" style="display:none;flex:1;flex-direction:row;">
+  <div class="sidebar">
+    <h3>چت خصوصی</h3>
+    <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:5px;border-radius:5px;border:none;">
+    <div id="privateUserList"></div>
+    <button id="backBtn">بازگشت به عمومی</button>
+  </div>
+  <div class="privateChatWindow">
+    <div id="privateChatContainer" style="flex:1;display:flex;flex-direction:column;">
+      <div class="messages" id="privateMessages"></div>
+      <div class="chat-input">
+        <input id="privateText" placeholder="پیام خصوصی...">
+        <button onclick="sendPrivateMessage()">ارسال</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -78,7 +95,19 @@ typingRef.onSnapshot(snap=>{
   document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
 });
 
-// ===== Online Users =====
+// ===== Private View Toggle =====
+const publicView=document.getElementById("publicView");
+const privateView=document.getElementById("privateView");
+document.getElementById("privateBtn").onclick=()=>{
+  publicView.style.display="none";
+  privateView.style.display="flex";
+}
+document.getElementById("backBtn").onclick=()=>{
+  publicView.style.display="flex";
+  privateView.style.display="none";
+}
+
+// ===== Online Users & Search =====
 let usersCache=[];
 usersRef.onSnapshot(snap=>{
   usersCache=[];
@@ -93,7 +122,6 @@ usersRef.onSnapshot(snap=>{
   renderPrivateUsers(usersCache);
 });
 
-// ===== Render Private Users =====
 function renderPrivateUsers(users){
   const listDiv=document.getElementById("privateUserList");
   listDiv.innerHTML="";
@@ -101,66 +129,46 @@ function renderPrivateUsers(users){
     const div=document.createElement("div");
     div.className="userItem";
     div.innerHTML=`<span>${u.name}</span>${u.online?'<span class="online-dot"></span>':''}`;
-    div.onclick=()=>openPrivateChat(u.id,u.name);
+    div.onclick=()=>selectPrivateUser(u.id,u.name);
     listDiv.appendChild(div);
   });
 }
 
-// ===== Search Private Users =====
 document.getElementById("privateSearch").addEventListener("input",()=>{
   const q=document.getElementById("privateSearch").value.toLowerCase();
   const filtered=usersCache.filter(u=>u.name.toLowerCase().includes(q));
   renderPrivateUsers(filtered);
 });
 
-// ===== Private Chat Windows =====
-let privateChats={};
-function openPrivateChat(otherId,otherName){
-  if(privateChats[otherId]) return;
-  const div=document.createElement("div");
-  div.className="privateChatWindow";
-  div.style.bottom=Object.keys(privateChats).length*320+"px";
-  div.innerHTML=`
-    <div class="header">${otherName} <span style="cursor:pointer" onclick="closePrivateChat('${otherId}')">✖</span></div>
-    <div class="messages" id="chatMsgs_${otherId}"></div>
-    <input id="chatInput_${otherId}" placeholder="پیام...">
-    <button onclick="sendPrivateMessage('${otherId}')">ارسال</button>
-  `;
-  document.body.appendChild(div);
-  privateChats[otherId]=div;
+// ===== Private Chat =====
+let selectedPrivateUser=null;
+function selectPrivateUser(id,name){
+  selectedPrivateUser={id,name};
+  loadPrivateMessages();
+}
 
-  // Load messages
+function loadPrivateMessages(){
+  const box=document.getElementById("privateMessages");
+  if(!selectedPrivateUser) return;
   messagesRef.orderBy("time").onSnapshot(snapshot=>{
-    const box=document.getElementById(`chatMsgs_${otherId}`);
-    if(!box) return;
     box.innerHTML="";
     snapshot.forEach(docSnap=>{
       const m=docSnap.data();
-      if((m.userId===userId && m.receiverId===otherId) || (m.userId===otherId && m.receiverId===userId)){
+      if((m.userId===userId && m.receiverId===selectedPrivateUser.id) || (m.userId===selectedPrivateUser.id && m.receiverId===userId)){
         const msgDiv=document.createElement("div");
         msgDiv.className="msg";
-        let replyHTML="";
-        if(m.replyTo){
-          const replyDoc=snapshot.docs.find(d=>d.id===m.replyTo);
-          if(replyDoc) replyHTML=`<div class="reply-box">↪ پاسخ به ${replyDoc.data().name}: ${replyDoc.data().text}</div>`;
-        }
-        msgDiv.innerHTML=replyHTML+`${m.name}: ${m.text} ${m.seen?"✅":""}`;
+        msgDiv.innerText=`${m.name}: ${m.text} ${m.seen?"✅":""}`;
         // Reactions
-        let reactionsHTML=`<div class="reactions">
-          ❤️ ${m.reactions?.heart?.length||0} 
-          👍 ${m.reactions?.like?.length||0}
-        </div>`;
+        let reactionsHTML=`<div class="reactions">❤️ ${m.reactions?.heart?.length||0} 👍 ${m.reactions?.like?.length||0}</div>`;
         msgDiv.innerHTML+=reactionsHTML;
-
-        // Delete/Edit only own messages
+        // Delete & Reply
         if(m.userId===userId){
           const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
-          const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById(`chatInput_${otherId}`).value=`↪ ${m.text} `;
+          const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("privateText").value=`↪ ${m.text} `;
           msgDiv.appendChild(del); msgDiv.appendChild(reply);
         }
         box.appendChild(msgDiv);
         box.scrollTop=box.scrollHeight;
-
         // Seen
         if(m.receiverId===userId && !m.seen) messagesRef.doc(docSnap.id).update({seen:true});
       }
@@ -168,22 +176,16 @@ function openPrivateChat(otherId,otherName){
   });
 }
 
-function closePrivateChat(otherId){
-  const div=privateChats[otherId];
-  if(div) div.remove();
-  delete privateChats[otherId];
-}
-
-// ===== Send Private Message =====
-function sendPrivateMessage(otherId){
-  const input=document.getElementById(`chatInput_${otherId}`);
+function sendPrivateMessage(){
+  if(!selectedPrivateUser) return alert("کاربر را انتخاب کنید");
+  const input=document.getElementById("privateText");
   const text=input.value.trim();
   if(!text) return;
   messagesRef.add({
     name:username,
     text,
     userId,
-    receiverId:otherId,
+    receiverId:selectedPrivateUser.id,
     reactions:{heart:[],like:[]},
     replyTo:null,
     time:firebase.firestore.FieldValue.serverTimestamp(),
@@ -201,19 +203,10 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     if(!m.receiverId){
       const div=document.createElement("div");
       div.className="msg";
-      let replyHTML="";
-      if(m.replyTo){
-        const replyDoc=snapshot.docs.find(d=>d.id===m.replyTo);
-        if(replyDoc) replyHTML=`<div class="reply-box">↪ پاسخ به ${replyDoc.data().name}: ${replyDoc.data().text}</div>`;
-      }
-      div.innerHTML=replyHTML+`${m.name}: ${m.text}`;
-      // Reactions
-      let reactionsHTML=`<div class="reactions">
-          ❤️ ${m.reactions?.heart?.length||0} 
-          👍 ${m.reactions?.like?.length||0}
-      </div>`;
+      div.innerText=`${m.name}: ${m.text}`;
+      // Reactions/Delete/Reply
+      let reactionsHTML=`<div class="reactions">❤️ ${m.reactions?.heart?.length||0} 👍 ${m.reactions?.like?.length||0}</div>`;
       div.innerHTML+=reactionsHTML;
-      // Delete/Edit
       if(m.userId===userId){
         const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
         const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("text").value=`↪ ${m.text} `;
@@ -253,4 +246,4 @@ function changeName(){
 }
 </script>
 </body>
-</html>
+  </html>
