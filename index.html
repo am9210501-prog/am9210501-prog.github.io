@@ -3,54 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - جامع</title>
+<title>IRN Chat Pro - کامل</title>
 <style>
-body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;}
-.top-bar{background:#0d6efd;padding:10px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:14px}
-.top-bar button{background:white;color:#0d6efd;border:none;padding:5px 8px;border-radius:5px;cursor:pointer;margin-left:5px}
-.chat{max-width:700px;margin:auto;padding:10px}
-.msg{background:#222;margin:8px;padding:10px;border-radius:10px;position:relative;animation:fade .3s}
-.msg small{color:#aaa;font-size:12px}
-.reactions span{margin-left:8px;cursor:pointer}
-input,button{padding:10px;margin:5px;border:none;border-radius:6px}
-button{background:#00aaff;color:white;cursor:pointer}
-.reply-box{background:#333;padding:5px;margin-bottom:5px;border-radius:5px;font-size:12px;color:#fff3cd}
-#typingStatus{font-size:12px;color:#aaa;margin-bottom:5px}
-#onlineUsers{font-size:12px;color:#0f0;margin-bottom:5px}
-#messagesPublic{max-height:300px;overflow-y:auto;padding:5px;border-radius:5px;margin-bottom:10px;background:#111;}
-#searchResults div{padding:8px;border-bottom:1px solid #444;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
-#searchResults div:hover{background:#0d6efd;}
-.privateChatWindow{position:fixed;bottom:0;right:20px;width:300px;background:#111;border:1px solid #444;border-radius:6px;display:flex;flex-direction:column;z-index:100;}
-.privateChatWindow .header{background:#0d6efd;padding:5px;color:white;cursor:move;display:flex;justify-content:space-between;}
-.privateChatWindow .messages{flex:1;overflow-y:auto;padding:5px;}
-.privateChatWindow input{border-radius:0;margin:0;}
+body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;display:flex;}
+.sidebar{width:250px;background:#111;border-right:1px solid #444;display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar h3{margin:5px;padding:5px;border-bottom:1px solid #444;}
+.sidebar .userItem{padding:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.sidebar .userItem:hover{background:#0d6efd;}
+.online-dot{width:10px;height:10px;border-radius:50%;background:#0f0;display:inline-block;margin-left:5px;}
+.main{flex:1;padding:10px;display:flex;flex-direction:column;}
+.chat-input{display:flex;}
+.chat-input input{flex:1;padding:10px;border-radius:6px;border:none;margin-right:5px;}
+.chat-input button{padding:10px;border:none;border-radius:6px;background:#00aaff;color:white;cursor:pointer;}
+.messages{flex:1;overflow-y:auto;margin-bottom:5px;padding:5px;border-radius:6px;background:#111;}
+.msg{background:#222;margin:5px;padding:5px;border-radius:6px;position:relative;animation:fade .3s;}
+.msg .reactions span{cursor:pointer;margin-left:5px;}
+.msg .reply-box{background:#333;padding:3px;font-size:12px;color:#fff3cd;margin-bottom:3px;border-radius:3px;}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
-.online-dot{height:10px;width:10px;background:#0f0;border-radius:50%;display:inline-block;margin-left:5px;}
 </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <span>👤 <strong id="displayName"></strong></span>
-  <div>
-    <button onclick="changeName()">تغییر نام</button>
-  </div>
+<div class="sidebar">
+  <h3>چت خصوصی</h3>
+  <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:5px;border-radius:5px;border:none;">
+  <div id="privateUserList"></div>
 </div>
 
-<div class="chat">
-  <div id="onlineUsers"></div>
-  <div id="typingStatus"></div>
-  <div id="replyBox"></div>
-
-  <input id="text" placeholder="پیام عمومی...">
-  <button onclick="sendMessage()">ارسال</button>
-
-  <h3>پیام‌های عمومی</h3>
-  <div id="messagesPublic"></div>
-
-  <h3>پیام خصوصی</h3>
-  <input id="userSearch" placeholder="جستجوی کاربر برای چت خصوصی">
-  <div id="searchResults"></div>
+<div class="main">
+  <div id="displayNameDiv">👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
+  <div id="typingStatus" style="font-size:12px;color:#aaa;"></div>
+  <div class="messages" id="messagesPublic"></div>
+  <div class="chat-input">
+    <input id="text" placeholder="پیام عمومی...">
+    <button onclick="sendPublicMessage()">ارسال</button>
+  </div>
 </div>
 
 <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
@@ -59,7 +46,7 @@ button{background:#00aaff;color:white;cursor:pointer}
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
 <script>
-// ====== Firebase Config ======
+// ===== Firebase Setup =====
 const firebaseConfig = {
   apiKey: "YOUR_KEY",
   authDomain: "irn-chat.firebaseapp.com",
@@ -71,22 +58,16 @@ const messagesRef = db.collection("messages");
 const usersRef = db.collection("users");
 const typingRef = db.collection("typing");
 
-// ====== User Setup ======
+// ===== User Setup =====
 let userId = localStorage.getItem("userId");
-if(!userId){
-  userId = Math.random().toString(36).substr(2,9);
-  localStorage.setItem("userId", userId);
-}
+if(!userId){ userId=Math.random().toString(36).substr(2,9); localStorage.setItem("userId",userId);}
 let username = localStorage.getItem("chatName");
-if(!username){
-  username = prompt("نام خود را وارد کنید") || "کاربر ناشناس";
-  localStorage.setItem("chatName", username);
-}
-document.getElementById("displayName").innerText = username;
+if(!username){ username=prompt("نام خود را وارد کنید") || "کاربر ناشناس"; localStorage.setItem("chatName",username);}
+document.getElementById("displayName").innerText=username;
 usersRef.doc(userId).set({name:username, online:true});
-window.addEventListener("beforeunload", ()=>usersRef.doc(userId).update({online:false}));
+window.addEventListener("beforeunload",()=>usersRef.doc(userId).update({online:false}));
 
-// ====== Typing Status ======
+// ===== Typing Status =====
 document.getElementById("text").addEventListener("input", ()=>{
   typingRef.doc(userId).set({name:username});
   setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
@@ -97,87 +78,106 @@ typingRef.onSnapshot(snap=>{
   document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
 });
 
-// ====== Online Users ======
+// ===== Online Users =====
+let usersCache=[];
 usersRef.onSnapshot(snap=>{
-  let html="";
+  usersCache=[];
+  const listDiv=document.getElementById("privateUserList");
+  listDiv.innerHTML="";
   snap.forEach(u=>{
-    const data = u.data();
-    if(data.online) html+=data.name+" ";
+    if(u.id!==userId){
+      const data=u.data();
+      usersCache.push({id:u.id,name:data.name,online:data.online});
+    }
   });
-  document.getElementById("onlineUsers").innerText="آنلاین: "+html;
+  renderPrivateUsers(usersCache);
 });
 
-// ====== Search & Private Chat ======
-const searchInput = document.getElementById("userSearch");
-const resultsBox = document.getElementById("searchResults");
-let usersCache = [];
-let privateChats = {}; // نگهداری پنجره‌های چت خصوصی
-
-usersRef.onSnapshot(snap=>{
-  usersCache = [];
-  snap.forEach(u=>{
-    if(u.id !== userId) usersCache.push({id:u.id, name:u.data().name, online:u.data().online});
-  });
-});
-
-searchInput.addEventListener("input", ()=>{
-  const q = searchInput.value.trim().toLowerCase();
-  resultsBox.innerHTML="";
-  if(!q) return;
-  usersCache.filter(u=>u.name.toLowerCase().includes(q)).forEach(u=>{
+// ===== Render Private Users =====
+function renderPrivateUsers(users){
+  const listDiv=document.getElementById("privateUserList");
+  listDiv.innerHTML="";
+  users.forEach(u=>{
     const div=document.createElement("div");
+    div.className="userItem";
     div.innerHTML=`<span>${u.name}</span>${u.online?'<span class="online-dot"></span>':''}`;
     div.onclick=()=>openPrivateChat(u.id,u.name);
-    resultsBox.appendChild(div);
+    listDiv.appendChild(div);
   });
+}
+
+// ===== Search Private Users =====
+document.getElementById("privateSearch").addEventListener("input",()=>{
+  const q=document.getElementById("privateSearch").value.toLowerCase();
+  const filtered=usersCache.filter(u=>u.name.toLowerCase().includes(q));
+  renderPrivateUsers(filtered);
 });
 
-// ====== Open Private Chat Window ======
+// ===== Private Chat Windows =====
+let privateChats={};
 function openPrivateChat(otherId,otherName){
-  if(privateChats[otherId]) return; // اگر باز است
-  const chatDiv = document.createElement("div");
-  chatDiv.className="privateChatWindow";
-  chatDiv.innerHTML=`
+  if(privateChats[otherId]) return;
+  const div=document.createElement("div");
+  div.className="privateChatWindow";
+  div.style.bottom=Object.keys(privateChats).length*320+"px";
+  div.innerHTML=`
     <div class="header">${otherName} <span style="cursor:pointer" onclick="closePrivateChat('${otherId}')">✖</span></div>
     <div class="messages" id="chatMsgs_${otherId}"></div>
-    <input placeholder="پیام..." id="chatInput_${otherId}">
+    <input id="chatInput_${otherId}" placeholder="پیام...">
     <button onclick="sendPrivateMessage('${otherId}')">ارسال</button>
   `;
-  document.body.appendChild(chatDiv);
-  privateChats[otherId]=chatDiv;
+  document.body.appendChild(div);
+  privateChats[otherId]=div;
 
-  // لود پیام‌های خصوصی
+  // Load messages
   messagesRef.orderBy("time").onSnapshot(snapshot=>{
-    const box = document.getElementById(`chatMsgs_${otherId}`);
+    const box=document.getElementById(`chatMsgs_${otherId}`);
     if(!box) return;
     box.innerHTML="";
     snapshot.forEach(docSnap=>{
-      const m = docSnap.data();
-      if(m.receiverId === otherId || m.userId === otherId){
-        const div = document.createElement("div");
-        div.className="msg";
-        div.innerText = `${m.name}: ${m.text}${m.seen?" ✅":""}`;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
-        // Seen
-        if(m.receiverId === userId && !m.seen){
-          messagesRef.doc(docSnap.id).update({seen:true});
+      const m=docSnap.data();
+      if((m.userId===userId && m.receiverId===otherId) || (m.userId===otherId && m.receiverId===userId)){
+        const msgDiv=document.createElement("div");
+        msgDiv.className="msg";
+        let replyHTML="";
+        if(m.replyTo){
+          const replyDoc=snapshot.docs.find(d=>d.id===m.replyTo);
+          if(replyDoc) replyHTML=`<div class="reply-box">↪ پاسخ به ${replyDoc.data().name}: ${replyDoc.data().text}</div>`;
         }
+        msgDiv.innerHTML=replyHTML+`${m.name}: ${m.text} ${m.seen?"✅":""}`;
+        // Reactions
+        let reactionsHTML=`<div class="reactions">
+          ❤️ ${m.reactions?.heart?.length||0} 
+          👍 ${m.reactions?.like?.length||0}
+        </div>`;
+        msgDiv.innerHTML+=reactionsHTML;
+
+        // Delete/Edit only own messages
+        if(m.userId===userId){
+          const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
+          const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById(`chatInput_${otherId}`).value=`↪ ${m.text} `;
+          msgDiv.appendChild(del); msgDiv.appendChild(reply);
+        }
+        box.appendChild(msgDiv);
+        box.scrollTop=box.scrollHeight;
+
+        // Seen
+        if(m.receiverId===userId && !m.seen) messagesRef.doc(docSnap.id).update({seen:true});
       }
     });
   });
 }
 
 function closePrivateChat(otherId){
-  const chatDiv = privateChats[otherId];
-  if(chatDiv) chatDiv.remove();
+  const div=privateChats[otherId];
+  if(div) div.remove();
   delete privateChats[otherId];
 }
 
-// ====== Send Private Message ======
+// ===== Send Private Message =====
 function sendPrivateMessage(otherId){
-  const input = document.getElementById(`chatInput_${otherId}`);
-  const text = input.value.trim();
+  const input=document.getElementById(`chatInput_${otherId}`);
+  const text=input.value.trim();
   if(!text) return;
   messagesRef.add({
     name:username,
@@ -186,30 +186,47 @@ function sendPrivateMessage(otherId){
     receiverId:otherId,
     reactions:{heart:[],like:[]},
     replyTo:null,
-    time: firebase.firestore.FieldValue.serverTimestamp(),
+    time:firebase.firestore.FieldValue.serverTimestamp(),
     seen:false
   });
   input.value="";
 }
 
-// ====== Public Messages ======
+// ===== Public Messages =====
 messagesRef.orderBy("time").onSnapshot(snapshot=>{
   const box=document.getElementById("messagesPublic");
   box.innerHTML="";
   snapshot.forEach(docSnap=>{
-    const m = docSnap.data();
-    const div=document.createElement("div");
-    div.className="msg";
+    const m=docSnap.data();
     if(!m.receiverId){
-      div.innerHTML=`<b>${m.name}</b>: ${m.text}`;
+      const div=document.createElement("div");
+      div.className="msg";
+      let replyHTML="";
+      if(m.replyTo){
+        const replyDoc=snapshot.docs.find(d=>d.id===m.replyTo);
+        if(replyDoc) replyHTML=`<div class="reply-box">↪ پاسخ به ${replyDoc.data().name}: ${replyDoc.data().text}</div>`;
+      }
+      div.innerHTML=replyHTML+`${m.name}: ${m.text}`;
+      // Reactions
+      let reactionsHTML=`<div class="reactions">
+          ❤️ ${m.reactions?.heart?.length||0} 
+          👍 ${m.reactions?.like?.length||0}
+      </div>`;
+      div.innerHTML+=reactionsHTML;
+      // Delete/Edit
+      if(m.userId===userId){
+        const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
+        const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("text").value=`↪ ${m.text} `;
+        div.appendChild(del); div.appendChild(reply);
+      }
       box.prepend(div);
     }
   });
 });
 
-// ====== Send Public Message ======
-function sendMessage(){
-  const text = document.getElementById("text").value.trim();
+// ===== Send Public Message =====
+function sendPublicMessage(){
+  const text=document.getElementById("text").value.trim();
   if(!text) return alert("پیام وارد نشده");
   messagesRef.add({
     name:username,
@@ -218,13 +235,13 @@ function sendMessage(){
     receiverId:null,
     reactions:{heart:[],like:[]},
     replyTo:null,
-    time: firebase.firestore.FieldValue.serverTimestamp(),
+    time:firebase.firestore.FieldValue.serverTimestamp(),
     seen:false
   });
   document.getElementById("text").value="";
 }
 
-// ====== Change Name ======
+// ===== Change Name =====
 function changeName(){
   const n=prompt("نام جدید:");
   if(n){
@@ -235,6 +252,5 @@ function changeName(){
   }
 }
 </script>
-
 </body>
 </html>
