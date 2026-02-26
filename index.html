@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - دو صفحه‌ای</title>
+<title>IRN Chat Pro پایدار</title>
 <style>
 body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;display:flex;flex-direction:column;height:100vh;}
 #publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
@@ -98,14 +98,8 @@ typingRef.onSnapshot(snap=>{
 // ===== Private View Toggle =====
 const publicView=document.getElementById("publicView");
 const privateView=document.getElementById("privateView");
-document.getElementById("privateBtn").onclick=()=>{
-  publicView.style.display="none";
-  privateView.style.display="flex";
-}
-document.getElementById("backBtn").onclick=()=>{
-  publicView.style.display="flex";
-  privateView.style.display="none";
-}
+document.getElementById("privateBtn").onclick=()=>{publicView.style.display="none";privateView.style.display="flex";}
+document.getElementById("backBtn").onclick=()=>{publicView.style.display="flex";privateView.style.display="none";}
 
 // ===== Online Users & Search =====
 let usersCache=[];
@@ -121,7 +115,6 @@ usersRef.onSnapshot(snap=>{
   });
   renderPrivateUsers(usersCache);
 });
-
 function renderPrivateUsers(users){
   const listDiv=document.getElementById("privateUserList");
   listDiv.innerHTML="";
@@ -133,7 +126,6 @@ function renderPrivateUsers(users){
     listDiv.appendChild(div);
   });
 }
-
 document.getElementById("privateSearch").addEventListener("input",()=>{
   const q=document.getElementById("privateSearch").value.toLowerCase();
   const filtered=usersCache.filter(u=>u.name.toLowerCase().includes(q));
@@ -157,10 +149,12 @@ function loadPrivateMessages(){
       if((m.userId===userId && m.receiverId===selectedPrivateUser.id) || (m.userId===selectedPrivateUser.id && m.receiverId===userId)){
         const msgDiv=document.createElement("div");
         msgDiv.className="msg";
-        msgDiv.innerText=`${m.name}: ${m.text} ${m.seen?"✅":""}`;
+        msgDiv.innerHTML=`${m.name}: ${m.text}`;
         // Reactions
-        let reactionsHTML=`<div class="reactions">❤️ ${m.reactions?.heart?.length||0} 👍 ${m.reactions?.like?.length||0}</div>`;
-        msgDiv.innerHTML+=reactionsHTML;
+        const reactionDiv=document.createElement("div");reactionDiv.className="reactions";
+        const heart=document.createElement("span");heart.textContent=`❤️ ${m.reactions?.heart?.length||0}`;heart.style.cursor="pointer";heart.onclick=()=>toggleReaction(docSnap.id,'heart');
+        const like=document.createElement("span");like.textContent=`👍 ${m.reactions?.like?.length||0}`;like.style.cursor="pointer";like.onclick=()=>toggleReaction(docSnap.id,'like');
+        reactionDiv.appendChild(heart);reactionDiv.appendChild(like);msgDiv.appendChild(reactionDiv);
         // Delete & Reply
         if(m.userId===userId){
           const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
@@ -203,10 +197,11 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     if(!m.receiverId){
       const div=document.createElement("div");
       div.className="msg";
-      div.innerText=`${m.name}: ${m.text}`;
-      // Reactions/Delete/Reply
-      let reactionsHTML=`<div class="reactions">❤️ ${m.reactions?.heart?.length||0} 👍 ${m.reactions?.like?.length||0}</div>`;
-      div.innerHTML+=reactionsHTML;
+      div.innerHTML=`${m.name}: ${m.text}`;
+      const reactionDiv=document.createElement("div");reactionDiv.className="reactions";
+      const heart=document.createElement("span");heart.textContent=`❤️ ${m.reactions?.heart?.length||0}`;heart.style.cursor="pointer";heart.onclick=()=>toggleReaction(docSnap.id,'heart');
+      const like=document.createElement("span");like.textContent=`👍 ${m.reactions?.like?.length||0}`;like.style.cursor="pointer";like.onclick=()=>toggleReaction(docSnap.id,'like');
+      reactionDiv.appendChild(heart);reactionDiv.appendChild(like);div.appendChild(reactionDiv);
       if(m.userId===userId){
         const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
         const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("text").value=`↪ ${m.text} `;
@@ -234,16 +229,26 @@ function sendPublicMessage(){
   document.getElementById("text").value="";
 }
 
+// ===== Toggle Reactions =====
+function toggleReaction(msgId,type){
+  messagesRef.doc(msgId).get().then(docSnap=>{
+    const data=docSnap.data();
+    if(!data.reactions) data.reactions={heart:[],like:[]};
+    const arr=data.reactions[type];
+    const idx=arr.indexOf(userId);
+    if(idx===-1) arr.push(userId); else arr.splice(idx,1);
+    messagesRef.doc(msgId).update({reactions:data.reactions});
+  });
+}
+
 // ===== Change Name =====
 function changeName(){
   const n=prompt("نام جدید:");
-  if(n){
-    username=n;
-    localStorage.setItem("chatName",n);
-    document.getElementById("displayName").innerText=n;
-    usersRef.doc(userId).update({name:n});
-  }
+  if(n){ username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n});}
 }
+
+// ===== Notifications =====
+if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
 </script>
 </body>
-  </html>
+</html>
