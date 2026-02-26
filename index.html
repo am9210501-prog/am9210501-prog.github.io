@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - پایدار با شمارنده لحظه‌ای</title>
+<title>IRN Chat Pro پایدار</title>
 <style>
 body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;display:flex;flex-direction:column;height:100vh;}
 #publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
@@ -20,8 +20,8 @@ body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;displa
 .sidebar .userItem{padding:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
 .sidebar .userItem:hover{background:#0d6efd;}
 .online-dot{width:10px;height:10px;border-radius:50%;background:#0f0;display:inline-block;margin-left:5px;}
-.unread-count{background:red;color:white;border-radius:50%;padding:2px 6px;margin-left:5px;font-size:12px;}
 .privateChatWindow{flex:1;display:flex;flex-direction:column;}
+#privateUnread{color:#ff0;margin-left:5px;}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
@@ -36,7 +36,7 @@ body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;displa
     <input id="text" placeholder="پیام عمومی...">
     <button onclick="sendPublicMessage()">ارسال</button>
   </div>
-  <button id="privateBtn">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count" style="display:none">0</span></button>
+  <button id="privateBtn">💬 چت خصوصی <span id="privateUnread">(0)</span></button>
 </div>
 
 <!-- ==== Private View ==== -->
@@ -99,8 +99,8 @@ typingRef.onSnapshot(snap=>{
 // ===== Private View Toggle =====
 const publicView=document.getElementById("publicView");
 const privateView=document.getElementById("privateView");
-document.getElementById("privateBtn").onclick=()=>{publicView.style.display="none";privateView.style.display="flex";clearUnread();};
-document.getElementById("backBtn").onclick=()=>{publicView.style.display="flex";privateView.style.display="none";};
+document.getElementById("privateBtn").onclick=()=>{publicView.style.display="none";privateView.style.display="flex";}
+document.getElementById("backBtn").onclick=()=>{publicView.style.display="flex";privateView.style.display="none";}
 
 // ===== Online Users & Search =====
 let usersCache=[];
@@ -137,6 +137,17 @@ document.getElementById("privateSearch").addEventListener("input",()=>{
 let selectedPrivateUser=null;
 function selectPrivateUser(id,name){
   selectedPrivateUser={id,name};
+
+  // --- Mark all messages from this user as seen immediately ---
+  messagesRef
+    .where("receiverId","==",userId)
+    .where("userId","==",id)
+    .where("seen","==",false)
+    .get()
+    .then(snap=>{
+      snap.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); });
+    });
+
   loadPrivateMessages();
 }
 
@@ -145,39 +156,27 @@ function loadPrivateMessages(){
   if(!selectedPrivateUser) return;
   messagesRef.orderBy("time").onSnapshot(snapshot=>{
     box.innerHTML="";
-    let unreadUpdated=false;
     snapshot.forEach(docSnap=>{
       const m=docSnap.data();
-      const isPrivate = (m.userId===userId && m.receiverId===selectedPrivateUser.id) || (m.userId===selectedPrivateUser.id && m.receiverId===userId);
-      if(isPrivate){
+      if((m.userId===userId && m.receiverId===selectedPrivateUser.id) || (m.userId===selectedPrivateUser.id && m.receiverId===userId)){
         const msgDiv=document.createElement("div");
         msgDiv.className="msg";
         msgDiv.innerHTML=`${m.name}: ${m.text}`;
-
         // Reactions
         const reactionDiv=document.createElement("div");reactionDiv.className="reactions";
         const heart=document.createElement("span");heart.textContent=`❤️ ${m.reactions?.heart?.length||0}`;heart.style.cursor="pointer";heart.onclick=()=>toggleReaction(docSnap.id,'heart');
         const like=document.createElement("span");like.textContent=`👍 ${m.reactions?.like?.length||0}`;like.style.cursor="pointer";like.onclick=()=>toggleReaction(docSnap.id,'like');
         reactionDiv.appendChild(heart);reactionDiv.appendChild(like);msgDiv.appendChild(reactionDiv);
-
         // Delete & Reply
         if(m.userId===userId){
           const del=document.createElement("button"); del.textContent="❌"; del.onclick=()=>messagesRef.doc(docSnap.id).delete();
           const reply=document.createElement("button"); reply.textContent="↩️"; reply.onclick=()=>document.getElementById("privateText").value=`↪ ${m.text} `;
           msgDiv.appendChild(del); msgDiv.appendChild(reply);
         }
-
         box.appendChild(msgDiv);
         box.scrollTop=box.scrollHeight;
-
-        // فوراً علامت خوانده شدن لحظه‌ای
-        if(m.receiverId===userId && !m.seen){
-          messagesRef.doc(docSnap.id).update({seen:true});
-          unreadUpdated=true;
-        }
       }
     });
-    if(unreadUpdated) clearUnread();
   });
 }
 
@@ -258,22 +257,13 @@ function changeName(){
   if(n){ username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n});}
 }
 
-// ===== Notifications =====
+// ===== Notifications & Unread Count =====
 if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
-
-// ===== Unread Counter =====
-function updateUnread(){
-  messagesRef.where("receiverId","!=",null).where("receiverId","==",userId).where("seen","==",false)
-    .onSnapshot(snap=>{
-      const count=snap.size;
-      const counter=document.getElementById("unreadPrivateCount");
-      if(count>0){ counter.style.display="inline-block"; counter.innerText=count;} 
-      else counter.style.display="none";
-  });
-}
-function clearUnread(){document.getElementById("unreadPrivateCount").style.display="none";}
-updateUnread();
-
+let unreadPrivateCount=0;
+messagesRef.where("receiverId","==",userId).where("seen","==",false).onSnapshot(snap=>{
+  unreadPrivateCount = snap.size;
+  document.getElementById("privateUnread").innerText = `(${unreadPrivateCount})`;
+});
 </script>
 </body>
   </html>
