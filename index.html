@@ -3,19 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - پیشرفته</title>
+<title>IRN Chat Pro - با حذف و ریپلای</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
-
 body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;color:white;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
-
-#loadingScreen{
-  position:fixed;top:0;left:0;width:100%;height:100%;background:#0b1a2f;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;
-}
+#loadingScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0b1a2f;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;}
 #loadingScreen h1{font-size:32px;margin:10px;text-align:center;}
 #loadingScreen p{font-size:18px;color:#aaa;margin-top:5px;text-align:center;}
-
-/* ==== Chat Styles ==== */
 #publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
 .messages{flex:1;overflow-y:auto;padding:5px;border-radius:6px;background:#111;margin-bottom:5px;}
 .msg{background:#222;margin:5px;padding:5px;border-radius:6px;position:relative;animation:fade .3s;display:flex;justify-content:space-between;align-items:center;}
@@ -35,18 +29,17 @@ body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;
 .ticks{margin-left:5px;font-size:12px;color:#0f0;}
 .sent{color:#aaa;}
 .seen{color:#0f0;}
+.msg button{margin-left:5px;background:#555;color:white;border:none;border-radius:3px;cursor:pointer;padding:2px 5px;font-size:12px;}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
 <body>
 
-<!-- ==== Loading Screen ==== -->
 <div id="loadingScreen">
   <h1>پیام‌رسانی ساده برای همه</h1>
   <p>«سرعت، امنیت، ارتباط»</p>
 </div>
 
-<!-- ==== Public View ==== -->
 <div id="publicView" style="display:none;">
   <div>👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
   <div id="typingStatus" style="font-size:12px;color:#aaa;"></div>
@@ -58,7 +51,6 @@ body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;
   <button id="privateBtn">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count" style="display:none">0</span></button>
 </div>
 
-<!-- ==== Private View ==== -->
 <div id="privateView" style="display:none;flex:1;flex-direction:row;">
   <div class="sidebar">
     <h3>چت خصوصی</h3>
@@ -83,7 +75,6 @@ body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
 <script>
-// ===== Firebase Setup =====
 const firebaseConfig = { apiKey:"YOUR_KEY", authDomain:"irn-chat.firebaseapp.com", projectId:"irn-chat" };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -91,7 +82,6 @@ const messagesRef = db.collection("messages");
 const usersRef = db.collection("users");
 const typingRef = db.collection("typing");
 
-// ===== User Setup =====
 let userId = localStorage.getItem("userId");
 if(!userId){ userId=Math.random().toString(36).substr(2,9); localStorage.setItem("userId",userId);}
 let username = localStorage.getItem("chatName");
@@ -100,12 +90,10 @@ document.getElementById("displayName").innerText=username;
 usersRef.doc(userId).set({name:username, online:true});
 window.addEventListener("beforeunload",()=>usersRef.doc(userId).update({online:false}));
 
-// ===== Loading Screen Hide =====
 window.addEventListener("load", ()=>{
   setTimeout(()=>{document.getElementById("loadingScreen").style.display="none"; document.getElementById("publicView").style.display="flex";},1500);
 });
 
-// ===== Typing Status =====
 document.getElementById("text").addEventListener("input", ()=>{
   typingRef.doc(userId).set({name:username});
   setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
@@ -116,7 +104,6 @@ typingRef.onSnapshot(snap=>{
   document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
 });
 
-// ===== Private View Toggle =====
 const publicView=document.getElementById("publicView");
 const privateView=document.getElementById("privateView");
 const unreadCounter = document.getElementById("unreadPrivateCount");
@@ -125,7 +112,6 @@ document.getElementById("privateBtn").onclick=()=>{
 };
 document.getElementById("backBtn").onclick=()=>{ publicView.style.display="flex"; privateView.style.display="none"; };
 
-// ===== Online Users & Unread =====
 let usersCache=[];
 usersRef.onSnapshot(snap=>{
   usersCache=[]; const listDiv=document.getElementById("privateUserList"); listDiv.innerHTML="";
@@ -135,8 +121,7 @@ usersRef.onSnapshot(snap=>{
 function renderPrivateUsers(users){
   const listDiv=document.getElementById("privateUserList"); listDiv.innerHTML="";
   users.forEach(u=>{
-    const div=document.createElement("div");
-    div.className="userItem"; div.id="userItem-"+u.id;
+    const div=document.createElement("div"); div.className="userItem"; div.id="userItem-"+u.id;
     div.innerHTML=`<span>${u.name}</span><span id="userUnread-${u.id}" class="unread-count" style="display:none">0</span>${u.online?'<span class="online-dot"></span>':''}`;
     div.onclick=()=>selectPrivateUser(u.id,u.name);
     listDiv.appendChild(div);
@@ -155,7 +140,6 @@ function updateUnreadPerUser(){
   });
 }
 
-// ===== Private Chat =====
 let selectedPrivateUser=null;
 function selectPrivateUser(id,name){ selectedPrivateUser={id,name}; loadPrivateMessages(); markMessagesAsReadFrom(id); }
 function loadPrivateMessages(){
@@ -167,22 +151,26 @@ function loadPrivateMessages(){
       const isPrivate=(m.userId===userId && m.receiverId===selectedPrivateUser.id)||(m.userId===selectedPrivateUser.id && m.receiverId===userId);
       if(isPrivate){
         const msgDiv=document.createElement("div"); msgDiv.className="msg";
-        let tick="";
-        if(m.userId===userId){ tick=m.seen?"<span class='ticks seen'>✔️</span>":"<span class='ticks sent'>✅</span>"; }
-        msgDiv.innerHTML=`<span>${m.name}: ${m.text}</span>${tick}`;
+        let tick=""; if(m.userId===userId){ tick=m.seen?"<span class='ticks seen'>✔️</span>":"<span class='ticks sent'>✅</span>"; }
+        let buttons="";
+        if(m.userId===userId){
+          buttons=`<button onclick="deleteMsg('${docSnap.id}')">❌</button>`;
+        }
+        buttons+=`<button onclick="replyMsg('${m.text}', ${m.userId===userId})">↩️</button>`;
+        msgDiv.innerHTML=`<span>${m.name}: ${m.text}</span>${tick}${buttons}`;
         box.appendChild(msgDiv); box.scrollTop=box.scrollHeight;
       }
     });
   });
 }
-function markMessagesAsReadFrom(senderId){
-  messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); });
+function deleteMsg(msgId){ messagesRef.doc(msgId).delete(); }
+function replyMsg(text,isMine){ 
+  const input = isMine ? document.getElementById("text") : document.getElementById("privateText");
+  input.value = `↪ ${text} `;
 }
-function markPrivateMessagesAsRead(){
-  messagesRef.where("receiverId","==",userId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); });
-}
+function markMessagesAsReadFrom(senderId){ messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); }); }
+function markPrivateMessagesAsRead(){ messagesRef.where("receiverId","==",userId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); }); }
 
-// ===== Send Messages =====
 function sendPrivateMessage(){
   if(!selectedPrivateUser) return alert("کاربر را انتخاب کنید");
   const input=document.getElementById("privateText"); const text=input.value.trim(); if(!text) return;
@@ -195,7 +183,10 @@ messagesRef.orderBy("time").onSnapshot(snapshot=>{
     const m=docSnap.data(); if(!m.receiverId){
       const div=document.createElement("div"); div.className="msg";
       let tick=""; if(m.userId===userId){ tick=m.seen?"<span class='ticks seen'>✔️</span>":"<span class='ticks sent'>✅</span>"; }
-      div.innerHTML=`<span>${m.name}: ${m.text}</span>${tick}`;
+      let buttons="";
+      if(m.userId===userId){ buttons=`<button onclick="deleteMsg('${docSnap.id}')">❌</button>`; }
+      buttons+=`<button onclick="replyMsg('${m.text}', true)">↩️</button>`;
+      div.innerHTML=`<span>${m.name}: ${m.text}</span>${tick}${buttons}`;
       box.prepend(div);
     }
   });
@@ -205,15 +196,9 @@ function sendPublicMessage(){
   messagesRef.add({ name:username,text,userId,receiverId:null,reactions:{heart:[],like:[]},replyTo:null,time:firebase.firestore.FieldValue.serverTimestamp(),seen:false });
   document.getElementById("text").value="";
 }
-
-// ===== Change Name =====
 function changeName(){ const n=prompt("نام جدید:"); if(n){ username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n}); } }
-
-// ===== Notifications =====
 if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
-
-// ===== Initialize Unread =====
 updateUnreadPerUser();
 </script>
 </body>
-  </html>
+</html>
