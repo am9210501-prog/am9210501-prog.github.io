@@ -3,71 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - نسخه نهایی کامل</title>
+<title>IRN Chat Pro - با حذف و ریپلای</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
-
-body, html {
-    margin:0; padding:0;
-    font-family:'Vazirmatn',tahoma;
-    background:#0b1a2f;
-    color:white;
-    height:100vh;
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-    font-size:14px;
-}
-
-#loadingScreen {
-    position:fixed; top:0; left:0; width:100%; height:100%;
-    background:#0b1a2f; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999;
-}
-#loadingScreen h1{font-size:28px;}
-#loadingScreen p{font-size:16px;color:#aaa;margin-top:8px;text-align:center;}
-
-#publicView,#privateView{
-    flex:1; display:flex; flex-direction:column; padding:10px; overflow:hidden; height:100%;
-}
-
-.messages{
-    flex:1; overflow-y:auto; padding:5px; margin-bottom:5px; background:#111; border-radius:6px;
-}
-
-.msg{
-    background:#222; margin:4px; padding:5px; border-radius:6px; position:relative;
-    display:flex; justify-content:space-between; align-items:center; font-size:13px;
-}
-
-.msg button{margin-left:4px; background:#555; color:white; border:none; border-radius:3px; cursor:pointer; padding:3px 5px; font-size:12px;}
-.ticks{margin-left:3px;font-size:12px;color:#0f0;}
-.sent{color:#aaa;}
-.seen{color:#0f0;}
-
-.chat-input{display:flex; margin-top:3px;}
-.chat-input input{flex:1;padding:7px;border-radius:5px;border:none;margin-right:4px;font-size:13px;}
-.chat-input button{padding:7px 8px;border:none;border-radius:5px;background:#00aaff;color:white;cursor:pointer;font-size:13px;}
-
-#privateBtn,#backBtn{padding:8px 10px;margin:3px 0;font-size:14px;border-radius:6px;background:#0d6efd;color:white;cursor:pointer;}
-
-.privateViewContainer{flex:1; display:flex; flex-direction:row; overflow:hidden; margin-top:5px;}
-
-.sidebar{
-    width:220px; background:#111; border-right:1px solid #444;
-    display:flex; flex-direction:column; overflow-y:auto; max-height:100%;
-}
-
-.sidebar h3{margin:5px;padding:5px;border-bottom:1px solid #444;font-size:14px;}
-.sidebar .userItem{padding:4px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:13px;}
+body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;color:white;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+#loadingScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0b1a2f;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;}
+#loadingScreen h1{font-size:32px;margin:10px;text-align:center;}
+#loadingScreen p{font-size:18px;color:#aaa;margin-top:5px;text-align:center;}
+#publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
+.messages{flex:1;overflow-y:auto;padding:5px;border-radius:6px;background:#111;margin-bottom:5px;}
+.msg{background:#222;margin:5px;padding:5px;border-radius:6px;position:relative;animation:fade .3s;display:flex;justify-content:space-between;align-items:center;}
+.msg .reactions span{cursor:pointer;margin-left:5px;}
+.msg .reply-box{background:#333;padding:3px;font-size:12px;color:#fff3cd;margin-bottom:3px;border-radius:3px;}
+.chat-input{display:flex;}
+.chat-input input{flex:1;padding:10px;border-radius:6px;border:none;margin-right:5px;}
+.chat-input button{padding:10px;border:none;border-radius:6px;background:#00aaff;color:white;cursor:pointer;}
+#privateBtn,#backBtn{padding:15px;margin:5px;border:none;border-radius:8px;background:#0d6efd;color:white;font-size:16px;cursor:pointer;}
+.sidebar{width:250px;background:#111;border-right:1px solid #444;display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar h3{margin:5px;padding:5px;border-bottom:1px solid #444;}
+.sidebar .userItem{padding:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
 .sidebar .userItem:hover{background:#0d6efd;}
 .online-dot{width:10px;height:10px;border-radius:50%;background:#0f0;display:inline-block;margin-left:5px;}
-.unread-count{background:red;color:white;border-radius:50%;padding:2px 5px;margin-left:5px;font-size:12px;}
-
-.privateChatWindow{
-    flex:1; display:flex; flex-direction:column; overflow:hidden; margin-left:5px;
-}
-#privateMessages{flex:1; overflow-y:auto; padding:5px; margin-bottom:5px; background:#111; border-radius:6px;}
-
+.unread-count{background:red;color:white;border-radius:50%;padding:2px 6px;margin-left:5px;font-size:12px;}
+.privateChatWindow{flex:1;display:flex;flex-direction:column;}
+.ticks{margin-left:5px;font-size:12px;color:#0f0;}
+.sent{color:#aaa;}
+.seen{color:#0f0;}
+.msg button{margin-left:5px;background:#555;color:white;border:none;border-radius:3px;cursor:pointer;padding:2px 5px;font-size:12px;}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
 <body>
@@ -78,8 +41,8 @@ body, html {
 </div>
 
 <div id="publicView" style="display:none;">
-  <div style="margin-bottom:5px;">👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
-  <div id="typingStatus" style="font-size:13px;color:#aaa;margin-bottom:5px;"></div>
+  <div>👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
+  <div id="typingStatus" style="font-size:12px;color:#aaa;"></div>
   <div class="messages" id="messagesPublic"></div>
   <div class="chat-input">
     <input id="text" placeholder="پیام عمومی...">
@@ -88,21 +51,19 @@ body, html {
   <button id="privateBtn">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count" style="display:none">0</span></button>
 </div>
 
-<div id="privateView" style="display:none;">
-  <div class="privateViewContainer">
-    <div class="sidebar">
-      <h3>چت خصوصی</h3>
-      <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:5px;border-radius:5px;border:none;font-size:13px;">
-      <div id="privateUserList"></div>
-      <button id="backBtn">بازگشت به عمومی</button>
-    </div>
-    <div class="privateChatWindow">
-      <div id="privateChatContainer" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-        <div class="messages" id="privateMessages"></div>
-        <div class="chat-input">
-          <input id="privateText" placeholder="پیام خصوصی...">
-          <button onclick="sendPrivateMessage()">ارسال</button>
-        </div>
+<div id="privateView" style="display:none;flex:1;flex-direction:row;">
+  <div class="sidebar">
+    <h3>چت خصوصی</h3>
+    <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:5px;border-radius:5px;border:none;">
+    <div id="privateUserList"></div>
+    <button id="backBtn">بازگشت به عمومی</button>
+  </div>
+  <div class="privateChatWindow">
+    <div id="privateChatContainer" style="flex:1;display:flex;flex-direction:column;">
+      <div class="messages" id="privateMessages"></div>
+      <div class="chat-input">
+        <input id="privateText" placeholder="پیام خصوصی...">
+        <button onclick="sendPrivateMessage()">ارسال</button>
       </div>
     </div>
   </div>
@@ -114,7 +75,6 @@ body, html {
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
 <script>
-// ==== Firebase setup ====
 const firebaseConfig = { apiKey:"YOUR_KEY", authDomain:"irn-chat.firebaseapp.com", projectId:"irn-chat" };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -122,7 +82,6 @@ const messagesRef = db.collection("messages");
 const usersRef = db.collection("users");
 const typingRef = db.collection("typing");
 
-// ==== User setup ====
 let userId = localStorage.getItem("userId");
 if(!userId){ userId=Math.random().toString(36).substr(2,9); localStorage.setItem("userId",userId);}
 let username = localStorage.getItem("chatName");
@@ -132,10 +91,9 @@ usersRef.doc(userId).set({name:username, online:true});
 window.addEventListener("beforeunload",()=>usersRef.doc(userId).update({online:false}));
 
 window.addEventListener("load", ()=>{
-  setTimeout(()=>{document.getElementById("loadingScreen").style.display="none"; document.getElementById("publicView").style.display="flex";},1200);
+  setTimeout(()=>{document.getElementById("loadingScreen").style.display="none"; document.getElementById("publicView").style.display="flex";},1500);
 });
 
-// ==== Typing status ====
 document.getElementById("text").addEventListener("input", ()=>{
   typingRef.doc(userId).set({name:username});
   setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
@@ -146,18 +104,17 @@ typingRef.onSnapshot(snap=>{
   document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
 });
 
-// ==== Views toggle ====
 const publicView=document.getElementById("publicView");
 const privateView=document.getElementById("privateView");
 const unreadCounter = document.getElementById("unreadPrivateCount");
-document.getElementById("privateBtn").onclick=()=>{ publicView.style.display="none"; privateView.style.display="flex"; markPrivateMessagesAsRead(); };
+document.getElementById("privateBtn").onclick=()=>{
+  publicView.style.display="none"; privateView.style.display="flex"; markPrivateMessagesAsRead();
+};
 document.getElementById("backBtn").onclick=()=>{ publicView.style.display="flex"; privateView.style.display="none"; };
 
-// ==== Users & unread ====
 let usersCache=[];
 usersRef.onSnapshot(snap=>{
-  usersCache=[];
-  const listDiv=document.getElementById("privateUserList"); listDiv.innerHTML="";
+  usersCache=[]; const listDiv=document.getElementById("privateUserList"); listDiv.innerHTML="";
   snap.forEach(u=>{ if(u.id!==userId){ const data=u.data(); usersCache.push({id:u.id,name:data.name,online:data.online}); } });
   renderPrivateUsers(usersCache);
 });
@@ -183,7 +140,6 @@ function updateUnreadPerUser(){
   });
 }
 
-// ==== Private chat ====
 let selectedPrivateUser=null;
 function selectPrivateUser(id,name){ selectedPrivateUser={id,name}; loadPrivateMessages(); markMessagesAsReadFrom(id); }
 function loadPrivateMessages(){
@@ -197,7 +153,9 @@ function loadPrivateMessages(){
         const msgDiv=document.createElement("div"); msgDiv.className="msg";
         let tick=""; if(m.userId===userId){ tick=m.seen?"<span class='ticks seen'>✔️</span>":"<span class='ticks sent'>✅</span>"; }
         let buttons="";
-        if(m.userId===userId){ buttons=`<button onclick="deleteMsg('${docSnap.id}')">❌</button>`; }
+        if(m.userId===userId){
+          buttons=`<button onclick="deleteMsg('${docSnap.id}')">❌</button>`;
+        }
         buttons+=`<button onclick="replyMsg('${m.text}', ${m.userId===userId})">↩️</button>`;
         msgDiv.innerHTML=`<span>${m.name}: ${m.text}</span>${tick}${buttons}`;
         box.appendChild(msgDiv); box.scrollTop=box.scrollHeight;
@@ -213,7 +171,6 @@ function replyMsg(text,isMine){
 function markMessagesAsReadFrom(senderId){ messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); }); }
 function markPrivateMessagesAsRead(){ messagesRef.where("receiverId","==",userId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); }); }
 
-// ==== Send messages ====
 function sendPrivateMessage(){
   if(!selectedPrivateUser) return alert("کاربر را انتخاب کنید");
   const input=document.getElementById("privateText"); const text=input.value.trim(); if(!text) return;
@@ -239,12 +196,9 @@ function sendPublicMessage(){
   messagesRef.add({ name:username,text,userId,receiverId:null,reactions:{heart:[],like:[]},replyTo:null,time:firebase.firestore.FieldValue.serverTimestamp(),seen:false });
   document.getElementById("text").value="";
 }
-
 function changeName(){ const n=prompt("نام جدید:"); if(n){ username=n; localStorage.setItem("chatName",n); document.getElementById("displayName").innerText=n; usersRef.doc(userId).update({name:n}); } }
-
 if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
 updateUnreadPerUser();
-
 </script>
 </body>
-              </html>
+        </html>
