@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - نسخه کامل با شمارنده پیام‌های خوانده نشده</title>
+<title>IRN Chat Pro - شمارنده پیشرفته</title>
 <style>
 body{font-family:tahoma;background:#0b1a2f;color:white;margin:0;padding:0;display:flex;flex-direction:column;height:100vh;}
 #publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
@@ -111,7 +111,7 @@ document.getElementById("backBtn").onclick=()=>{
   privateView.style.display="none";
 };
 
-// ===== Online Users & Search =====
+// ===== Online Users & Search + Unread per User =====
 let usersCache=[];
 usersRef.onSnapshot(snap=>{
   usersCache=[];
@@ -125,28 +125,57 @@ usersRef.onSnapshot(snap=>{
   });
   renderPrivateUsers(usersCache);
 });
+
+// تابع رندر لیست کاربران خصوصی با شمارنده پیام‌های خوانده نشده
 function renderPrivateUsers(users){
   const listDiv=document.getElementById("privateUserList");
   listDiv.innerHTML="";
   users.forEach(u=>{
     const div=document.createElement("div");
     div.className="userItem";
-    div.innerHTML=`<span>${u.name}</span>${u.online?'<span class="online-dot"></span>':''}`;
+    div.id="userItem-"+u.id;
+    div.innerHTML=`<span>${u.name}</span><span id="userUnread-${u.id}" class="unread-count" style="display:none">0</span>${u.online?'<span class="online-dot"></span>':''}`;
     div.onclick=()=>selectPrivateUser(u.id,u.name);
     listDiv.appendChild(div);
   });
 }
-document.getElementById("privateSearch").addEventListener("input",()=>{
-  const q=document.getElementById("privateSearch").value.toLowerCase();
-  const filtered=usersCache.filter(u=>u.name.toLowerCase().includes(q));
-  renderPrivateUsers(filtered);
-});
+
+// به‌روزرسانی شمارنده پیام‌های خوانده نشده برای هر کاربر
+function updateUnreadPerUser(){
+  messagesRef.where("receiverId","==",userId).where("seen","==",false)
+    .onSnapshot(snap=>{
+      let countMap={};
+      snap.forEach(doc=>{
+        const m=doc.data();
+        if(m.userId){
+          countMap[m.userId] = (countMap[m.userId]||0)+1;
+        }
+      });
+      // بروزرسانی لیست کاربران
+      usersCache.forEach(u=>{
+        const el=document.getElementById("userUnread-"+u.id);
+        if(el){
+          if(countMap[u.id]>0){
+            el.style.display="inline-block";
+            el.innerText=countMap[u.id];
+          } else {
+            el.style.display="none";
+          }
+        }
+      });
+      // شمارنده کلی در صفحه اصلی
+      const totalUnread = Object.values(countMap).reduce((a,b)=>a+b,0);
+      if(totalUnread>0){ unreadCounter.style.display="inline-block"; unreadCounter.innerText=totalUnread; }
+      else unreadCounter.style.display="none";
+    });
+}
 
 // ===== Private Chat =====
 let selectedPrivateUser=null;
 function selectPrivateUser(id,name){
   selectedPrivateUser={id,name};
   loadPrivateMessages();
+  markMessagesAsReadFrom(id);
 }
 
 function loadPrivateMessages(){
@@ -177,15 +206,19 @@ function loadPrivateMessages(){
 
         box.appendChild(msgDiv);
         box.scrollTop=box.scrollHeight;
-
-        if(m.receiverId===userId && !m.seen){
-          messagesRef.doc(docSnap.id).update({seen:true});
-        }
       }
     });
   });
 }
 
+// علامت گذاری پیام‌ها از کاربر انتخابی به عنوان خوانده شده
+function markMessagesAsReadFrom(senderId){
+  messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get().then(snapshot=>{
+    snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); });
+  });
+}
+
+// ===== Send Private Message =====
 function sendPrivateMessage(){
   if(!selectedPrivateUser) return alert("کاربر را انتخاب کنید");
   const input=document.getElementById("privateText");
@@ -266,35 +299,8 @@ function changeName(){
 // ===== Notifications =====
 if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
 
-// ===== Unread Private Messages Counter =====
-function updateUnreadCounter() {
-  messagesRef
-    .where("receiverId", "==", userId)
-    .where("seen", "==", false)
-    .onSnapshot(snap => {
-      const count = snap.size;
-      if(count>0){
-        unreadCounter.style.display = "inline-block";
-        unreadCounter.innerText = count;
-      } else {
-        unreadCounter.style.display = "none";
-      }
-    });
-}
-
-function markPrivateMessagesAsRead() {
-  messagesRef
-    .where("receiverId", "==", userId)
-    .where("seen", "==", false)
-    .get()
-    .then(snapshot => {
-      snapshot.forEach(doc => {
-        messagesRef.doc(doc.id).update({ seen: true });
-      });
-    });
-}
-
-updateUnreadCounter();
+// ===== Initialize Unread =====
+updateUnreadPerUser();
 </script>
 </body>
-</html>
+                                       </html>
