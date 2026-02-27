@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - جمع‌وجور</title>
+<title>IRN Chat Pro - جمع‌وجور + scrollbar</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
@@ -26,24 +26,48 @@ body, html {
 #loadingScreen h1{font-size:24px;}
 #loadingScreen p{font-size:14px;color:#aaa;margin-top:5px;text-align:center;}
 
-#publicView,#privateView{flex:1; display:flex; flex-direction:column; padding:6px; overflow:hidden;}
-.messages{flex:1; overflow-y:auto; padding:2px; margin-bottom:2px; background:#111; border-radius:5px;}
-.msg{background:#222; margin:2px; padding:3px; border-radius:5px; position:relative; display:flex; justify-content:space-between; align-items:center; font-size:12px;}
+#publicView,#privateView{
+    flex:1; display:flex; flex-direction:column; padding:6px; overflow:hidden; height:100%;
+}
+
+.messages{
+    flex:1; overflow-y:auto; padding:2px; margin-bottom:2px; background:#111; border-radius:5px;
+}
+
+.msg{
+    background:#222; margin:2px; padding:3px; border-radius:5px; position:relative;
+    display:flex; justify-content:space-between; align-items:center; font-size:12px;
+}
+
 .msg button{margin-left:3px; background:#555; color:white; border:none; border-radius:3px; cursor:pointer; padding:2px 4px; font-size:11px;}
 .ticks{margin-left:3px;font-size:11px;color:#0f0;}
 .sent{color:#aaa;}
 .seen{color:#0f0;}
+
 .chat-input{display:flex;}
 .chat-input input{flex:1;padding:5px;border-radius:4px;border:none;margin-right:3px;font-size:12px;}
 .chat-input button{padding:5px 6px;border:none;border-radius:4px;background:#00aaff;color:white;cursor:pointer;font-size:12px;}
+
 #privateBtn,#backBtn{padding:6px 8px;margin:2px 0;font-size:13px;border-radius:5px;background:#0d6efd;color:white;cursor:pointer;}
-.sidebar{width:200px;background:#111;border-right:1px solid #444;display:flex;flex-direction:column;overflow-y:auto;}
+
+.privateViewContainer{flex:1; display:flex; flex-direction:row; overflow:hidden;}
+
+.sidebar{
+    width:200px; background:#111; border-right:1px solid #444;
+    display:flex; flex-direction:column; overflow-y:auto; max-height:100%;
+}
+
 .sidebar h3{margin:5px;padding:5px;border-bottom:1px solid #444;font-size:13px;}
 .sidebar .userItem{padding:3px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:12px;}
 .sidebar .userItem:hover{background:#0d6efd;}
 .online-dot{width:8px;height:8px;border-radius:50%;background:#0f0;display:inline-block;margin-left:5px;}
 .unread-count{background:red;color:white;border-radius:50%;padding:1px 4px;margin-left:4px;font-size:11px;}
-.privateChatWindow{flex:1; display:flex; flex-direction:column;}
+
+.privateChatWindow{
+    flex:1; display:flex; flex-direction:column; overflow:hidden;
+}
+#privateMessages{flex:1; overflow-y:auto; padding:2px; margin-bottom:2px; background:#111; border-radius:5px;}
+
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
@@ -65,19 +89,21 @@ body, html {
   <button id="privateBtn">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count" style="display:none">0</span></button>
 </div>
 
-<div id="privateView" style="display:none; flex:1; flex-direction:row;">
-  <div class="sidebar">
-    <h3>چت خصوصی</h3>
-    <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:4px;border-radius:4px;border:none;font-size:12px;">
-    <div id="privateUserList"></div>
-    <button id="backBtn">بازگشت به عمومی</button>
-  </div>
-  <div class="privateChatWindow">
-    <div id="privateChatContainer" style="flex:1;display:flex;flex-direction:column;">
-      <div class="messages" id="privateMessages"></div>
-      <div class="chat-input">
-        <input id="privateText" placeholder="پیام خصوصی...">
-        <button onclick="sendPrivateMessage()">ارسال</button>
+<div id="privateView" style="display:none;">
+  <div class="privateViewContainer">
+    <div class="sidebar">
+      <h3>چت خصوصی</h3>
+      <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:4px;border-radius:4px;border:none;font-size:12px;">
+      <div id="privateUserList"></div>
+      <button id="backBtn">بازگشت به عمومی</button>
+    </div>
+    <div class="privateChatWindow">
+      <div id="privateChatContainer" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div class="messages" id="privateMessages"></div>
+        <div class="chat-input">
+          <input id="privateText" placeholder="پیام خصوصی...">
+          <button onclick="sendPrivateMessage()">ارسال</button>
+        </div>
       </div>
     </div>
   </div>
