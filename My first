@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تست GitHub Pages</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      max-width: 500px;
+      width: calc(100% - 40px);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      margin: 16px 0;
+    }
+
+    button {
+      border: none;
+      background: #ffcc00;
+      color: #111;
+      font-size: 1rem;
+      padding: 12px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      background: #ffd84d;
+    }
+
+    #msg {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #fff7c2;
+      min-height: 28px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>سلام! این یک تست است</h1>
+    <p>اگر این صفحه را دیدی یعنی GitHub Pages درست کار می‌کند.</p>
+    <button onclick="document.getElementById('msg').innerText='✅ انتشار سایت موفق بود!';">
+      کلیک کن
+    </button>
+    <div id="msg"></div>
+  </div>
+</body>
+</html>
+                                  
