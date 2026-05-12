@@ -1,534 +1,77 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آزمون آنلاین پیشرفته</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #50e3c2;
-            --background-color: #f8f9fa;
-            --card-background: #ffffff;
-            --text-color: #333333;
-            --light-text-color: #6c757d;
-            --border-color: #dee2e6;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تست GitHub Pages</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    .card {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      max-width: 500px;
+      width: calc(100% - 40px);
+    }
 
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            line-height: 1.6;
-        }
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+    }
 
-        .container {
-            background-color: var(--card-background);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 700px;
-            text-align: center;
-            animation: fadeIn 0.8s ease-out;
-        }
+    p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      margin: 16px 0;
+    }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    button {
+      border: none;
+      background: #ffcc00;
+      color: #111;
+      font-size: 1rem;
+      padding: 12px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
 
-        h1 {
-            color: var(--primary-color);
-            margin-bottom: 30px;
-            font-size: 2.2em;
-            font-weight: 700;
-        }
+    button:hover {
+      transform: scale(1.05);
+      background: #ffd84d;
+    }
 
-        #quiz-selection, #quiz-area, #result-area {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Quiz Selection */
-        .quiz-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .quiz-item {
-            padding: 15px 20px;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1em;
-            font-weight: 500;
-            transition: background-color 0.3s, transform 0.2s;
-            border: 2px solid transparent;
-        }
-        .quiz-item:hover {
-            background-color: #3a7bc2;
-            transform: translateY(-2px);
-        }
-
-        /* Quiz Area */
-        .question-card {
-            background-color: var(--background-color);
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-        }
-        .question-text {
-            font-size: 1.4em;
-            font-weight: 500;
-            color: var(--text-color);
-            margin-bottom: 25px;
-        }
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        .option-btn {
-            padding: 15px 20px;
-            background-color: var(--card-background);
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-            border-radius: 8px;
-            font-size: 1.05em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .option-btn:hover:not(.disabled) {
-            background-color: var(--primary-color);
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .option-btn.correct {
-            background-color: var(--success-color);
-            color: white;
-            border-color: var(--success-color);
-            animation: pulse 0.8s;
-        }
-        .option-btn.wrong {
-            background-color: var(--danger-color);
-            color: white;
-            border-color: var(--danger-color);
-            animation: shake 0.8s;
-        }
-        .option-btn.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px) skewX(-5deg); }
-            50% { transform: translateX(5px) skewX(5deg); }
-            75% { transform: translateX(-3px) skewX(-3deg); }
-        }
-
-        #timer-progress {
-            width: 100%;
-            height: 10px;
-            background-color: #eee;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        #timer-progress-bar {
-            height: 100%;
-            width: 100%;
-            background-color: var(--secondary-color);
-            transition: width 1s linear;
-        }
-        #timer-text {
-            font-size: 0.95em;
-            color: var(--light-text-color);
-            margin-bottom: 25px;
-        }
-
-        .nav-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-        }
-        .nav-button {
-            padding: 12px 25px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 7px;
-            font-size: 1em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .nav-button:hover {
-            background-color: #3a7bc2;
-            transform: translateY(-2px);
-        }
-        .nav-button.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .nav-button#finish-btn {
-            background-color: var(--secondary-color);
-        }
-        .nav-button#finish-btn:hover {
-            background-color: #40d0b0;
-        }
-
-        /* Result Area */
-        .result-card {
-            background-color: var(--background-color);
-            padding: 30px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-        }
-        .result-message {
-            font-size: 1.8em;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: var(--primary-color);
-        }
-        .score-text {
-            font-size: 1.3em;
-            color: var(--text-color);
-            margin-bottom: 25px;
-        }
-        .retry-btn {
-            padding: 12px 30px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 7px;
-            font-size: 1em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .retry-btn:hover {
-            background-color: #40d0b0;
-            transform: translateY(-2px);
-        }
-        .quiz-selection-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 7px;
-            font-size: 0.9em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .quiz-selection-btn:hover {
-            background-color: #5a6268;
-        }
-    </style>
+    #msg {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #fff7c2;
+      min-height: 28px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div id="quiz-selection">
-            <h1>انتخاب آزمون</h1>
-            <div id="quiz-list" class="quiz-list">
-                <!-- لیست آزمون‌ها اینجا بارگذاری می‌شود -->
-            </div>
-        </div>
-
-        <div id="quiz-area" style="display: none;">
-            <div id="timer-progress"><div id="timer-progress-bar"></div></div>
-            <div id="timer-text">زمان باقی‌مانده: --:--</div>
-            <div class="question-card">
-                <div id="question-text" class="question-text"></div>
-                <div id="options-grid" class="options-grid">
-                    <!-- گزینه‌ها اینجا بارگذاری می‌شوند -->
-                </div>
-            </div>
-            <div class="nav-buttons">
-                <button id="prev-btn" class="nav-button disabled">سوال قبل</button>
-                <button id="next-btn" class="nav-button">سوال بعدی</button>
-                <button id="finish-btn" class="nav-button" style="display: none;">پایان آزمون</button>
-            </div>
-        </div>
-
-        <div id="result-area" style="display: none;">
-            <div class="result-card">
-                <div id="result-message" class="result-message"></div>
-                <div id="score-text" class="score-text"></div>
-                <button id="retry-btn" class="retry-btn">شرکت مجدد در همین آزمون</button>
-                <button id="select-quiz-btn" class="quiz-selection-btn">انتخاب آزمون دیگر</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // --- داده‌های آزمون‌ها ---
-        const quizzes = [
-            {
-                id: 'quiz1',
-                title: 'آزمون اطلاعات عمومی',
-                questions: [
-                    { question: "پایتخت ایران کجاست؟", options: ["اصفهان", "تهران", "شیراز", "تبریز"], answer: "تهران" },
-                    { question: "بزرگترین اقیانوس جهان کدام است؟", options: ["اطلس", "هند", "آرام", "منجمد شمالی"], answer: "آرام" },
-                    { question: "واحد پول ژاپن چیست؟", options: ["دلار", "یورو", "پوند", "ین"], answer: "ین" },
-                    { question: "بلندترین کوه جهان اورست است. درست یا غلط؟", options: ["درست", "غلط"], answer: "درست" }
-                ],
-                timeLimit: 120 // seconds
-            },
-            {
-                id: 'quiz2',
-                title: 'آزمون منطق',
-                questions: [
-                    { question: "اگر همه گربه‌ها پستاندار باشند و لوسی یک گربه باشد، لوسی پستاندار است. درست یا غلط؟", options: ["درست", "غلط"], answer: "درست" },
-                    { question: "کدام یک از اعداد زیر اول است؟", options: ["9", "15", "17", "21"], answer: "17" },
-                    { question: "چند ماه در سال 28 روز دارند؟", options: ["1", "4", "12", "2"], answer: "12" }
-                ],
-                timeLimit: 90 // seconds
-            },
-            {
-                id: 'quiz3',
-                title: 'آزمون تاریخ',
-                questions: [
-                    { question: "جنگ جهانی اول در چه سالی آغاز شد؟", options: ["1914", "1939", "1945", "1918"], answer: "1914" },
-                    { question: "کدام امپراتوری توسط کوروش بزرگ تأسیس شد؟", options: ["روم", "هخامنشی", "مغول", "بیت المقدس"], answer: "هخامنشی" }
-                ],
-                timeLimit: 100 // seconds
-            }
-        ];
-
-        // --- عناصر DOM ---
-        const quizSelectionDiv = document.getElementById('quiz-selection');
-        const quizListDiv = document.getElementById('quiz-list');
-        const quizAreaDiv = document.getElementById('quiz-area');
-        const resultAreaDiv = document.getElementById('result-area');
-
-        const questionTextElement = document.getElementById('question-text');
-        const optionsGridElement = document.getElementById('options-grid');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const finishBtn = document.getElementById('finish-btn');
-        const timerProgressBar = document.getElementById('timer-progress-bar');
-        const timerTextElement = document.getElementById('timer-text');
-
-        const resultMessageElement = document.getElementById('result-message');
-        const scoreTextElement = document.getElementById('score-text');
-        const retryBtn = document.getElementById('retry-btn');
-        const selectQuizBtn = document.getElementById('select-quiz-btn');
-
-        // --- وضعیت آزمون ---
-        let currentQuiz = null;
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let timerInterval = null;
-        let timeLeft = 0;
-        let selectedAnswers = {}; // { questionIndex: optionIndex }
-
-        // --- توابع کمکی ---
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-        }
-
-        function saveResult(quizId, quizTitle, userScore, totalQuestions) {
-            const results = JSON.parse(localStorage.getItem('quizResults')) || [];
-            results.push({
-                quizId: quizId,
-                quizTitle: quizTitle,
-                score: userScore,
-                total: totalQuestions,
-                date: new Date().toLocaleString('fa-IR')
-            });
-            localStorage.setItem('quizResults', JSON.stringify(results));
-            console.log("Result saved:", results);
-        }
-
-        // --- مدیریت نمایش UI ---
-        function showScreen(screenId) {
-            quizSelectionDiv.style.display = 'none';
-            quizAreaDiv.style.display = 'none';
-            resultAreaDiv.style.display = 'none';
-
-            document.getElementById(screenId).style.display = 'block';
-        }
-
-        // --- بارگذاری لیست آزمون‌ها ---
-        function loadQuizList() {
-            quizListDiv.innerHTML = '';
-            quizzes.forEach(quiz => {
-                const quizItem = document.createElement('div');
-                quizItem.classList.add('quiz-item');
-                quizItem.textContent = quiz.title;
-                quizItem.onclick = () => startQuiz(quiz);
-                quizListDiv.appendChild(quizItem);
-            });
-            showScreen('quiz-selection');
-        }
-
-        // --- شروع آزمون ---
-        function startQuiz(quiz) {
-            currentQuiz = quiz;
-            currentQuestionIndex = 0;
-            score = 0;
-            selectedAnswers = {};
-            timeLeft = quiz.timeLimit;
-
-            clearInterval(timerInterval); // Clear any existing timer
-            showScreen('quiz-area');
-            loadQuestion();
-            startTimer();
-            updateNavButtons();
-        }
-
-        // --- بارگذاری سوال فعلی ---
-        function loadQuestion() {
-            if (!currentQuiz) return;
-
-            const questionData = currentQuiz.questions[currentQuestionIndex];
-            questionTextElement.textContent = questionData.question;
-            optionsGridElement.innerHTML = ''; // Clear previous options
-
-            questionData.options.forEach((option, index) => {
-                const button = document.createElement('button');
-                button.classList.add('option-btn');
-                button.textContent = option;
-                button.onclick = () => selectAnswer(index, option);
-                optionsGridElement.appendChild(button);
-            });
-
-            // Load previously selected answer if exists
-            if (selectedAnswers[currentQuestionIndex] !== undefined) {
-                const previouslySelectedOptionIndex = selectedAnswers[currentQuestionIndex];
-                const previouslySelectedButton = optionsGridElement.children[previouslySelectedOptionIndex];
-                if (previouslySelectedButton) {
-                    previouslySelectedButton.classList.add('disabled');
-                    // Re-highlight if it was correct/wrong (this logic might need adjustment based on desired behavior)
-                    // For now, just disable and don't show color feedback until next/finish
-                }
-            } else {
-                 // Enable all buttons if no answer was selected for this question yet
-                 document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('disabled'));
-            }
-
-            updateTimerDisplay();
-            updateNavButtons();
-        }
-
-        // --- انتخاب پاسخ ---
-        function selectAnswer(optionIndex, optionText) {
-            if (currentQuiz.questions[currentQuestionIndex].options.includes(optionText) === false) return; // Should not happen
-
-            const questionData = currentQuiz.questions[currentQuestionIndex];
-            const correctAnswer = questionData.answer;
-
-            // Disable all options for the current question
-            document.querySelectorAll('.options-grid .option-btn').forEach(btn => btn.classList.add('disabled'));
-
-            // Store the selected answer
-            selectedAnswers[currentQuestionIndex] = optionIndex;
-
-            // Update score if correct
-            if (optionText === correctAnswer) {
-                score++;
-            }
-
-            // Show feedback
-            const selectedButton = optionsGridElement.children[optionIndex];
-            if (optionText === correctAnswer) {
-                selectedButton.classList.add('correct');
-            } else {
-                selectedButton.classList.add('wrong');
-                // Highlight the correct answer
-                Array.from(optionsGridElement.children).forEach((btn, index) => {
-                    if (btn.textContent === correctAnswer) {
-                        btn.classList.add('correct');
-                    }
-                });
-            }
-
-            // Update timer immediately to reflect answer selection (optional, can be adjusted)
-            // clearInterval(timerInterval); // Stop timer temporarily
-
-            updateNavButtons(); // Enable next/finish buttons after answering
-        }
-
-        // --- مدیریت تایمر ---
-        function startTimer() {
-            clearInterval(timerInterval); // Ensure no duplicate timers
-            timerInterval = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateTimerDisplay();
-                } else {
-                    clearInterval(timerInterval);
-                    // Time's up! Show result
-                    finishQuiz();
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            timerTextElement.textContent = `زمان باقی‌مانده: ${formatTime(timeLeft)}`;
-            const progressBarWidth = (timeLeft / currentQuiz.timeLimit) * 100;
-            timerProgressBar.style.width = `${progressBarWidth}%`;
-        }
-
-        // --- ناوبری بین سوالات ---
-        function updateNavButtons() {
-            // Previous button
-            prevBtn.classList.toggle('disabled', currentQuestionIndex === 0);
-
-            // Next/Finish button logic
-            const isLastQuestion = currentQuestionIndex === currentQuiz.questions.length - 1;
-            if (isLastQuestion) {
-                finishBtn.style.display = 'inline-block';
-                nextBtn.style.display = 'none';
-            } else {
-                finishBtn.style.display = 'none';
-                nextBtn.style.display = 'inline-block';
-            }
-
-            // Enable/Disable next/finish based on whether the current question is answered
-            const isAnswered = selectedAnswers.hasOwnProperty(currentQuestionIndex);
-            nextBtn.classList.toggle('disabled', !isAnswered && !isLastQuestion); // Only disable if not last question and not answered
-            finishBtn.classList.toggle('disabled', !isAnswered); // Disable finish if la
+  <div class="card">
+    <h1>سلام! این یک تست است</h1>
+    <p>اگر این صفحه را دیدی یعنی GitHub Pages درست کار می‌کند.</p>
+    <button onclick="document.getElementById('msg').innerText='✅ انتشار سایت موفق بود!';">
+      کلیک کن
+    </button>
+    <div id="msg"></div>
+  </div>
+</body>
+</html>
+    
