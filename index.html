@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ورود</title>
+<title>ورود امن</title>
 
 <style>
 body{
@@ -12,76 +12,69 @@ body{
     display:flex;
     justify-content:center;
     align-items:center;
-    background:linear-gradient(135deg,#6a11cb,#2575fc);
-    font-family:tahoma,sans-serif;
+    background:#0f172a;
+    font-family:tahoma;
+    color:white;
 }
 
-.box{
-    background:white;
+#loginBox,#secretPage{
+    background:#1e293b;
     padding:30px;
-    border-radius:20px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    border-radius:15px;
     text-align:center;
-    width:320px;
-}
-
-h1{
-    color:#2575fc;
+    box-shadow:0 0 20px rgba(0,255,255,.3);
 }
 
 input{
-    width:90%;
     padding:12px;
-    margin-top:10px;
-    border:2px solid #2575fc;
-    border-radius:10px;
-    font-size:16px;
+    width:220px;
+    border:none;
+    border-radius:8px;
+    margin:10px;
 }
 
 button{
-    margin-top:15px;
-    padding:12px 25px;
+    padding:12px 20px;
     border:none;
-    border-radius:10px;
-    background:#2575fc;
+    border-radius:8px;
+    background:#06b6d4;
     color:white;
-    font-size:16px;
     cursor:pointer;
 }
 
-button:hover{
-    background:#1d5fd1;
-}
-
-#result{
-    margin-top:15px;
-    font-weight:bold;
+#secretPage{
+    display:none;
 }
 </style>
 </head>
 <body>
 
-<div class="box">
-    <h1>م؟</h1>
-    <p>رمز بزن داشی😁🤫</p>
-
-    <input type="password" id="password" placeholder="رمز عبور">
+<div id="loginBox">
+    <h2>ورود به سیستم</h2>
+    <input type="password" id="pass" placeholder="رمز عبور">
     <br>
-    <button onclick="checkPassword()">ورود</button>
+    <button onclick="login()">ورود</button>
+    <p id="error"></p>
+</div>
 
-    <div id="result"></div>
+<div id="secretPage">
+    <h1>🔒 پیام مخفی</h1>
+    <p>
+        اینجا متن محرمانه شما قرار می‌گیرد.
+    </p>
 </div>
 
 <script>
-function checkPassword() {
-    let pass = document.getElementById("password").value;
+const PASSWORD = "11228";
 
-    if(pass === "11228"){
-        document.getElementById("result").innerHTML =
-            "<span style='color:green'>✅ ورود موفقیت‌آمیز بود</span>";
-    } else {
-        document.getElementById("result").innerHTML =
-            "<span style='color:red'>❌ رمز اشتباه است</span>";
+function login(){
+    const p = document.getElementById("pass").value;
+
+    if(p === PASSWORD){
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("secretPage").style.display="block";
+    }else{
+        document.getElementById("error").innerHTML="رمز اشتباه است";
     }
 }
 </script>
