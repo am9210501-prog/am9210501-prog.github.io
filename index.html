@@ -2,290 +2,87 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QR Profile Maker</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ورود</title>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:tahoma;
-}
-
 body{
-background:#0f172a;
-color:white;
-padding:20px;
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#6a11cb,#2575fc);
+    font-family:tahoma,sans-serif;
 }
 
-.container{
-max-width:700px;
-margin:auto;
-background:#1e293b;
-padding:20px;
-border-radius:20px;
+.box{
+    background:white;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    text-align:center;
+    width:320px;
 }
 
 h1{
-text-align:center;
-margin-bottom:20px;
+    color:#2575fc;
 }
 
 input{
-width:100%;
-padding:12px;
-margin-bottom:12px;
-border:none;
-border-radius:10px;
-background:#334155;
-color:white;
-}
-
-input::placeholder{
-color:#cbd5e1;
+    width:90%;
+    padding:12px;
+    margin-top:10px;
+    border:2px solid #2575fc;
+    border-radius:10px;
+    font-size:16px;
 }
 
 button{
-width:100%;
-padding:12px;
-margin-top:10px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-font-size:15px;
+    margin-top:15px;
+    padding:12px 25px;
+    border:none;
+    border-radius:10px;
+    background:#2575fc;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
 }
 
-.generate{
-background:#2563eb;
-color:white;
+button:hover{
+    background:#1d5fd1;
 }
 
-.download{
-background:#16a34a;
-color:white;
-}
-
-.card{
-margin-top:25px;
-background:#111827;
-padding:20px;
-border-radius:15px;
-text-align:center;
-}
-
-.avatar{
-width:120px;
-height:120px;
-border-radius:50%;
-object-fit:cover;
-margin-bottom:10px;
-border:3px solid #2563eb;
-}
-
-.links{
-margin-top:15px;
-text-align:right;
-line-height:2;
-word-break:break-word;
-}
-
-.links a{
-color:#60a5fa;
-text-decoration:none;
-}
-
-#qrcode{
-margin-top:20px;
-display:flex;
-justify-content:center;
-}
-
-.notice{
-margin-top:10px;
-font-size:13px;
-color:#94a3b8;
+#result{
+    margin-top:15px;
+    font-weight:bold;
 }
 </style>
 </head>
 <body>
 
-<div class="container">
+<div class="box">
+    <h1>مهسا رو بگیرم؟</h1>
+    <p>رمز بزن داشی😁🤫</p>
 
-<h1>(ساخته شده توسط عباسی)🚀سازنده QR پروفایل</h1>
+    <input type="password" id="password" placeholder="رمز عبور">
+    <br>
+    <button onclick="checkPassword()">ورود</button>
 
-<input type="text" id="username" placeholder="👤 نام کاربری">
-
-<input type="text" id="instagram" placeholder="📷 لینک اینستاگرام">
-
-<input type="text" id="telegram" placeholder="✈️ لینک تلگرام">
-
-<input type="text" id="rubika" placeholder="💎 لینک روبیکا">
-
-<input type="file" id="photo" accept="image/*">
-
-<button class="generate" onclick="generateProfile()">
-ساخت پروفایل و QR
-</button>
-
-<div id="result"></div>
-
+    <div id="result"></div>
 </div>
 
 <script>
+function checkPassword() {
+    let pass = document.getElementById("password").value;
 
-function generateProfile(){
-
-const username=document.getElementById("username").value.trim();
-const instagram=document.getElementById("instagram").value.trim();
-const telegram=document.getElementById("telegram").value.trim();
-const rubika=document.getElementById("rubika").value.trim();
-const photo=document.getElementById("photo").files[0];
-
-if(!username){
-alert("نام کاربری را وارد کنید");
-return;
-}
-
-const reader=new FileReader();
-
-reader.onload=function(e){
-
-const image=e.target.result;
-
-const qrText=
-`👤 نام کاربری:
-${username}
-
-📷 Instagram:
-${instagram}
-
-✈️ Telegram:
-${telegram}
-
-💎 Rubika:
-${rubika}`;
-
-document.getElementById("result").innerHTML=`
-
-<div class="card">
-
-<img class="avatar" src="${image}">
-
-<h2>${username}</h2>
-
-<div class="links">
-
-<div>
-📷 اینستاگرام:
-<br>
-<a href="${instagram}" target="_blank">${instagram || "ثبت نشده"}</a>
-</div>
-
-<div>
-✈️ تلگرام:
-<br>
-<a href="${telegram}" target="_blank">${telegram || "ثبت نشده"}</a>
-</div>
-
-<div>
-💎 روبیکا:
-<br>
-<a href="${rubika}" target="_blank">${rubika || "ثبت نشده"}</a>
-</div>
-
-</div>
-
-<div id="qrcode"></div>
-
-<button class="download" onclick="downloadQR()">
-📥 دانلود QR
-</button>
-
-<div class="notice">
-QR را ذخیره کنید و برای دیگران ارسال کنید.
-</div>
-
-</div>
-`;
-
-new QRCode(document.getElementById("qrcode"),{
-text:qrText,
-width:220,
-height:220
-});
-
-};
-
-if(photo){
-reader.readAsDataURL(photo);
-}else{
-
-const qrText=
-`👤 نام کاربری:
-${username}
-
-📷 Instagram:
-${instagram}
-
-✈️ Telegram:
-${telegram}
-
-💎 Rubika:
-${rubika}`;
-
-document.getElementById("result").innerHTML=`
-
-<div class="card">
-
-<h2>${username}</h2>
-
-<div class="links">
-
-<div>📷 ${instagram || "ثبت نشده"}</div>
-<div>✈️ ${telegram || "ثبت نشده"}</div>
-<div>💎 ${rubika || "ثبت نشده"}</div>
-
-</div>
-
-<div id="qrcode"></div>
-
-<button class="download" onclick="downloadQR()">
-📥 دانلود QR
-</button>
-
-</div>
-`;
-
-new QRCode(document.getElementById("qrcode"),{
-text:qrText,
-width:220,
-height:220
-});
-
-}
-
-}
-
-function downloadQR(){
-
-const canvas=document.querySelector("#qrcode canvas");
-
-if(!canvas){
-alert("ابتدا QR بسازید");
-return;
-}
-
-const link=document.createElement("a");
-
-link.download="QR-Profile.png";
-
-link.href=canvas.toDataURL("image/png");
-
-link.click();
-
+    if(pass === "11228"){
+        document.getElementById("result").innerHTML =
+            "<span style='color:green'>✅ ورود موفقیت‌آمیز بود</span>";
+    } else {
+        document.getElementById("result").innerHTML =
+            "<span style='color:red'>❌ رمز اشتباه است</span>";
+    }
 }
 </script>
 
