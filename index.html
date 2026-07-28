@@ -1,267 +1,407 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRN Chat Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-        // وارد کردن Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, setDoc, updateDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRN Chat Pro - نسخه نهایی اصلاح شده</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
-        // مشخصات فایربیس شما
-        const firebaseConfig = {
-            apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
-            authDomain: "irn-chat-pro.firebaseapp.com",
-            projectId: "irn-chat-pro",
-            storageBucket: "irn-chat-pro.firebasestorage.app",
-            messagingSenderId: "1084279461221",
-            appId: "1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
-        };
+body, html {
+    margin:0; padding:0;
+    font-family:'Vazirmatn',tahoma;
+    background:#0b1a2f;
+    color:white;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    font-size:14px;
+}
 
-        // مقداردهی اولیه
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+#loadingScreen {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    background:#0b1a2f; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999;
+}
+#loadingScreen h1{font-size:28px;}
+#loadingScreen p{font-size:16px;color:#aaa;margin-top:8px;text-align:center;}
 
-        // متغیرهای وضعیت برنامه
-        let currentUser = null;
-        let activeChatId = 'public'; 
-        let isPrivateChat = false;
-        let recipientId = null;
-        let currentUserDisplayName = "";
+#publicView,#privateView{
+    flex:1; display:flex; flex-direction:column; padding:10px; overflow:hidden; height:100%;
+}
 
-        // عناصر صفحه
-        const loginScreen = document.getElementById('login-screen');
-        const chatScreen = document.getElementById('chat-screen');
-        const userList = document.getElementById('user-list');
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('message-input');
-        const chatTitle = document.getElementById('chat-title');
-        const usernameInput = document.getElementById('username-input');
+.messages{
+    flex:1; overflow-y:auto; padding:5px; margin-bottom:5px; background:#111; border-radius:6px;
+}
 
-        // --- تابع ورود ---
-        async function login() {
-            const name = usernameInput.value.trim();
-            if (!name) return alert("لطفاً نام خود را وارد کنید");
+.msg{
+    background:#222; margin:4px; padding:8px; border-radius:6px; position:relative;
+    display:flex; justify-content:space-between; align-items:center; font-size:13px;
+}
 
-            try {
-                const userCredential = await signInAnonymously(auth);
-                currentUser = userCredential.user;
-                currentUserDisplayName = name;
+.msg-content { flex: 1; }
+.msg-actions { display: flex; align-items: center; margin-right: 5px; }
 
-                // ذخیره اطلاعات کاربر در Firestore
-                await setDoc(doc(db, "users", currentUser.uid), {
-                    uid: currentUser.uid,
-                    displayName: name,
-                    isOnline: true,
-                    lastSeen: serverTimestamp()
-                });
+.msg button{margin-right:4px; background:#444; color:white; border:none; border-radius:3px; cursor:pointer; padding:3px 6px; font-size:11px;}
+.msg button:hover { background: #666; }
 
-                loginScreen.classList.add('hidden');
-                chatScreen.classList.remove('hidden');
-                startApp();
-            } catch (error) {
-                console.error("خطا در ورود:", error);
-                alert("خطا در اتصال به فایربیس. کنسول را چک کنید.");
-            }
-        }
+.ticks{margin-left:5px;font-size:12px;color:#0f0;}
+.sent{color:#aaa;}
+.seen{color:#0f0;}
 
-        function startApp() {
-            loadUsers();
-            loadMessages();
-            // آپدیت وضعیت آنلاین هر ۳۰ ثانیه
-            setInterval(() => {
-                if (currentUser) updateDoc(doc(db, "users", currentUser.uid), { isOnline: true });
-            }, 30000);
-        }
+.chat-input{display:flex; margin-top:3px;}
+.chat-input input{flex:1;padding:10px;border-radius:5px;border:none;margin-left:4px;font-size:13px; outline: none;}
+.chat-input button{padding:7px 15px;border:none;border-radius:5px;background:#00aaff;color:white;cursor:pointer;font-size:13px;}
 
-        // --- مدیریت لیست کاربران ---
-        function loadUsers() {
-            const q = query(collection(db, "users"));
-            onSnapshot(q, (snapshot) => {
-                userList.innerHTML = `
-                    <div onclick="window.switchChat('public')" class="p-4 hover:bg-gray-700 cursor-pointer flex items-center transition ${activeChatId === 'public' ? 'bg-gray-700 border-r-4 border-blue-500' : ''}">
-                        <span class="ml-3 text-xl">📢</span>
-                        <span class="font-medium">چت عمومی</span>
-                    </div>
-                `;
+#privateBtn,#backBtn{padding:8px 10px;margin:5px 0;font-size:14px;border-radius:6px;background:#0d6efd;color:white;cursor:pointer; border:none;}
 
-                snapshot.forEach((docSnap) => {
-                    const user = docSnap.data();
-                    if (user.uid !== currentUser.uid) {
-                        const userDiv = document.createElement('div');
-                        userDiv.className = `p-4 hover:bg-gray-700 cursor-pointer flex items-center transition ${recipientId === user.uid ? 'bg-gray-700 border-r-4 border-blue-500' : ''}`;
-                        userDiv.innerHTML = `
-                            <span class="relative flex h-3 w-3 ml-3">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${user.isOnline ? 'bg-green-400' : 'bg-gray-400'} opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-3 w-3 ${user.isOnline ? 'bg-green-500' : 'bg-gray-500'}"></span>
-                            </span>
-                            <span class="font-medium">${user.displayName}</span>
-                        `;
-                        userDiv.onclick = () => window.switchChat('private', user.uid, user.displayName);
-                        userList.appendChild(userDiv);
-                    }
-                });
-            });
-        }
+.privateViewContainer{flex:1; display:flex; flex-direction:row; overflow:hidden; margin-top:5px; border: 1px solid #333;}
 
-        // --- جابجایی بین چت‌ها ---
-        window.switchChat = (type, targetId = null, targetName = '') => {
-            isPrivateChat = (type === 'private');
-            recipientId = targetId;
-            
-            if (isPrivateChat) {
-                const chatRoomId = getChatRoomId(currentUser.uid, targetId);
-                activeChatId = `chat_${chatRoomId}`;
-                chatTitle.innerText = `چت خصوصی: ${targetName}`;
-            } else {
-                activeChatId = 'public';
-                chatTitle.innerText = "چت عمومی";
-            }
-            loadMessages();
-        };
+.sidebar{
+    width:250px; background:#111; border-left:1px solid #444;
+    display:flex; flex-direction:column; overflow-y:auto;
+}
 
-        function getChatRoomId(id1, id2) {
-            return [id1, id2].sort().join('_');
-        }
+.sidebar h3{margin:10px;padding:5px;border-bottom:1px solid #444;font-size:14px; text-align: center;}
+.sidebar .userItem{padding:10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:13px; border-bottom: 1px solid #222;}
+.sidebar .userItem:hover{background:#1a3a5a;}
+.online-dot{width:10px;height:10px;border-radius:50%;background:#0f0;display:inline-block;margin-right:5px;}
+.unread-count{background:red;color:white;border-radius:50%;padding:2px 6px;margin-right:5px;font-size:11px;}
 
-        // --- بارگذاری پیام‌ها ---
-        function loadMessages() {
-            messagesContainer.innerHTML = '<p class="text-center text-gray-500 mt-10">در حال بارگذاری...</p>';
-            
-            let q;
-            if (!isPrivateChat) {
-                q = query(collection(db, "messages"), where("chatId", "==", "public"), orderBy("timestamp", "asc"));
-            } else {
-                const chatRoomId = getChatRoomId(currentUser.uid, recipientId);
-                q = query(collection(db, "messages"), where("chatId", "==", `chat_${chatRoomId}`), orderBy("timestamp", "asc"));
-            }
+.privateChatWindow{
+    flex:1; display:flex; flex-direction:column; overflow:hidden; background: #0b1a2f;
+}
+#privateMessages{flex:1; overflow-y:auto; padding:5px; margin-bottom:5px; background:#111; border-radius:6px;}
 
-            onSnapshot(q, (snapshot) => {
-                messagesContainer.innerHTML = '';
-                if (snapshot.empty) {
-                    messagesContainer.innerHTML = '<p class="text-center text-gray-500 mt-10">پیامی یافت نشد.</p>';
-                }
-                snapshot.forEach((docSnap) => {
-                    const msg = docSnap.data();
-                    const isMe = msg.senderId === currentUser.uid;
-                    const msgDiv = document.createElement('div');
-                    msgDiv.className = `mb-4 flex ${isMe ? 'justify-end' : 'justify-start'}`;
-                    msgDiv.innerHTML = `
-                        <div class="max-w-[75%]">
-                            <div class="${isMe ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl' : 'bg-gray-700 text-white rounded-r-xl rounded-tl-xl'} px-4 py-2 shadow-md">
-                                ${!isMe && isPrivateChat ? `<p class="text-[10px] text-blue-300 mb-1">${msg.senderName}</p>` : ''}
-                                <p class="text-sm leading-relaxed">${msg.text}</p>
-                            </div>
-                            <p class="text-[9px] text-gray-500 mt-1 ${isMe ? 'text-left' : 'text-right'}">
-                                ${msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'}) : ''}
-                            </p>
-                        </div>
-                    `;
-                    messagesContainer.appendChild(msgDiv);
-                });
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }, (error) => {
-                console.error("Error loading messages:", error);
-                messagesContainer.innerHTML = `<p class="text-center text-red-500 mt-10">خطا در دریافت پیام‌ها. احتمالاً ایندکس ساخته نشده است.</p>`;
-            });
-        }
-
-        // --- ارسال پیام ---
-        window.sendMessage = async () => {
-            const text = messageInput.value.trim();
-            if (!text || !currentUser) return;
-
-            const chatId = isPrivateChat ? `chat_${getChatRoomId(currentUser.uid, recipientId)}` : 'public';
-
-            try {
-                messageInput.value = ''; // پاک کردن ورودی بلافاصله برای تجربه بهتر کاربر
-                await addDoc(collection(db, "messages"), {
-                    chatId: chatId,
-                    senderId: currentUser.uid,
-                    senderName: currentUserDisplayName,
-                    text: text,
-                    timestamp: serverTimestamp()
-                });
-            } catch (e) {
-                console.error("Error sending message:", e);
-                alert("خطا در ارسال پیام.");
-            }
-        };
-
-        window.sendMessageKeyPress = (e) => { if(e.key === 'Enter') window.sendMessage(); };
-        window.login = login;
-
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700&display=swap');
-        body { font-family: 'Vazirmatn', sans-serif; }
-        #messages::-webkit-scrollbar { width: 4px; }
-        #messages::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
-    </style>
+</style>
 </head>
-<body class="bg-gray-900 text-white h-screen overflow-hidden">
+<body>
 
-    <!-- صفحه ورود -->
-    <div id="login-screen" class="flex items-center justify-center h-full p-6">
-        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-700">
-            <div class="text-center mb-8">
-                <div class="bg-blue-600 w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 shadow-lg shadow-blue-500/20">💬</div>
-                <h1 class="text-2xl font-bold text-white">خوش آمدید</h1>
-                <p class="text-gray-400 text-sm mt-2">برای شروع، نام خود را وارد کنید</p>
-            </div>
-            <input id="username-input" type="text" placeholder="نام شما..." class="w-full p-4 mb-4 rounded-xl bg-gray-700 border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition text-center">
-            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-bold text-lg transition-all active:scale-95 shadow-lg shadow-blue-600/30">ورود به چت</button>
-        </div>
+<div id="loadingScreen">
+  <h1>پیام‌رسانی ساده برای همه</h1>
+  <p>«سرعت، امنیت، ارتباط»</p>
+</div>
+
+<div id="publicView" style="display:none;">
+  <div style="margin-bottom:10px; background: #1a3a5a; padding: 8px; border-radius: 8px;">
+      👤 <strong id="displayName"></strong> 
+      <button onclick="changeName()" style="font-size:11px; padding:2px 5px; margin-right:10px;">تغییر نام</button>
+  </div>
+  <div id="typingStatus" style="font-size:12px;color:#aaa;margin-bottom:5px; height: 15px;"></div>
+  <div class="messages" id="messagesPublic"></div>
+  <div class="chat-input">
+    <input id="text" placeholder="پیام عمومی...">
+    <button onclick="sendPublicMessage()">ارسال</button>
+  </div>
+  <button id="privateBtn">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count" style="display:none">0</span></button>
+</div>
+
+<div id="privateView" style="display:none;">
+  <div class="privateViewContainer">
+    <div class="sidebar">
+      <h3>لیست کاربران آنلاین</h3>
+      <input id="privateSearch" placeholder="جستجو..." style="margin:5px;padding:8px;border-radius:5px;border:none;font-size:13px; background: #222; color: white;">
+      <div id="privateUserList"></div>
+      <button id="backBtn" style="margin: 10px;">⬅ بازگشت به عمومی</button>
     </div>
-
-    <!-- صفحه اصلی چت -->
-    <div id="chat-screen" class="hidden flex h-full overflow-hidden">
-        
-        <!-- سایدبار (کاربران آنلاین) -->
-        <div class="w-full md:w-80 bg-gray-800 border-l border-gray-700 flex flex-col shrink-0">
-            <div class="p-5 font-bold text-lg border-b border-gray-700 flex items-center justify-between">
-                <span>👥 کاربران آنلاین</span>
-                <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">Live</span>
-            </div>
-            <div id="user-list" class="flex-1 overflow-y-auto">
-                <!-- لیست کاربران اینجا تزریق می‌شود -->
-            </div>
-        </div>
-
-        <!-- بخش اصلی پیام‌ها -->
-        <div class="flex-1 flex flex-col min-w-0">
-            <!-- هدر چت -->
-            <div class="p-4 bg-gray-800/50 backdrop-blur-md border-b border-gray-700 flex items-center">
-                <div id="chat-header-icon" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center ml-3 text-xl">📢</div>
-                <div>
-                    <h2 id="chat-title" class="text-md font-bold leading-none">چت عمومی</h2>
-                    <p class="text-[10px] text-green-500 mt-1">متصل به سرور</p>
-                </div>
-            </div>
-
-            <!-- نمایش پیام‌ها -->
-            <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-2 bg-[#0b0e14]">
-                <!-- پیام‌ها اینجا تزریق می‌شوند -->
-            </div>
-
-            <!-- باکس ارسال پیام -->
-            <div class="p-4 bg-gray-800 border-t border-gray-700">
-                <div class="max-w-4xl mx-auto flex gap-3 items-center">
-                    <input id="message-input" type="text" onkeypress="sendMessageKeyPress(event)" placeholder="پیام خود را بنویسید..." class="flex-1 p-3 rounded-xl bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none transition">
-                    <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 p-3 rounded-xl transition-all active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
+    <div class="privateChatWindow">
+      <div id="chatHeader" style="padding: 10px; background: #1a3a5a; font-weight: bold;">انتخاب کاربر...</div>
+      <div class="messages" id="privateMessages"></div>
+      <div class="chat-input">
+        <input id="privateText" placeholder="پیام خصوصی...">
+        <button onclick="sendPrivateMessage()">ارسال</button>
+      </div>
     </div>
+  </div>
+</div>
 
+<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
+
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ==== Firebase setup ====
+const firebaseConfig = {
+  apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
+  authDomain: "irn-chat-pro.firebaseapp.com",
+  projectId: "irn-chat-pro",
+  storageBucket: "irn-chat-pro.firebasestorage.app",
+  messagingSenderId: "1084279461221",
+  appId: "1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const messagesRef = db.collection("messages");
+const usersRef = db.collection("users");
+const typingRef = db.collection("typing");
+
+// ==== User setup ====
+let userId = localStorage.getItem("userId");
+if(!userId){ userId=Math.random().toString(36).substr(2,9); localStorage.setItem("userId",userId);}
+let username = localStorage.getItem("chatName");
+if(!username){ username=prompt("نام خود را وارد کنید") || "کاربر ناشناس"; localStorage.setItem("chatName",username);}
+
+document.getElementById("displayName").innerText=username;
+// ثبت کاربر در دیتابیس
+usersRef.doc(userId).set({name:username, online:true}, {merge: true});
+
+window.addEventListener("beforeunload",()=>usersRef.doc(userId).update({online:false}));
+
+window.addEventListener("load", ()=>{
+  setTimeout(()=>{
+      document.getElementById("loadingScreen").style.display="none"; 
+      document.getElementById("publicView").style.display="flex";
+  },1200);
+});
+
+// ==== Typing status ====
+document.getElementById("text").addEventListener("input", ()=>{
+  typingRef.doc(userId).set({name:username});
+  setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),2000);
+});
+
+typingRef.onSnapshot(snap=>{
+  let names=[];
+  snap.forEach(d=>{ if(d.id!==userId) names.push(d.data().name) });
+  document.getElementById("typingStatus").innerText = names.length ? names.join(" و ")+" در حال نوشتن..." : "";
+});
+
+// ==== Views toggle ====
+const publicView=document.getElementById("publicView");
+const privateView=document.getElementById("privateView");
+const unreadCounter = document.getElementById("unreadPrivateCount");
+
+document.getElementById("privateBtn").onclick=()=>{ 
+    publicView.style.display="none"; 
+    privateView.style.display="flex"; 
+    markPrivateMessagesAsRead(); 
+};
+document.getElementById("backBtn").onclick=()=>{ 
+    publicView.style.display="flex"; 
+    privateView.style.display="none"; 
+};
+
+// ==== Users management ====
+let usersCache=[];
+usersRef.onSnapshot(snap=>{
+  usersCache=[];
+  snap.forEach(u=>{ 
+      if(u.id !== userId){ 
+          const data = u.data();
+          usersCache.push({id:u.id, name:data.name, online:data.online}); 
+      } 
+  });
+  renderPrivateUsers(usersCache);
+});
+
+function renderPrivateUsers(users){
+  const listDiv=document.getElementById("privateUserList"); 
+  listDiv.innerHTML="";
+  users.forEach(u=>{
+    const div=document.createElement("div"); 
+    div.className="userItem"; 
+    div.id="userItem-"+u.id;
+    div.innerHTML = `<span>${u.name}</span><span id="userUnread-${u.id}" class="unread-count" style="display:none">0</span>${u.online ? '<span class="online-dot"></span>' : ''}`;
+    div.onclick=()=>selectPrivateUser(u.id,u.name);
+    listDiv.appendChild(div);
+  });
+}
+
+// ==== Private Chat Logic ====
+let selectedPrivateUser=null;
+let privateUnsubscribe = null;
+
+function selectPrivateUser(id, name){ 
+    selectedPrivateUser = {id, name}; 
+    document.getElementById("chatHeader").innerText = "چت با: " + name;
+    loadPrivateMessages(); 
+    markMessagesAsReadFrom(id); 
+}
+
+function loadPrivateMessages(){
+    if(privateUnsubscribe) privateUnsubscribe(); // جلوگیری از تداخل کانال‌ها
+    const box=document.getElementById("privateMessages"); 
+    if(!selectedPrivateUser) return;
+    
+    box.innerHTML = "";
+
+    // ایجاد یک کانال گوش دادن به پیام‌ها
+    privateUnsubscribe = messagesRef.orderBy("time", "asc").onSnapshot(snapshot=>{
+        box.innerHTML="";
+        snapshot.forEach(docSnap=>{
+            const m=docSnap.data();
+            // شرط اصلی: پیام یا از من به او، یا از او به من باشد + مقصد حتماً خصوصی باشد
+            const isPrivate = (m.userId === userId && m.receiverId === selectedPrivateUser.id) || 
+                              (m.userId === selectedPrivateUser.id && m.receiverId === userId);
+            
+            if(isPrivate){
+                const msgDiv=document.createElement("div"); 
+                msgDiv.className="msg";
+                
+                let tick = "";
+                if(m.userId === userId){
+                    tick = m.seen ? "<span class='ticks seen'>✔️</span>" : "<span class='ticks sent'>✅</span>";
+                }
+
+                let buttons = "";
+                if(m.userId === userId){
+                    buttons += `<button onclick="deleteMsg('${docSnap.id}')">❌</button>`;
+                }
+                buttons += `<button onclick="replyMsg('${m.text}', ${m.userId === userId})">↩️</button>`;
+
+                msgDiv.innerHTML = `
+                    <div class="msg-content">
+                        <span style="color:#00aaff; font-size:11px;">${m.name}</span><br>
+                        <span>${m.text}</span>
+                    </div>
+                    <div class="msg-actions">${tick}${buttons}</div>
+                `;
+                box.appendChild(msgDiv);
+            }
+        });
+        box.scrollTop = box.scrollHeight;
+    });
+}
+
+function sendPrivateMessage(){
+  if(!selectedPrivateUser) return alert("لطفاً ابتدا یک کاربر را انتخاب کنید");
+  const input=document.getElementById("privateText"); 
+  const text=input.value.trim(); 
+  if(!text) return;
+
+  messagesRef.add({ 
+    name:username,
+    text:text,
+    userId:userId,
+    receiverId:selectedPrivateUser.id,
+    time:firebase.firestore.FieldValue.serverTimestamp(),
+    seen:false 
+  });
+  input.value="";
+}
+
+function deleteMsg(msgId){ 
+    if(confirm("آیا از حذف این پیام مطمئن هستید؟")) {
+        messagesRef.doc(msgId).delete(); 
+    }
+}
+
+function replyMsg(text, isMine){ 
+  const input = isMine ? document.getElementById("text") : document.getElementById("privateText");
+  input.value = "↪ " + text;
+  input.focus();
+}
+
+function markMessagesAsReadFrom(senderId){ 
+    messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get().then(snapshot=>{ 
+        snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); 
+    }); 
+}
+
+function markPrivateMessagesAsRead(){ 
+    messagesRef.where("receiverId","==",userId).where("seen","==",false).get().then(snapshot=>{ 
+        snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); 
+    }); 
+}
+
+function updateUnreadPerUser(){
+  messagesRef.where("receiverId","==",userId).where("seen","==",false).onSnapshot(snap=>{
+    let countMap={};
+    snap.forEach(doc=>{ 
+        const m=doc.data(); 
+        if(m.receiverId && m.receiverId !== userId){ 
+            // در اینجا برای نمایش در لیست، باید بدانیم پیام از چه کسی آمده (userId فرستنده)
+            // چون در دیتابیس فقط receiverId ذخیره شده، باید منطق را دقیق کرد
+            // اما برای سادگی بر اساس userId فرستنده شمارش می‌کنیم:
+            const sender = m.userId; 
+            countMap[sender]=(countMap[sender]||0)+1; 
+        } 
+    });
+
+    usersCache.forEach(u=>{
+      const el=document.getElementById("userUnread-"+u.id);
+      if(el){ 
+          if(countMap[u.id]>0){ 
+              el.style.display="inline-block"; 
+              el.innerText=countMap[u.id]; 
+          } else { 
+              el.style.display="none"; 
+          } 
+      }
+    });
+
+    const totalUnread=Object.values(countMap).reduce((a,b)=>a+b,0);
+    if(totalUnread>0){ 
+        unreadCounter.style.display="inline-block"; 
+        unreadCounter.innerText=totalUnread; 
+    } else {
+        unreadCounter.style.display="none";
+    }
+  });
+}
+
+// ==== Public Chat Logic ====
+messagesRef.orderBy("time", "desc").onSnapshot(snapshot=>{
+  const box=document.getElementById("messagesPublic"); 
+  box.innerHTML="";
+  snapshot.forEach(docSnap=>{
+    const m=docSnap.data(); 
+    // فقط پیام‌هایی که گیرنده ندارند (عمومی هستند)
+    if(!m.receiverId){
+      const div=document.createElement("div"); 
+      div.className="msg";
+      let tick=""; 
+      if(m.userId===userId){
+          tick = m.seen ? "<span class='ticks seen'>✔️</span>" : "<span class='ticks sent'>✅</span>";
+      }
+      let buttons="";
+      if(m.userId===userId){ 
+          buttons = `<button onclick="deleteMsg('${docSnap.id}')">❌</button>`; 
+      }
+      buttons += `<button onclick="replyMsg('${m.text}', true)">↩️</button>`;
+      
+      div.innerHTML = `
+        <div class="msg-content">
+            <span style="color:#00aaff; font-size:11px;">${m.name}</span><br>
+            <span>${m.text}</span>
+        </div>
+        <div class="msg-actions">${tick}${buttons}</div>
+      `;
+      box.appendChild(div);
+    }
+  });
+});
+
+function sendPublicMessage(){
+  const input=document.getElementById("text"); 
+  const text=input.value.trim(); 
+  if(!text) return alert("پیام وارد نشده");
+  
+  messagesRef.add({ 
+    name:username,
+    text:text,
+    userId:userId,
+    receiverId:null,
+    time:firebase.firestore.FieldValue.serverTimestamp(),
+    seen:false 
+  });
+  input.value="";
+}
+
+function changeName(){ 
+    const n=prompt("نام جدید:"); 
+    if(n){ 
+        username=n; 
+        localStorage.setItem("chatName",n); 
+        document.getElementById("displayName").innerText=n; 
+        usersRef.doc(userId).update({name:n}); 
+    } 
+}
+
+if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
+updateUnreadPerUser();
+
+</script>
 </body>
     </html>
-    
