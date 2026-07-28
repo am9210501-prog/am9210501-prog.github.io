@@ -429,6 +429,9 @@ const usersRef = db.collection("users");
 
 
 // کاربر
+// ======================
+// USER SYSTEM
+// ======================
 
 
 let userId = localStorage.getItem("userId");
@@ -436,11 +439,12 @@ let userId = localStorage.getItem("userId");
 
 if(!userId){
 
-userId = Math.random()
-.toString(36)
-.substring(2,12);
+    userId = crypto.randomUUID();
 
-localStorage.setItem("userId",userId);
+    localStorage.setItem(
+        "userId",
+        userId
+    );
 
 }
 
@@ -451,31 +455,85 @@ let username = localStorage.getItem("chatName");
 
 if(!username){
 
-username = prompt("نام خود را وارد کنید") || "کاربر";
+    username =
+    prompt("نام خود را وارد کنید")
+    ||
+    "کاربر";
 
-localStorage.setItem("chatName",username);
+
+    localStorage.setItem(
+        "chatName",
+        username
+    );
 
 }
 
 
 
-document.getElementById("myName").innerText=username;
+document.getElementById("myName")
+.innerText=username;
 
 
+
+// ثبت کاربر
 
 usersRef.doc(userId).set({
 
-name:username,
+    name:username,
 
-online:true
+    online:true,
 
-},{merge:true});
-
-
-
+    lastSeen:
+    firebase.firestore.FieldValue.serverTimestamp()
 
 
+},
+{
+merge:true
+});
 
+
+
+
+// هر 20 ثانیه وضعیت را تازه کن
+
+setInterval(()=>{
+
+
+usersRef.doc(userId).update({
+
+    online:true,
+
+    lastSeen:
+    firebase.firestore.FieldValue.serverTimestamp()
+
+
+});
+
+
+},20000);
+
+
+
+
+// خروج
+
+window.addEventListener(
+"beforeunload",
+()=>{
+
+
+usersRef.doc(userId).update({
+
+online:false,
+
+lastSeen:
+firebase.firestore.FieldValue.serverTimestamp()
+
+});
+
+
+});
 
 // ورود
 
@@ -565,11 +623,12 @@ userId:userId,
 
 type:"public",
 
-receiverId:null,
+receiverId:"",
 
-seen:false,
+seenBy:[],
 
-time:firebase.firestore.FieldValue.serverTimestamp()
+time:
+firebase.firestore.FieldValue.serverTimestamp()
 
 });
 
@@ -1052,16 +1111,44 @@ box.scrollTop=box.scrollHeight;
 function deleteMessage(id){
 
 
-if(confirm("پیام حذف شود؟")){
+if(!confirm("پیام حذف شود؟"))
+return;
 
 
-messagesRef.doc(id).delete();
 
+messagesRef.doc(id)
+.get()
+.then(doc=>{
+
+
+if(!doc.exists)
+return;
+
+
+
+let data=doc.data();
+
+
+
+if(data.userId !== userId){
+
+alert("این پیام متعلق به شما نیست");
+
+return;
 
 }
 
 
-}
+
+messagesRef.doc(id)
+.delete();
+
+
+
+});
+
+
+  }
 
 
 
