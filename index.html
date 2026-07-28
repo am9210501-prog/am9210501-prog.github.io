@@ -180,8 +180,42 @@ IRN Chat Pro
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
+<script>
 
 
+const firebaseConfig = {
+
+apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
+
+authDomain: "irn-chat-pro.firebaseapp.com",
+
+projectId: "irn-chat-pro",
+
+storageBucket: "irn-chat-pro.firebasestorage.app",
+
+messagingSenderId: "1084279461221",
+
+appId: "1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
+
+};
+
+
+
+firebase.initializeApp(firebaseConfig);
+
+
+
+const db = firebase.firestore();
+
+
+
+console.log("Firebase Connected");
+
+
+</script>
 </body>
 
 
