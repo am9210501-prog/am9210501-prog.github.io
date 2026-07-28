@@ -666,5 +666,286 @@ box.scrollTop=box.scrollHeight;
 
 
 
+// ======================
+// چت خصوصی
+// ======================
 
+
+let selectedUser = null;
+
+
+// رفتن به خصوصی
+
+function openPrivate(){
+
+document.getElementById("publicPage")
+.classList.add("hidden");
+
+
+document.getElementById("privatePage")
+.classList.remove("hidden");
+
+
+}
+
+
+
+// برگشت
+
+function backPublic(){
+
+document.getElementById("privatePage")
+.classList.add("hidden");
+
+
+document.getElementById("publicPage")
+.classList.remove("hidden");
+
+
+}
+
+
+
+// لیست کاربران
+
+usersRef.onSnapshot(snapshot=>{
+
+
+let list =
+document.getElementById("userList");
+
+
+list.innerHTML="";
+
+
+
+snapshot.forEach(doc=>{
+
+
+let u=doc.data();
+
+
+
+if(doc.id !== userId){
+
+
+
+list.innerHTML += `
+
+
+<div class="user"
+onclick="selectUser('${doc.id}','${u.name}')">
+
+
+${u.name}
+
+
+</div>
+
+
+`;
+
+
+
+}
+
+
+});
+
+
+
+});
+
+
+
+
+
+// انتخاب کاربر
+
+
+function selectUser(id,name){
+
+
+selectedUser={
+
+id:id,
+
+name:name
+
+};
+
+
+
+document.getElementById("privateTitle")
+.innerText="چت با "+name;
+
+
+
+loadPrivateMessages();
+
+
+}
+
+
+
+
+
+
+// ارسال پیام خصوصی
+
+
+function sendPrivate(){
+
+
+if(!selectedUser){
+
+alert("اول یک کاربر انتخاب کن");
+
+return;
+
+}
+
+
+
+let input =
+document.getElementById("privateInput");
+
+
+
+let text=input.value.trim();
+
+
+
+if(!text)return;
+
+
+
+
+messagesRef.add({
+
+
+name:username,
+
+text:text,
+
+userId:userId,
+
+receiverId:selectedUser.id,
+
+type:"private",
+
+seen:false,
+
+time:firebase.firestore.FieldValue.serverTimestamp()
+
+
+});
+
+
+
+input.value="";
+
+
+
+}
+
+
+
+
+
+
+
+// نمایش پیام خصوصی
+
+
+function loadPrivateMessages(){
+
+
+
+messagesRef
+.orderBy("time","asc")
+.onSnapshot(snapshot=>{
+
+
+
+let box =
+document.getElementById("privateMessages");
+
+
+
+box.innerHTML="";
+
+
+
+snapshot.forEach(doc=>{
+
+
+
+let m=doc.data();
+
+
+
+if(
+
+m.type==="private"
+
+&&
+
+(
+
+(m.userId===userId && m.receiverId===selectedUser.id)
+
+||
+
+(m.userId===selectedUser.id && m.receiverId===userId)
+
+)
+
+){
+
+
+
+box.innerHTML += `
+
+
+<div class="msg">
+
+
+<div class="name">
+
+${m.name}
+
+</div>
+
+
+
+${m.text}
+
+
+
+</div>
+
+
+
+`;
+
+
+
+}
+
+
+
+});
+
+
+
+box.scrollTop=box.scrollHeight;
+
+
+
+});
+
+
+
+  }
 </script>
