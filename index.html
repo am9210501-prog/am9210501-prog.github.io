@@ -1051,14 +1051,24 @@ box.scrollTop=box.scrollHeight;
 
 function deleteMessage(id){
 
-
 if(confirm("پیام حذف شود؟")){
 
+messagesRef.doc(id).delete()
+.then(()=>{
 
-messagesRef.doc(id).delete();
+console.log("پیام حذف شد");
+
+})
+.catch(err=>{
+
+alert("خطا در حذف: "+err.message);
+
+});
 
 
 }
+
+  }
 
 
 }
