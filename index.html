@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
 
 <meta charset="UTF-8">
@@ -9,51 +10,186 @@
 
 <style>
 
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+
+
+*{
+box-sizing:border-box;
+}
+
+
 body{
-    margin:0;
-    background:#0b1a2f;
-    color:white;
-    font-family:tahoma;
+
+margin:0;
+height:100vh;
+font-family:Vazirmatn,Tahoma;
+background:#0b1a2f;
+color:white;
+
 }
 
-.box{
-    padding:15px;
+
+.hidden{
+
+display:none!important;
+
 }
 
-#messages{
-    height:70vh;
-    overflow:auto;
-    background:#111;
-    border-radius:10px;
-    padding:10px;
+
+.page{
+
+height:100vh;
+display:flex;
+flex-direction:column;
+padding:10px;
+
 }
 
-.msg{
-    background:#222;
-    padding:8px;
-    margin:5px;
-    border-radius:8px;
+
+.header{
+
+background:#1a3a5a;
+padding:10px;
+border-radius:8px;
+margin-bottom:8px;
+
 }
 
-.name{
-    color:#00aaff;
-    font-size:12px;
-}
 
-input{
-    width:75%;
-    padding:12px;
-    border-radius:8px;
-    border:0;
-}
 
 button{
-    padding:12px;
-    background:#008cff;
-    color:white;
-    border:0;
-    border-radius:8px;
+
+background:#008cff;
+color:white;
+border:none;
+padding:8px 12px;
+border-radius:6px;
+cursor:pointer;
+
 }
+
+
+
+input{
+
+padding:10px;
+border-radius:6px;
+border:none;
+outline:none;
+flex:1;
+
+}
+
+
+
+.box{
+
+display:flex;
+gap:5px;
+margin-top:8px;
+
+}
+
+
+
+.messages{
+
+flex:1;
+background:#111;
+border-radius:8px;
+padding:8px;
+overflow-y:auto;
+
+}
+
+
+
+.msg{
+
+background:#222;
+padding:8px;
+border-radius:7px;
+margin-bottom:5px;
+
+}
+
+
+
+.name{
+
+color:#00aaff;
+font-size:12px;
+
+}
+
+
+
+/* خصوصی */
+
+
+.private{
+
+display:flex;
+flex:1;
+gap:8px;
+
+}
+
+
+
+.users{
+
+width:220px;
+background:#111;
+border-radius:8px;
+overflow-y:auto;
+
+}
+
+
+
+.user{
+
+padding:10px;
+border-bottom:1px solid #333;
+cursor:pointer;
+
+}
+
+
+
+.user:hover{
+
+background:#1a3a5a;
+
+}
+
+
+
+.chat{
+
+flex:1;
+display:flex;
+flex-direction:column;
+
+}
+
+
+
+#loading{
+
+position:fixed;
+inset:0;
+background:#0b1a2f;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:99;
+
+}
+
+
 
 </style>
 
@@ -63,33 +199,63 @@ button{
 <body>
 
 
-<div class="box">
+<div id="loading">
 
+<h1>
+IRN Chat Pro
+</h1>
 
-<h2>
-💬 IRN Chat Pro
-</h2>
+<p>
+سرعت، امنیت، ارتباط
+</p>
 
-
-<div>
-👤
-<span id="myName"></span>
 </div>
 
 
-<br>
 
 
-<div id="messages"></div>
+<!-- صفحه عمومی -->
 
 
-<br>
+<div id="publicPage" class="page hidden">
 
 
-<input id="text" placeholder="پیام...">
+<div class="header">
 
-<button onclick="send()">
+👤
+
+<span id="myName">
+
+کاربر
+
+</span>
+
+
+<button onclick="changeName()">
+
+تغییر نام
+
+</button>
+
+
+</div>
+
+
+<div id="publicMessages" class="messages">
+
+</div>
+
+
+
+<div class="box">
+
+<input id="publicInput" placeholder="پیام عمومی...">
+
+
+<button onclick="sendPublic()">
+
 ارسال
+
 </button>
 
 
@@ -97,83 +263,194 @@ button{
 
 
 
+<button onclick="openPrivate()">
 
+💬 چت خصوصی
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+<!-- صفحه خصوصی -->
+
+
+<div id="privatePage" class="page hidden">
+
+
+
+<div class="private">
+
+
+
+<div class="users">
+
+
+<h3 style="padding:10px">
+
+کاربران
+
+</h3>
+
+
+<div id="userList">
+
+</div>
+
+
+</div>
+
+
+
+
+<div class="chat">
+
+
+<div class="header" id="privateTitle">
+
+انتخاب کاربر
+
+</div>
+
+
+
+<div id="privateMessages" class="messages">
+
+</div>
+
+
+
+<div class="box">
+
+<input id="privateInput" placeholder="پیام خصوصی...">
+
+
+<button onclick="sendPrivate()">
+
+ارسال
+
+</button>
+
+
+</div>
+
+
+
+<button onclick="backPublic()">
+
+⬅ بازگشت
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+<!-- Firebase -->
 
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
 
-
 <script>
 
 
+// ======================
 // Firebase
+// ======================
+
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
+apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
 
-  authDomain: "irn-chat-pro.firebaseapp.com",
+authDomain: "irn-chat-pro.firebaseapp.com",
 
-  projectId: "irn-chat-pro",
+projectId: "irn-chat-pro",
 
-  storageBucket: "irn-chat-pro.firebasestorage.app",
+storageBucket: "irn-chat-pro.firebasestorage.app",
 
-  messagingSenderId: "1084279461221",
+messagingSenderId: "1084279461221",
 
-  appId: "1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
+appId: "1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
 
 };
+
 
 
 firebase.initializeApp(firebaseConfig);
 
 
-const db=firebase.firestore();
 
-
-const messages=db.collection("messages");
-
-const users=db.collection("users");
+const db = firebase.firestore();
 
 
 
+const messagesRef = db.collection("messages");
+
+const usersRef = db.collection("users");
+
+
+
+
+
+// ======================
 // کاربر
+// ======================
 
 
-let userId=localStorage.getItem("uid");
+let userId = localStorage.getItem("userId");
+
 
 
 if(!userId){
 
-userId=Math.random().toString(36).substring(2);
+userId =
+Math.random().toString(36).substring(2,12);
 
-localStorage.setItem("uid",userId);
+localStorage.setItem("userId",userId);
+
+}
+
+
+
+
+
+let username =
+localStorage.getItem("chatName");
+
+
+
+if(!username){
+
+username =
+prompt("نام خود را وارد کنید") || "کاربر";
+
+localStorage.setItem("chatName",username);
 
 }
 
 
 
-let name=localStorage.getItem("name");
-
-
-if(!name){
-
-name=prompt("نام شما؟") || "کاربر";
-
-localStorage.setItem("name",name);
-
-}
-
-
-document.getElementById("myName").innerText=name;
+document.getElementById("myName").innerText=username;
 
 
 
-users.doc(userId).set({
 
-name:name,
+
+usersRef.doc(userId).set({
+
+name:username,
 
 online:true
 
@@ -183,38 +460,71 @@ online:true
 
 
 
-// ارسال پیام
 
 
-function send(){
+// ======================
+// شروع برنامه
+// ======================
 
 
-let input=document.getElementById("text");
+setTimeout(()=>{
 
 
-let txt=input.value.trim();
-
-
-if(!txt)return;
+document.getElementById("loading")
+.classList.add("hidden");
 
 
 
-messages.add({
+document.getElementById("publicPage")
+.classList.remove("hidden");
 
-name:name,
 
-text:txt,
 
-userId:userId,
+},1000);
 
-type:"public",
 
-time:firebase.firestore.FieldValue.serverTimestamp()
+
+
+
+
+
+// ======================
+// تغییر نام
+// ======================
+
+
+
+function changeName(){
+
+
+let newName = prompt("نام جدید:");
+
+
+
+if(newName){
+
+
+username=newName;
+
+
+localStorage.setItem("chatName",username);
+
+
+
+document.getElementById("myName")
+.innerText=username;
+
+
+
+usersRef.doc(userId).update({
+
+name:username
 
 });
 
 
-input.value="";
+}
+
 
 
 }
@@ -224,23 +534,88 @@ input.value="";
 
 
 
-// دریافت پیام
+
+// ======================
+// ارسال پیام عمومی
+// ======================
 
 
-messages.orderBy("time","asc")
-.onSnapshot(s=>{
+
+function sendPublic(){
 
 
-let box=document.getElementById("messages");
+let input =
+document.getElementById("publicInput");
+
+
+
+let text=input.value.trim();
+
+
+
+if(!text)return;
+
+
+
+
+messagesRef.add({
+
+name:username,
+
+text:text,
+
+userId:userId,
+
+type:"public",
+
+receiverId:null,
+
+seen:false,
+
+time:firebase.firestore.FieldValue.serverTimestamp()
+
+
+});
+
+
+
+input.value="";
+
+
+
+}
+
+
+
+
+
+
+
+// ======================
+// نمایش پیام عمومی
+// ======================
+
+
+
+messagesRef
+.orderBy("time","asc")
+.onSnapshot(snapshot=>{
+
+
+let box =
+document.getElementById("publicMessages");
+
 
 
 box.innerHTML="";
 
 
-s.forEach(d=>{
+
+snapshot.forEach(doc=>{
 
 
-let m=d.data();
+let m=doc.data();
+
 
 
 if(m.type==="public"){
@@ -248,34 +623,48 @@ if(m.type==="public"){
 
 box.innerHTML += `
 
+
 <div class="msg">
 
+
 <div class="name">
+
 ${m.name}
+
 </div>
+
+
+
+<div>
 
 ${m.text}
 
 </div>
 
+
+
+</div>
+
+
 `;
+
 
 }
 
 
+
 });
+
 
 
 box.scrollTop=box.scrollHeight;
 
 
+
 });
 
 
 
+
+
 </script>
-
-
-</body>
-
-    </html>
