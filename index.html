@@ -3,204 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRN Chat Pro | Premium</title>
+    <title>IRN Chat Pro | Fixed</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
-
         * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            height: 100vh;
-            font-family: 'Vazirmatn', Tahoma, sans-serif;
-            background: #0b1a2f;
-            color: white;
-            overflow: hidden;
-        }
-
+        body { margin: 0; height: 100vh; font-family: 'Vazirmatn', Tahoma; background: #0b1a2f; color: white; overflow: hidden; }
         .hidden { display: none !important; }
-
-        .page {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-        }
-
-        .header {
-            background: #1a3a5a;
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        button {
-            background: #008cff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: 'Vazirmatn';
-        }
-
-        button:hover { background: #005fa3; }
-
-        input {
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            outline: none;
-            flex: 1;
-            background: #eee;
-            font-family: 'Vazirmatn';
-        }
-
-        .box { display: flex; gap: 8px; margin-top: 10px; }
-
-        .messages {
-            flex: 1;
-            background: #0a0a0a;
-            border-radius: 12px;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        /* استایل پیام‌ها */
-        .msg {
-            background: #222;
-            padding: 10px 14px;
-            border-radius: 12px;
-            max-width: 85%;
-            position: relative;
-            word-wrap: break-word;
-        }
-
-        .msg.mine {
-            align-self: flex-end;
-            background: #005fa3;
-        }
-
-        .name { color: #00aaff; font-size: 11px; margin-bottom: 4px; }
-        .mine .name { color: #abdfff; text-align: left; }
-
-        .actions {
-            margin-top: 6px;
-            display: flex;
-            gap: 8px;
-            font-size: 11px;
-        }
-
+        .page { height: 100vh; display: flex; flex-direction: column; padding: 10px; }
+        .header { background: #1a3a5a; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        button { background: #008cff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-family: 'Vazirmatn'; }
+        input { padding: 10px; border-radius: 6px; border: none; outline: none; flex: 1; }
+        .box { display: flex; gap: 5px; margin-top: 8px; }
+        .messages { flex: 1; background: #050505; border-radius: 8px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; }
+        .msg { background: #222; padding: 8px 12px; border-radius: 10px; margin-bottom: 8px; max-width: 80%; position: relative; }
+        .msg.mine { align-self: flex-end; background: #005fa3; }
+        .name { color: #00aaff; font-size: 11px; margin-bottom: 3px; }
+        .msg.mine .name { color: #abdfff; text-align: left; }
+        .actions { margin-top: 5px; font-size: 10px; display: flex; gap: 5px; }
         .tick { color: #00ff00; }
-        .delete { background: #c0392b; padding: 2px 6px; }
-
-        /* بخش خصوصی */
-        .private-container {
-            display: flex;
-            flex: 1;
-            gap: 10px;
-            overflow: hidden;
-        }
-
-        .users-list {
-            width: 250px;
-            background: #111;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-item {
-            padding: 12px;
-            border-bottom: 1px solid #222;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .user-item:hover { background: #1a3a5a; }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .online { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
+        .delete { background: #c0392b; padding: 2px 5px; }
+        .private { display: flex; flex: 1; gap: 8px; overflow: hidden; }
+        .users { width: 200px; background: #111; border-radius: 8px; overflow-y: auto; }
+        .user { padding: 12px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .user:hover { background: #1a3a5a; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .online { background: #00ff00; }
         .offline { background: #555; }
-
-        #loading {
-            position: fixed; inset: 0;
-            background: #0b1a2f;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            z-index: 999;
-        }
+        .chat { flex: 1; display: flex; flex-direction: column; }
+        #loading { position: fixed; inset: 0; background: #0b1a2f; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; }
     </style>
 </head>
 <body>
 
 <div id="loading">
     <h1>IRN Chat Pro</h1>
-    <p>در حال اتصال به سرور...</p>
+    <p>در حال اتصال...</p>
 </div>
 
 <!-- صفحه عمومی -->
 <div id="publicPage" class="page hidden">
     <div class="header">
-        <div>
-            <span id="myName">کاربر</span>
-            <div style="font-size: 10px; color: #00ff00;">در دسترس</div>
-        </div>
+        <span>👤 <span id="myName">کاربر</span></span>
         <button onclick="changeName()">تغییر نام</button>
     </div>
-    
     <div id="publicMessages" class="messages"></div>
-
     <div class="box">
-        <input id="publicInput" placeholder="پیام خود را اینجا بنویسید..." onkeypress="handleKeyPress(event, 'public')">
+        <input id="publicInput" placeholder="پیام عمومی..." onkeypress="if(event.key==='Enter') sendPublic()">
         <button onclick="sendPublic()">ارسال</button>
     </div>
-    
-    <button style="margin-top: 10px;" onclick="openPrivate()">💬 چت خصوصی</button>
+    <button style="margin-top:10px" onclick="openPrivate()">💬 چت خصوصی</button>
 </div>
 
 <!-- صفحه خصوصی -->
 <div id="privatePage" class="page hidden">
-    <div class="private-container">
-        <div class="users-list">
-            <h3 style="padding: 15px; margin: 0; border-bottom: 1px solid #333;">کاربران آنلاین</h3>
-            <div id="userList" style="overflow-y: auto;"></div>
+    <div class="private">
+        <div class="users">
+            <h3 style="padding:10px; margin:0; font-size:14px;">کاربران</h3>
+            <div id="userList"></div>
         </div>
-
-        <div class="chat-area" style="flex: 1; display: flex; flex-direction: column;">
+        <div class="chat">
             <div id="privateTitle" class="header">انتخاب کاربر</div>
             <div id="privateMessages" class="messages"></div>
             <div class="box">
-                <input id="privateInput" placeholder="پیام خصوصی..." onkeypress="handleKeyPress(event, 'private')">
+                <input id="privateInput" placeholder="پیام خصوصی..." onkeypress="if(event.key==='Enter') sendPrivate()">
                 <button onclick="sendPrivate()">ارسال</button>
             </div>
-            <button onclick="backPublic()" style="margin-top: 10px;">⬅ بازگشت به عمومی</button>
+            <button onclick="backPublic()" style="margin-top:10px">⬅ بازگشت</button>
         </div>
     </div>
 </div>
 
-<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
 <script>
-    // ۱. پیکربندی (اطمینان حاصل کنید این مقادیر درست هستند)
+    // پیکربندی فایربیس
     const firebaseConfig = {
         apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
         authDomain: "irn-chat-pro.firebaseapp.com",
@@ -215,7 +92,7 @@
     const messagesRef = db.collection("messages");
     const usersRef = db.collection("users");
 
-    // ۲. مدیریت هویت کاربر
+    // مدیریت هویت
     let userId = localStorage.getItem("userId") || Math.random().toString(36).substring(2, 12);
     localStorage.setItem("userId", userId);
 
@@ -223,58 +100,40 @@
     localStorage.setItem("chatName", username);
 
     let selectedUser = null;
+    let privateUnsubscribe = null; // برای بستن گوش دادن به پیام‌های خصوصی
 
-    // ۳. تابع کمکی برای نمایش پیام‌ها (جلوگیری از تکرار کد)
-    function createMessageHTML(m, isMine, docId) {
-        const tick = isMine ? (m.seen ? "✔✔" : "✅") : "";
-        const delBtn = isMine ? `<button class="delete" onclick="deleteMessage('${docId}')">❌</button>` : "";
-        const alignmentClass = isMine ? "mine" : "";
-
-        return `
-            <div class="msg ${alignmentClass}">
-                <div class="name">${m.name}</div>
-                <div>${m.text}</div>
-                <div class="actions">
-                    <span class="tick">${tick}</span>
-                    ${delBtn}
-                </div>
-            </div>
-        `;
-    }
-
-    // ۴. شروع برنامه
+    // شروع برنامه
     async function init() {
         document.getElementById("myName").innerText = username;
         
-        // ثبت کاربر در دیتابیس و وضعیت آنلاین
+        // ثبت کاربر
         await usersRef.doc(userId).set({
             name: username,
             online: true,
             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        // لودینگ را مخفی کن
+        // نمایش صفحه اصلی
         setTimeout(() => {
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("publicPage").classList.remove("hidden");
-        }, 1500);
+        }, 1000);
 
-        listenPublicMessages();
-        listenUsers();
+        startListeningPublic();
+        startListeningUsers();
     }
 
-    // ۵. مدیریت پیام‌های عمومی
-    function listenPublicMessages() {
+    // --- بخش عمومی ---
+    function startListeningPublic() {
         messagesRef.orderBy("time", "asc").onSnapshot(snapshot => {
             const box = document.getElementById("publicMessages");
-            let html = "";
+            box.innerHTML = ""; 
             snapshot.forEach(doc => {
                 const m = doc.data();
                 if (m.type === "public") {
-                    html += createMessageHTML(m, m.userId === userId, doc.id);
+                    box.innerHTML += renderMsg(m, doc.id);
                 }
             });
-            box.innerHTML = html;
             box.scrollTop = box.scrollHeight;
         });
     }
@@ -296,33 +155,68 @@
         input.value = "";
     }
 
-    // ۶. مدیریت پیام‌های خصوصی
-    function listenPrivateMessages() {
-        if (!selectedUser) return;
+    // --- بخش خصوصی ---
+    function openPrivate() {
+        document.getElementById("publicPage").classList.add("hidden");
+        document.getElementById("privatePage").classList.remove("hidden");
+    }
 
-        messagesRef.orderBy("time", "asc").onSnapshot(snapshot => {
+    function backPublic() {
+        if (privateUnsubscribe) privateUnsubscribe(); // قطع گوش دادن به پیام‌های خصوصی
+        document.getElementById("privatePage").classList.add("hidden");
+        document.getElementById("publicPage").classList.remove("hidden");
+    }
+
+    function startListeningUsers() {
+        usersRef.onSnapshot(snapshot => {
+            const list = document.getElementById("userList");
+            list.innerHTML = "";
+            snapshot.forEach(doc => {
+                const u = doc.data();
+                if (doc.id !== userId) {
+                    list.innerHTML += `
+                        <div class="user" onclick="selectUser('${doc.id}', '${u.name}')">
+                            <span>${u.name}</span>
+                            <span class="status-dot ${u.online ? 'online' : 'offline'}"></span>
+                        </div>
+                    `;
+                }
+            });
+        });
+    }
+
+    function selectUser(id, name) {
+        selectedUser = { id: id, name: name };
+        document.getElementById("privateTitle").innerText = "چت با " + name;
+        
+        // اگر قبلاً در حال گوش دادن به چت خصوصی بود، اول آن را قطع کن
+        if (privateUnsubscribe) privateUnsubscribe();
+
+        // شروع گوش دادن به پیام‌های این کاربر خاص
+        privateUnsubscribe = messagesRef.orderBy("time", "asc").onSnapshot(snapshot => {
             const box = document.getElementById("privateMessages");
-            let html = "";
+            box.innerHTML = "";
+            
             snapshot.forEach(doc => {
                 const m = doc.data();
-                const isFromMe = m.userId === userId && m.receiverId === selectedUser.id;
-                const isToMe = m.userId === selectedUser.id && m.receiverId === userId;
+                // شرط چت خصوصی: یا من فرستادم برای او، یا او برای من فرستاده
+                const isFromMe = (m.userId === userId && m.receiverId === selectedUser.id);
+                const isToMe = (m.userId === selectedUser.id && m.receiverId === userId);
 
                 if (m.type === "private" && (isFromMe || isToMe)) {
-                    // قابلیت خوانده شده (Seen)
+                    // قابلیت خوانده شده
                     if (isToMe && !m.seen) {
                         messagesRef.doc(doc.id).update({ seen: true });
                     }
-                    html += createMessageHTML(m, isFromMe, doc.id);
+                    box.innerHTML += renderMsg(m, doc.id);
                 }
             });
-            box.innerHTML = html;
             box.scrollTop = box.scrollHeight;
         });
     }
 
     function sendPrivate() {
-        if (!selectedUser) return alert("لطفا ابتدا یک کاربر را انتخاب کنید");
+        if (!selectedUser) return alert("ابتدا کاربر را انتخاب کنید");
         const input = document.getElementById("privateInput");
         const text = input.value.trim();
         if (!text) return;
@@ -339,41 +233,31 @@
         input.value = "";
     }
 
-    // ۷. مدیریت کاربران و آنلاین بودن
-    function listenUsers() {
-        usersRef.onSnapshot(snapshot => {
-            const list = document.getElementById("userList");
-            list.innerHTML = "";
-            snapshot.forEach(doc => {
-                const u = doc.data();
-                if (doc.id !== userId) {
-                    const isOnline = u.online; // در پروژه واقعی باید از Realtime DB برای دقت بالاتر استفاده شود
-                    list.innerHTML += `
-                        <div class="user-item" onclick="selectUser('${doc.id}', '${u.name}')">
-                            <span>${u.name}</span>
-                            <span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>
-                        </div>
-                    `;
-                }
-            });
-        });
+    // --- توابع کمکی و سیستمی ---
+    function renderMsg(m, docId) {
+        const isMine = m.userId === userId;
+        const tick = isMine ? (m.seen ? "✔✔" : "✅") : "";
+        const del = isMine ? `<button class="delete" onclick="deleteMsg('${docId}')">❌</button>` : "";
+        const align = isMine ? "mine" : "";
+
+        return `
+            <div class="msg ${align}">
+                <div class="name">${m.name}</div>
+                <div>${m.text}</div>
+                <div class="actions">
+                    <span class="tick">${tick}</span>
+                    ${del}
+                </div>
+            </div>
+        `;
     }
 
-    function selectUser(id, name) {
-        selectedUser = { id, name };
-        document.getElementById("privateTitle").innerText = "چت با " + name;
-        document.getElementById("privateMessages").innerHTML = "";
-        listenPrivateMessages();
-    }
-
-    // ۸. توابع کمکی (حذف، تغییر نام، جابجایی صفحات)
-    function deleteMessage(id) {
-        if (confirm("آیا مطمئن هستید؟")) {
-            messagesRef.doc(id).delete().then(() => {
-                console.log("Deleted successfully");
-            }).catch(err => console.error("Delete error: ", err));
+    // تابع حذف پیام (اصلاح شده)
+    window.deleteMsg = function(id) {
+        if (confirm("حذف شود؟")) {
+            messagesRef.doc(id).delete().catch(err => console.error("خطا در حذف:", err));
         }
-    }
+    };
 
     function changeName() {
         let n = prompt("نام جدید:", username);
@@ -385,27 +269,7 @@
         }
     }
 
-    function openPrivate() {
-        document.getElementById("publicPage").classList.add("hidden");
-        document.getElementById("privatePage").classList.remove("hidden");
-    }
-
-    function backPublic() {
-        document.getElementById("privatePage").classList.add("hidden");
-        document.getElementById("publicPage").classList.remove("hidden");
-    }
-
-    function handleKeyPress(e, type) {
-        if (e.key === 'Enter') {
-            if (type === 'public') sendPublic();
-            else sendPrivate();
-        }
-    }
-
-    // اجرای اولیه
     init();
-
 </script>
 </body>
-              </html>
-          
+</html>
