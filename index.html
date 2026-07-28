@@ -232,9 +232,12 @@ function loadPrivateMessages(){
         snapshot.forEach(docSnap=>{
             const m=docSnap.data();
             // شرط اصلی: پیام یا از من به او، یا از او به من باشد + مقصد حتماً خصوصی باشد
-            const isPrivate = (m.userId === userId && m.receiverId === selectedPrivateUser.id) || 
-                              (m.userId === selectedPrivateUser.id && m.receiverId === userId);
-            
+            const isPrivate = 
+m.type === "private" &&
+(
+(m.userId === userId && m.receiverId === selectedPrivateUser.id) ||
+(m.userId === selectedPrivateUser.id && m.receiverId === userId)
+);
             if(isPrivate){
                 const msgDiv=document.createElement("div"); 
                 msgDiv.className="msg";
@@ -274,10 +277,11 @@ function sendPrivateMessage(){
     name:username,
     text:text,
     userId:userId,
-    receiverId:selectedPrivateUser.id,
+    receiverId:null,
+    type:"public",
     time:firebase.firestore.FieldValue.serverTimestamp(),
     seen:false 
-  });
+});
   input.value="";
 }
 
@@ -310,7 +314,7 @@ function updateUnreadPerUser(){
     let countMap={};
     snap.forEach(doc=>{ 
         const m=doc.data(); 
-        if(m.receiverId && m.receiverId !== userId){ 
+        if(m.type === "public")} && m.receiverId !== userId){ 
             // در اینجا برای نمایش در لیست، باید بدانیم پیام از چه کسی آمده (userId فرستنده)
             // چون در دیتابیس فقط receiverId ذخیره شده، باید منطق را دقیق کرد
             // اما برای سادگی بر اساس userId فرستنده شمارش می‌کنیم:
