@@ -621,8 +621,24 @@ let m=doc.data();
 if(m.type==="public"){
 
 
-box.innerHTML += `
+let del = "";
 
+if(m.userId === userId){
+
+del = `
+
+<button onclick="deleteMessage('${doc.id}')">
+
+❌ حذف
+
+</button>
+
+`;
+
+}
+
+
+box.innerHTML += `
 
 <div class="msg">
 
@@ -634,12 +650,19 @@ ${m.name}
 </div>
 
 
-
 <div>
 
 ${m.text}
 
 </div>
+
+
+${del}
+
+
+</div>
+
+`;
 
 
 
@@ -905,8 +928,24 @@ m.type==="private"
 
 
 
-box.innerHTML += `
+let del = "";
 
+if(m.userId === userId){
+
+del = `
+
+<button onclick="deleteMessage('${doc.id}')">
+
+❌ حذف
+
+</button>
+
+`;
+
+}
+
+
+box.innerHTML += `
 
 <div class="msg">
 
@@ -918,12 +957,19 @@ ${m.name}
 </div>
 
 
+<div>
 
 ${m.text}
 
+</div>
+
+
+${del}
 
 
 </div>
+
+`;
 
 
 
