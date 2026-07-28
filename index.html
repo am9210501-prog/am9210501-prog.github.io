@@ -3,42 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GapChat Pro</title>
+    <title>IRN Chat Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-        // وارد کردن Firebase
+        // وارد کردن Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, setDoc, updateDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // 🛑 مشخصات فایربیس خودت را اینجا جایگزین کن 🛑
+        // مشخصات فایربیس شما
         const firebaseConfig = {
-  apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
-  authDomain: "irn-chat-pro.firebaseapp.com",
-  projectId: "irn-chat-pro",
-  storageBucket: "irn-chat-pro.firebasestorage.app",
-  messagingSenderId: "1084279461221",
-  appId: "1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
-};
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
+            authDomain: "irn-chat-pro.firebaseapp.com",
+            projectId: "irn-chat-pro",
+            storageBucket: "irn-chat-pro.firebasestorage.app",
+            messagingSenderId: "1084279461221",
+            appId: "1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
         };
 
+        // مقداردهی اولیه
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // متغیرهای سراسری برنامه
+        // متغیرهای وضعیت برنامه
         let currentUser = null;
-        let activeChatId = 'public'; // حالت پیش‌فرض چت عمومی
+        let activeChatId = 'public'; 
         let isPrivateChat = false;
         let recipientId = null;
+        let currentUserDisplayName = "";
 
-        // عناصر DOM
+        // عناصر صفحه
         const loginScreen = document.getElementById('login-screen');
         const chatScreen = document.getElementById('chat-screen');
         const userList = document.getElementById('user-list');
@@ -47,16 +42,17 @@
         const chatTitle = document.getElementById('chat-title');
         const usernameInput = document.getElementById('username-input');
 
-        // --- تابع ورود و تنظیم پروفایل ---
+        // --- تابع ورود ---
         async function login() {
             const name = usernameInput.value.trim();
-            if (!name) return alert("نام را وارد کنید");
+            if (!name) return alert("لطفاً نام خود را وارد کنید");
 
             try {
                 const userCredential = await signInAnonymously(auth);
                 currentUser = userCredential.user;
+                currentUserDisplayName = name;
 
-                // ذخیره کاربر در Firestore
+                // ذخیره اطلاعات کاربر در Firestore
                 await setDoc(doc(db, "users", currentUser.uid), {
                     uid: currentUser.uid,
                     displayName: name,
@@ -68,31 +64,28 @@
                 chatScreen.classList.remove('hidden');
                 startApp();
             } catch (error) {
-                console.error("Error logging in:", error);
+                console.error("خطا در ورود:", error);
+                alert("خطا در اتصال به فایربیس. کنسول را چک کنید.");
             }
         }
 
-        // --- شروع اپلیکیشن ---
         function startApp() {
             loadUsers();
             loadMessages();
-            // مدیریت وضعیت آنلاین بودن
-            setInterval(updateOnlineStatus, 30000); 
+            // آپدیت وضعیت آنلاین هر ۳۰ ثانیه
+            setInterval(() => {
+                if (currentUser) updateDoc(doc(db, "users", currentUser.uid), { isOnline: true });
+            }, 30000);
         }
 
-        async function updateOnlineStatus() {
-            if (currentUser) {
-                await updateDoc(doc(db, "users", currentUser.uid), { isOnline: true });
-            }
-        }
-
-        // --- بارگذاری لیست کاربران ---
+        // --- مدیریت لیست کاربران ---
         function loadUsers() {
             const q = query(collection(db, "users"));
             onSnapshot(q, (snapshot) => {
                 userList.innerHTML = `
-                    <div onclick="window.switchChat('public')" class="p-3 hover:bg-gray-700 cursor-pointer flex justify-between items-center ${activeChatId === 'public' ? 'bg-gray-700' : ''}">
-                        <span>📢 چت عمومی</span>
+                    <div onclick="window.switchChat('public')" class="p-4 hover:bg-gray-700 cursor-pointer flex items-center transition ${activeChatId === 'public' ? 'bg-gray-700 border-r-4 border-blue-500' : ''}">
+                        <span class="ml-3 text-xl">📢</span>
+                        <span class="font-medium">چت عمومی</span>
                     </div>
                 `;
 
@@ -100,144 +93,175 @@
                     const user = docSnap.data();
                     if (user.uid !== currentUser.uid) {
                         const userDiv = document.createElement('div');
-                        userDiv.className = `p-3 hover:bg-gray-700 cursor-pointer flex justify-between items-center ${recipientId === user.uid ? 'bg-gray-700' : ''}`;
+                        userDiv.className = `p-4 hover:bg-gray-700 cursor-pointer flex items-center transition ${recipientId === user.uid ? 'bg-gray-700 border-r-4 border-blue-500' : ''}`;
                         userDiv.innerHTML = `
-                            <div class="flex items-center">
-                                <span class="w-3 h-3 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-gray-500'} ml-2"></span>
-                                <span>${user.displayName}</span>
-                            </div>
+                            <span class="relative flex h-3 w-3 ml-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${user.isOnline ? 'bg-green-400' : 'bg-gray-400'} opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 ${user.isOnline ? 'bg-green-500' : 'bg-gray-500'}"></span>
+                            </span>
+                            <span class="font-medium">${user.displayName}</span>
                         `;
-                        userDiv.onclick = () => switchChat('private', user.uid, user.displayName);
+                        userDiv.onclick = () => window.switchChat('private', user.uid, user.displayName);
                         userList.appendChild(userDiv);
                     }
                 });
             });
         }
 
-        // --- سوئیچ بین چت عمومی و خصوصی ---
+        // --- جابجایی بین چت‌ها ---
         window.switchChat = (type, targetId = null, targetName = '') => {
             isPrivateChat = (type === 'private');
             recipientId = targetId;
-            activeChatId = isPrivateChat ? `chat_${getChatId(currentUser.uid, targetId)}` : 'public';
-            chatTitle.innerText = isPrivateChat ? targetName : "چت عمومی";
+            
+            if (isPrivateChat) {
+                const chatRoomId = getChatRoomId(currentUser.uid, targetId);
+                activeChatId = `chat_${chatRoomId}`;
+                chatTitle.innerText = `چت خصوصی: ${targetName}`;
+            } else {
+                activeChatId = 'public';
+                chatTitle.innerText = "چت عمومی";
+            }
             loadMessages();
         };
 
-        // تابع برای ساخت یک ID یکتا برای دو نفر (برای چت خصوصی)
-        function getChatId(id1, id2) {
+        function getChatRoomId(id1, id2) {
             return [id1, id2].sort().join('_');
         }
 
         // --- بارگذاری پیام‌ها ---
         function loadMessages() {
-            messagesContainer.innerHTML = '';
+            messagesContainer.innerHTML = '<p class="text-center text-gray-500 mt-10">در حال بارگذاری...</p>';
+            
             let q;
-
             if (!isPrivateChat) {
-                // کوئری چت عمومی
                 q = query(collection(db, "messages"), where("chatId", "==", "public"), orderBy("timestamp", "asc"));
             } else {
-                // کوئری چت خصوصی
-                const chatId = `chat_${getChatId(currentUser.uid, recipientId)}`;
-                q = query(collection(db, "messages"), where("chatId", "==", chatId), orderBy("timestamp", "asc"));
+                const chatRoomId = getChatRoomId(currentUser.uid, recipientId);
+                q = query(collection(db, "messages"), where("chatId", "==", `chat_${chatRoomId}`), orderBy("timestamp", "asc"));
             }
 
             onSnapshot(q, (snapshot) => {
                 messagesContainer.innerHTML = '';
+                if (snapshot.empty) {
+                    messagesContainer.innerHTML = '<p class="text-center text-gray-500 mt-10">پیامی یافت نشد.</p>';
+                }
                 snapshot.forEach((docSnap) => {
                     const msg = docSnap.data();
                     const isMe = msg.senderId === currentUser.uid;
                     const msgDiv = document.createElement('div');
                     msgDiv.className = `mb-4 flex ${isMe ? 'justify-end' : 'justify-start'}`;
                     msgDiv.innerHTML = `
-                        <div class="${isMe ? 'bg-blue-600 text-white' : 'bg-gray-600 text-white'} px-4 py-2 rounded-lg max-w-xs">
-                            <p class="text-sm">${msg.text}</p>
+                        <div class="max-w-[75%]">
+                            <div class="${isMe ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl' : 'bg-gray-700 text-white rounded-r-xl rounded-tl-xl'} px-4 py-2 shadow-md">
+                                ${!isMe && isPrivateChat ? `<p class="text-[10px] text-blue-300 mb-1">${msg.senderName}</p>` : ''}
+                                <p class="text-sm leading-relaxed">${msg.text}</p>
+                            </div>
+                            <p class="text-[9px] text-gray-500 mt-1 ${isMe ? 'text-left' : 'text-right'}">
+                                ${msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'}) : ''}
+                            </p>
                         </div>
                     `;
                     messagesContainer.appendChild(msgDiv);
                 });
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, (error) => {
+                console.error("Error loading messages:", error);
+                messagesContainer.innerHTML = `<p class="text-center text-red-500 mt-10">خطا در دریافت پیام‌ها. احتمالاً ایندکس ساخته نشده است.</p>`;
             });
         }
 
         // --- ارسال پیام ---
         window.sendMessage = async () => {
             const text = messageInput.value.trim();
-            if (!text) return;
+            if (!text || !currentUser) return;
 
-            const chatId = isPrivateChat ? `chat_${getChatId(currentUser.uid, recipientId)}` : 'public';
+            const chatId = isPrivateChat ? `chat_${getChatRoomId(currentUser.uid, recipientId)}` : 'public';
 
-            await addDoc(collection(db, "messages"), {
-                chatId: chatId,
-                senderId: currentUser.uid,
-                senderName: (await getDocOnceUser()).displayName,
-                text: text,
-                timestamp: serverTimestamp()
-            });
-
-            messageInput.value = '';
+            try {
+                messageInput.value = ''; // پاک کردن ورودی بلافاصله برای تجربه بهتر کاربر
+                await addDoc(collection(db, "messages"), {
+                    chatId: chatId,
+                    senderId: currentUser.uid,
+                    senderName: currentUserDisplayName,
+                    text: text,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) {
+                console.error("Error sending message:", e);
+                alert("خطا در ارسال پیام.");
+            }
         };
 
-        async function getDocOnceUser() {
-            // تابع کمکی برای گرفتن نام کاربر فعلی
-            const userDoc = await getDocs(query(collection(db, "users"), where("uid", "==", currentUser.uid)));
-            return { displayName: userDoc.docs[0].data().displayName };
-        }
-
-        // اتصال دکمه‌ها به توابع
+        window.sendMessageKeyPress = (e) => { if(e.key === 'Enter') window.sendMessage(); };
         window.login = login;
-        window.sendMessage = sendMessage;
-        window.sendMessageKeyPress = (e) => { if(e.key === 'Enter') sendMessage(); };
 
     </script>
     <style>
-        body { font-family: Tahoma, sans-serif; }
-        #messages::-webkit-scrollbar { width: 5px; }
-        #messages::-webkit-scrollbar-thumb { background: #4a5568; }
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700&display=swap');
+        body { font-family: 'Vazirmatn', sans-serif; }
+        #messages::-webkit-scrollbar { width: 4px; }
+        #messages::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-gray-900 text-white h-screen overflow-hidden">
 
     <!-- صفحه ورود -->
-    <div id="login-screen" class="flex flex-col items-center justify-center h-full p-4">
-        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
-            <h1 class="text-3xl font-bold mb-6 text-center text-blue-500">GapChat Pro</h1>
-            <input id="username-input" type="text" placeholder="نام کاربری خود را وارد کنید..." class="w-full p-3 mb-4 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none">
-            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold transition">ورود به برنامه</button>
+    <div id="login-screen" class="flex items-center justify-center h-full p-6">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-700">
+            <div class="text-center mb-8">
+                <div class="bg-blue-600 w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 shadow-lg shadow-blue-500/20">💬</div>
+                <h1 class="text-2xl font-bold text-white">خوش آمدید</h1>
+                <p class="text-gray-400 text-sm mt-2">برای شروع، نام خود را وارد کنید</p>
+            </div>
+            <input id="username-input" type="text" placeholder="نام شما..." class="w-full p-4 mb-4 rounded-xl bg-gray-700 border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition text-center">
+            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-bold text-lg transition-all active:scale-95 shadow-lg shadow-blue-600/30">ورود به چت</button>
         </div>
     </div>
 
     <!-- صفحه اصلی چت -->
-    <div id="chat-screen" class="hidden flex h-full">
+    <div id="chat-screen" class="hidden flex h-full overflow-hidden">
         
-        <!-- سایدبار کاربران (سمت راست در RTL) -->
-        <div class="w-1/4 bg-gray-800 border-l border-gray-700 flex flex-col">
-            <div class="p-4 font-bold text-xl border-b border-gray-700 text-blue-400">کاربران آنلاین</div>
+        <!-- سایدبار (کاربران آنلاین) -->
+        <div class="w-full md:w-80 bg-gray-800 border-l border-gray-700 flex flex-col shrink-0">
+            <div class="p-5 font-bold text-lg border-b border-gray-700 flex items-center justify-between">
+                <span>👥 کاربران آنلاین</span>
+                <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">Live</span>
+            </div>
             <div id="user-list" class="flex-1 overflow-y-auto">
-                <!-- لیست کاربران اینجا ساخته می‌شود -->
+                <!-- لیست کاربران اینجا تزریق می‌شود -->
             </div>
         </div>
 
-        <!-- بخش چت (وسط) -->
-        <div class="flex-1 flex flex-col">
+        <!-- بخش اصلی پیام‌ها -->
+        <div class="flex-1 flex flex-col min-w-0">
             <!-- هدر چت -->
-            <div class="p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
-                <h2 id="chat-title" class="text-lg font-bold">چت عمومی</h2>
-                <span class="text-xs text-gray-400">GapChat v5.6</span>
+            <div class="p-4 bg-gray-800/50 backdrop-blur-md border-b border-gray-700 flex items-center">
+                <div id="chat-header-icon" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center ml-3 text-xl">📢</div>
+                <div>
+                    <h2 id="chat-title" class="text-md font-bold leading-none">چت عمومی</h2>
+                    <p class="text-[10px] text-green-500 mt-1">متصل به سرور</p>
+                </div>
             </div>
 
-            <!-- پیام‌ها -->
-            <div id="messages" class="flex-1 overflow-y-auto p-4 bg-gray-900">
-                <!-- پیام‌ها اینجا ساخته می‌شوند -->
+            <!-- نمایش پیام‌ها -->
+            <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-2 bg-[#0b0e14]">
+                <!-- پیام‌ها اینجا تزریق می‌شوند -->
             </div>
 
-            <!-- ورودی پیام -->
-            <div class="p-4 bg-gray-800 flex gap-2">
-                <input id="message-input" type="text" onkeypress="sendMessageKeyPress(event)" placeholder="پیام خود را بنویسید..." class="flex-1 p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none">
-                <button onclick="sendMessage()" class="bg-blue-600 px-6 py-2 rounded font-bold hover:bg-blue-700">ارسال</button>
+            <!-- باکس ارسال پیام -->
+            <div class="p-4 bg-gray-800 border-t border-gray-700">
+                <div class="max-w-4xl mx-auto flex gap-3 items-center">
+                    <input id="message-input" type="text" onkeypress="sendMessageKeyPress(event)" placeholder="پیام خود را بنویسید..." class="flex-1 p-3 rounded-xl bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none transition">
+                    <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 p-3 rounded-xl transition-all active:scale-90">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
 </body>
-</html>
+    </html>
+    
