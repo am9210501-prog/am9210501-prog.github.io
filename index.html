@@ -703,7 +703,8 @@ u.online
 list.innerHTML += `
 
 
-<div class="user">
+<div class="user"
+onclick="selectUser('${doc.id}','${u.name}')">
 
 
 ${u.name}
@@ -737,7 +738,79 @@ ${status}
 
 
 
+// ======================
+// رفتن به چت خصوصی
+// ======================
 
+
+let selectedUser = null;
+
+
+
+function openPrivate(){
+
+
+document
+.getElementById("publicPage")
+.classList.add("hidden");
+
+
+
+document
+.getElementById("privatePage")
+.classList.remove("hidden");
+
+
+}
+
+
+
+
+
+function backPublic(){
+
+
+document
+.getElementById("privatePage")
+.classList.add("hidden");
+
+
+
+document
+.getElementById("publicPage")
+.classList.remove("hidden");
+
+
+}
+
+
+
+
+
+// انتخاب کاربر
+
+
+function selectUser(id,name){
+
+
+selectedUser={
+
+id:id,
+
+name:name
+
+};
+
+
+
+document
+.getElementById("privateTitle")
+.innerText =
+"چت با "+name;
+
+
+
+  }
   </script>
 
 
