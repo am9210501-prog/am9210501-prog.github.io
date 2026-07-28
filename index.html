@@ -210,7 +210,92 @@ firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
 
+// =====================
+// USER SYSTEM
+// =====================
 
+
+let userId = localStorage.getItem("userId");
+
+
+if(!userId){
+
+userId =
+Math.random()
+.toString(36)
+.substring(2,12);
+
+
+localStorage.setItem(
+"userId",
+userId
+);
+
+}
+
+
+
+
+let username =
+localStorage.getItem("chatName");
+
+
+
+if(!username){
+
+
+username =
+prompt("اسم خود را وارد کنید")
+||
+"کاربر";
+
+
+localStorage.setItem(
+"chatName",
+username
+);
+
+
+}
+
+
+
+
+// نمایش اسم
+
+document.querySelector(".userInfo")
+.firstChild.textContent =
+username + " ";
+
+
+
+// ذخیره در Firebase
+
+db.collection("users")
+.doc(userId)
+.set({
+
+name:username,
+
+online:true,
+
+lastSeen:
+firebase.firestore.FieldValue.serverTimestamp()
+
+
+},
+{
+
+merge:true
+
+});
+
+
+
+console.log(
+"User Created:",
+username
+);
 
 console.log("Firebase Connected");
 
