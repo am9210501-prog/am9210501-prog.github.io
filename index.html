@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRN Chat Pro | Fixed</title>
+    <title>IRN Chat Pro | Final Fixed</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
         * { box-sizing: border-box; }
@@ -21,7 +21,7 @@
         .msg.mine .name { color: #abdfff; text-align: left; }
         .actions { margin-top: 5px; font-size: 10px; display: flex; gap: 5px; }
         .tick { color: #00ff00; }
-        .delete { background: #c0392b; padding: 2px 5px; }
+        .delete { background: #c0392b; padding: 2px 5px; font-size: 10px; }
         .private { display: flex; flex: 1; gap: 8px; overflow: hidden; }
         .users { width: 200px; background: #111; border-radius: 8px; overflow-y: auto; }
         .user { padding: 12px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -100,20 +100,18 @@
     localStorage.setItem("chatName", username);
 
     let selectedUser = null;
-    let privateUnsubscribe = null; // برای بستن گوش دادن به پیام‌های خصوصی
+    let privateUnsubscribe = null;
 
     // شروع برنامه
     async function init() {
         document.getElementById("myName").innerText = username;
         
-        // ثبت کاربر
         await usersRef.doc(userId).set({
             name: username,
             online: true,
             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        // نمایش صفحه اصلی
         setTimeout(() => {
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("publicPage").classList.remove("hidden");
@@ -127,7 +125,7 @@
     function startListeningPublic() {
         messagesRef.orderBy("time", "asc").onSnapshot(snapshot => {
             const box = document.getElementById("publicMessages");
-            box.innerHTML = ""; 
+            box.innerHTML = ""; // پاکسازی کامل برای جلوگیری از تکرار پیام‌ها
             snapshot.forEach(doc => {
                 const m = doc.data();
                 if (m.type === "public") {
@@ -162,7 +160,7 @@
     }
 
     function backPublic() {
-        if (privateUnsubscribe) privateUnsubscribe(); // قطع گوش دادن به پیام‌های خصوصی
+        if (privateUnsubscribe) privateUnsubscribe();
         document.getElementById("privatePage").classList.add("hidden");
         document.getElementById("publicPage").classList.remove("hidden");
     }
@@ -189,24 +187,21 @@
         selectedUser = { id: id, name: name };
         document.getElementById("privateTitle").innerText = "چت با " + name;
         
-        // اگر قبلاً در حال گوش دادن به چت خصوصی بود، اول آن را قطع کن
         if (privateUnsubscribe) privateUnsubscribe();
 
-        // شروع گوش دادن به پیام‌های این کاربر خاص
         privateUnsubscribe = messagesRef.orderBy("time", "asc").onSnapshot(snapshot => {
             const box = document.getElementById("privateMessages");
-            box.innerHTML = "";
+            box.innerHTML = ""; // پاکسازی کامل ظرف پیام‌های خصوصی
             
             snapshot.forEach(doc => {
                 const m = doc.data();
-                // شرط چت خصوصی: یا من فرستادم برای او، یا او برای من فرستاده
                 const isFromMe = (m.userId === userId && m.receiverId === selectedUser.id);
                 const isToMe = (m.userId === selectedUser.id && m.receiverId === userId);
 
                 if (m.type === "private" && (isFromMe || isToMe)) {
-                    // قابلیت خوانده شده
+                    // علامت خوانده شده
                     if (isToMe && !m.seen) {
-                        messagesRef.doc(doc.id).update({ seen: true });
+                        messagesRef.doc(doc.id).update({ seen: true }).catch(()=>{});
                     }
                     box.innerHTML += renderMsg(m, doc.id);
                 }
@@ -233,7 +228,7 @@
         input.value = "";
     }
 
-    // --- توابع کمکی و سیستمی ---
+    // --- توابع رندر و حذف (اصلاح شده) ---
     function renderMsg(m, docId) {
         const isMine = m.userId === userId;
         const tick = isMine ? (m.seen ? "✔✔" : "✅") : "";
@@ -252,10 +247,11 @@
         `;
     }
 
-    // تابع حذف پیام (اصلاح شده)
     window.deleteMsg = function(id) {
-        if (confirm("حذف شود؟")) {
-            messagesRef.doc(id).delete().catch(err => console.error("خطا در حذف:", err));
+        if (confirm("آیا از حذف این پیام مطمئن هستید؟")) {
+            messagesRef.doc(id).delete()
+                .then(() => console.log("حذف موفق"))
+                .catch(err => console.error("خطا در حذف:", err));
         }
     };
 
@@ -272,4 +268,5 @@
     init();
 </script>
 </body>
-</html>
+            </html>
+                
