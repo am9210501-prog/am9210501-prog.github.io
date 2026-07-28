@@ -19,21 +19,35 @@ box-sizing:border-box;
 
 
 body{
-
 margin:0;
 height:100vh;
 font-family:Vazirmatn,Tahoma;
 background:#0b1a2f;
 color:white;
-
+overflow:hidden;
 }
+
 
 
 .hidden{
-
 display:none!important;
+}
+
+
+
+#loading{
+
+position:fixed;
+inset:0;
+background:#0b1a2f;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:999;
 
 }
+
 
 
 .page{
@@ -46,11 +60,12 @@ padding:10px;
 }
 
 
+
 .header{
 
 background:#1a3a5a;
 padding:10px;
-border-radius:8px;
+border-radius:10px;
 margin-bottom:8px;
 
 }
@@ -59,9 +74,9 @@ margin-bottom:8px;
 
 button{
 
+border:none;
 background:#008cff;
 color:white;
-border:none;
 padding:8px 12px;
 border-radius:6px;
 cursor:pointer;
@@ -73,8 +88,8 @@ cursor:pointer;
 input{
 
 padding:10px;
-border-radius:6px;
 border:none;
+border-radius:6px;
 outline:none;
 flex:1;
 
@@ -82,7 +97,7 @@ flex:1;
 
 
 
-.box{
+.row{
 
 display:flex;
 gap:5px;
@@ -95,10 +110,10 @@ margin-top:8px;
 .messages{
 
 flex:1;
+overflow-y:auto;
 background:#111;
 border-radius:8px;
 padding:8px;
-overflow-y:auto;
 
 }
 
@@ -108,8 +123,8 @@ overflow-y:auto;
 
 background:#222;
 padding:8px;
-border-radius:7px;
-margin-bottom:5px;
+border-radius:8px;
+margin-bottom:6px;
 
 }
 
@@ -124,37 +139,29 @@ font-size:12px;
 
 
 
-.actions{
+.status{
 
-margin-top:5px;
 font-size:12px;
+color:#00ff66;
 
 }
 
 
 
-.tick{
+.typing{
 
-color:#00ff00;
-
-}
-
-
-
-.delete{
-
-background:#c0392b;
-padding:4px 8px;
-font-size:11px;
+height:20px;
+font-size:12px;
+color:#aaa;
 
 }
 
 
 
-/* خصوصی */
+/* private */
 
 
-.private{
+.privateBox{
 
 display:flex;
 flex:1;
@@ -203,17 +210,35 @@ flex-direction:column;
 
 
 
+.online{
 
-#loading{
+color:#00ff66;
+font-size:11px;
 
-position:fixed;
-inset:0;
-background:#0b1a2f;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-z-index:99;
+}
+
+
+.offline{
+
+color:#777;
+font-size:11px;
+
+}
+
+
+
+.tick{
+
+color:#00ff66;
+
+}
+
+
+
+.deleteBtn{
+
+background:#d63031;
+font-size:11px;
 
 }
 
@@ -222,6 +247,7 @@ z-index:99;
 </style>
 
 </head>
+
 
 
 <body>
@@ -244,7 +270,7 @@ IRN Chat Pro
 
 
 
-<!-- عمومی -->
+<!-- صفحه عمومی -->
 
 
 <div id="publicPage" class="page hidden">
@@ -268,16 +294,22 @@ IRN Chat Pro
 
 
 
+<div id="typingBox" class="typing">
+
+</div>
+
+
+
 <div id="publicMessages" class="messages">
 
 </div>
 
 
 
-<div class="box">
+<div class="row">
 
-
-<input id="publicInput" placeholder="پیام عمومی...">
+<input id="publicInput"
+placeholder="پیام عمومی...">
 
 
 <button onclick="sendPublic()">
@@ -298,6 +330,7 @@ IRN Chat Pro
 </button>
 
 
+
 </div>
 
 
@@ -306,13 +339,16 @@ IRN Chat Pro
 
 
 
-<!-- خصوصی -->
+
+
+<!-- صفحه خصوصی -->
 
 
 <div id="privatePage" class="page hidden">
 
 
-<div class="private">
+<div class="privateBox">
+
 
 
 <div class="users">
@@ -336,12 +372,21 @@ IRN Chat Pro
 
 
 
+
+
 <div class="chat">
 
 
-<div id="privateTitle" class="header">
+
+<div class="header" id="privateTitle">
 
 انتخاب کاربر
+
+</div>
+
+
+
+<div id="privateTyping" class="typing">
 
 </div>
 
@@ -354,10 +399,12 @@ IRN Chat Pro
 
 
 
-<div class="box">
+
+<div class="row">
 
 
-<input id="privateInput" placeholder="پیام خصوصی...">
+<input id="privateInput"
+placeholder="پیام خصوصی...">
 
 
 <button onclick="sendPrivate()">
@@ -368,6 +415,7 @@ IRN Chat Pro
 
 
 </div>
+
 
 
 
@@ -386,7 +434,6 @@ IRN Chat Pro
 
 
 </div>
-<!-- Firebase -->
 
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 
@@ -394,6 +441,11 @@ IRN Chat Pro
 
 
 <script>
+
+
+// ======================
+// Firebase
+// ======================
 
 
 const firebaseConfig = {
@@ -420,18 +472,24 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 
-const messagesRef = db.collection("messages");
 
 const usersRef = db.collection("users");
 
+const messagesRef = db.collection("messages");
+
+const typingRef = db.collection("typing");
 
 
 
 
-// کاربر
+
+// ======================
+// ساخت کاربر
+// ======================
 
 
 let userId = localStorage.getItem("userId");
+
 
 
 if(!userId){
@@ -440,55 +498,113 @@ userId = Math.random()
 .toString(36)
 .substring(2,12);
 
-localStorage.setItem("userId",userId);
+
+localStorage.setItem(
+"userId",
+userId
+);
 
 }
+
+
 
 
 
 let username = localStorage.getItem("chatName");
 
 
+
 if(!username){
 
-username = prompt("نام خود را وارد کنید") || "کاربر";
+username = prompt("نام خود را وارد کنید") || "کاربر ناشناس";
 
-localStorage.setItem("chatName",username);
+
+localStorage.setItem(
+"chatName",
+username
+);
 
 }
 
 
 
-document.getElementById("myName").innerText=username;
 
+
+document.getElementById("myName")
+.innerText=username;
+
+
+
+
+
+
+
+// ثبت آنلاین بودن
 
 
 usersRef.doc(userId).set({
 
 name:username,
 
-online:true
+online:true,
 
-},{merge:true});
-
-
-
+lastSeen:
+firebase.firestore.FieldValue.serverTimestamp()
 
 
+},
+{
+merge:true
+});
 
 
-// ورود
+
+
+
+
+// وقتی صفحه بسته شد
+
+
+window.addEventListener(
+"beforeunload",
+()=>{
+
+
+usersRef.doc(userId).update({
+
+online:false,
+
+lastSeen:
+firebase.firestore.FieldValue.serverTimestamp()
+
+
+});
+
+
+});
+
+
+
+
+
+
+
+// نمایش صفحه
 
 
 setTimeout(()=>{
 
 
-document.getElementById("loading")
+document
+.getElementById("loading")
 .classList.add("hidden");
 
 
-document.getElementById("publicPage")
+
+document
+.getElementById("publicPage")
 .classList.remove("hidden");
+
 
 
 },1000);
@@ -505,76 +621,40 @@ document.getElementById("publicPage")
 function changeName(){
 
 
-let n = prompt("نام جدید");
+let newName =
+prompt("نام جدید:");
 
 
-if(n){
+
+if(newName){
 
 
-username=n;
+username=newName;
 
 
-localStorage.setItem("chatName",n);
+
+localStorage.setItem(
+"chatName",
+username
+);
+
 
 
 document.getElementById("myName")
-.innerText=n;
-
-
-usersRef.doc(userId).update({
-
-name:n
-
-});
-
-
-}
-
-
-}
+.innerText=username;
 
 
 
+usersRef.doc(userId)
+.update({
 
-
-
-
-// ارسال عمومی
-
-
-function sendPublic(){
-
-
-let input=document.getElementById("publicInput");
-
-
-let text=input.value.trim();
-
-
-if(!text)return;
-
-
-
-messagesRef.add({
-
-name:username,
-
-text:text,
-
-userId:userId,
-
-type:"public",
-
-receiverId:null,
-
-seen:false,
-
-time:firebase.firestore.FieldValue.serverTimestamp()
+name:username
 
 });
 
 
-input.value="";
+
+}
 
 
 }
@@ -585,435 +665,58 @@ input.value="";
 
 
 
-
-// نمایش عمومی
-
-
-messagesRef
-.orderBy("time","asc")
-.onSnapshot(snapshot=>{
-
-
-let box=document.getElementById("publicMessages");
-
-
-box.innerHTML="";
-
-
-
-snapshot.forEach(doc=>{
-
-
-let m=doc.data();
-
-
-if(m.type==="public"){
-
-
-
-let tick="";
-
-
-let del="";
-
-
-
-if(m.userId===userId){
-
-
-tick = m.seen ? "✔✔" : "✅";
-
-
-
-del=`
-
-<button class="delete"
-onclick="deleteMessage('${doc.id}')">
-
-❌
-
-</button>
-
-`;
-
-
-
-}
-
-
-
-box.innerHTML += `
-
-
-<div class="msg">
-
-
-<div class="name">
-
-${m.name}
-
-</div>
-
-
-
-<div>
-
-${m.text}
-
-</div>
-
-
-
-<div class="actions">
-
-<span class="tick">
-
-${tick}
-
-</span>
-
-
-${del}
-
-</div>
-
-
-</div>
-
-
-
-`;
-
-
-
-}
-
-
-
-});
-
-
-});
-
-
-
-
-
-
-
-
-
-// خصوصی
-
-
-
-let selectedUser=null;
-
-
-
-function openPrivate(){
-
-
-document.getElementById("publicPage")
-.classList.add("hidden");
-
-
-document.getElementById("privatePage")
-.classList.remove("hidden");
-
-
-}
-
-
-
-
-
-function backPublic(){
-
-
-document.getElementById("privatePage")
-.classList.add("hidden");
-
-
-document.getElementById("publicPage")
-.classList.remove("hidden");
-
-
-}
-
-
-
-
-
-
-
-// لیست کاربران
-
+// نمایش کاربران آنلاین
 
 
 usersRef.onSnapshot(snapshot=>{
 
 
-let list=document.getElementById("userList");
+const list =
+document.getElementById("userList");
+
 
 
 list.innerHTML="";
 
 
+
 snapshot.forEach(doc=>{
-
-
-let u=doc.data();
-
 
 
 if(doc.id!==userId){
 
 
 
+let u=doc.data();
+
+
+
+let status =
+u.online
+?
+"🟢 آنلاین"
+:
+"⚪ آفلاین";
+
+
+
 list.innerHTML += `
 
 
-<div class="user"
-onclick="selectUser('${doc.id}','${u.name}')">
+<div class="user">
 
 
 ${u.name}
 
+<br>
 
-</div>
+<span class="${u.online?'online':'offline'}">
 
-
-
-`;
-
-
-
-}
-
-
-
-});
-
-
-
-});
-
-
-
-
-
-
-
-
-
-function selectUser(id,name){
-
-
-selectedUser={
-
-id:id,
-
-name:name
-
-};
-
-
-
-document.getElementById("privateTitle")
-.innerText="چت با "+name;
-
-
-
-loadPrivate();
-
-
-}
-
-
-
-
-
-
-
-
-
-function sendPrivate(){
-
-
-if(!selectedUser){
-
-alert("کاربر انتخاب نشده");
-
-return;
-
-}
-
-
-
-let input=document.getElementById("privateInput");
-
-
-let text=input.value.trim();
-
-
-if(!text)return;
-
-
-
-messagesRef.add({
-
-name:username,
-
-text:text,
-
-userId:userId,
-
-receiverId:selectedUser.id,
-
-type:"private",
-
-seen:false,
-
-time:firebase.firestore.FieldValue.serverTimestamp()
-
-
-});
-
-
-input.value="";
-
-
-}
-
-
-
-
-
-
-
-
-
-
-function loadPrivate(){
-
-
-messagesRef
-.orderBy("time","asc")
-.onSnapshot(snapshot=>{
-
-
-let box=document.getElementById("privateMessages");
-
-
-box.innerHTML="";
-
-
-
-snapshot.forEach(doc=>{
-
-
-let m=doc.data();
-
-
-
-if(
-m.type==="private"
-&&
-(
-(m.userId===userId && m.receiverId===selectedUser.id)
-||
-(m.userId===selectedUser.id && m.receiverId===userId)
-)
-){
-
-
-
-// خوانده شدن
-
-if(
-m.receiverId===userId &&
-m.seen===false
-){
-
-messagesRef.doc(doc.id)
-.update({
-
-seen:true
-
-});
-
-}
-
-
-
-
-
-let tick="";
-
-
-let del="";
-
-
-if(m.userId===userId){
-
-
-tick=m.seen ? "✔✔" : "✅";
-
-
-del=`
-
-<button class="delete"
-
-onclick="deleteMessage('${doc.id}')">
-
-❌
-
-</button>
-
-
-`;
-
-}
-
-
-
-box.innerHTML +=`
-
-
-<div class="msg">
-
-
-<div class="name">
-
-${m.name}
-
-</div>
-
-
-<div>
-
-${m.text}
-
-</div>
-
-
-
-<div class="actions">
-
-<span class="tick">
-
-${tick}
+${status}
 
 </span>
 
 
-${del}
-
-
-</div>
-
-
 </div>
 
 
@@ -1029,55 +732,15 @@ ${del}
 
 
 
-box.scrollTop=box.scrollHeight;
-
-
-
 });
 
 
 
-}
 
 
-
-
-
-
-
-// حذف پیام
-
-
-
-function deleteMessage(id){
-
-if(confirm("پیام حذف شود؟")){
-
-messagesRef.doc(id).delete()
-.then(()=>{
-
-console.log("پیام حذف شد");
-
-})
-.catch(err=>{
-
-alert("خطا در حذف: "+err.message);
-
-});
-
-
-}
-
-  }
-
-
-}
-
-
-
-</script>
+  </script>
 
 
 </body>
 
-  </html>
+</html>
