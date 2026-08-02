@@ -1,385 +1,285 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>IRN Chat Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRN Chat Pro - با حذف و ریپلای</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;font-family:Vazirmatn,Tahoma,sans-serif;background:#081525;color:#fff;overflow:hidden}
-button,input{font:inherit}
-button{border:0;cursor:pointer}
-.hidden{display:none!important}
-#loadingScreen{position:fixed;inset:0;background:radial-gradient(circle at top,#17385b,#081525 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
-#loadingScreen h1{margin:0 0 8px;font-size:34px}
-#loadingScreen p{color:#b9c8d8;margin:0}
-.auth-card{width:min(430px,calc(100% - 28px));background:rgba(17,35,56,.96);border:1px solid #274563;border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
-.auth-card h2{margin:0 0 6px}.auth-card p{color:#aebed0;font-size:13px;margin:0 0 18px}
-.auth-card input{width:100%;margin:6px 0;padding:12px;border-radius:10px;border:1px solid #304c68;background:#0c1c2d;color:#fff;outline:none}
-.auth-card input:focus{border-color:#16a6ff}
-.auth-row{display:flex;gap:8px;margin-top:8px}
-.primary{background:linear-gradient(135deg,#008cff,#0068e8);color:#fff;padding:11px 15px;border-radius:10px}
-.secondary{background:#263d55;color:#fff;padding:11px 15px;border-radius:10px}
-.auth-error{color:#ff9d9d;min-height:20px;font-size:12px;margin-top:7px}
-#publicView,#privateView{height:100%;min-height:0;padding:10px;gap:8px}
-#publicView{display:flex;flex-direction:column}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(135deg,#173b5e,#122d48);padding:10px 12px;border-radius:13px;border:1px solid #284d6c;flex:0 0 auto}
-.profile{display:flex;align-items:center;gap:9px}.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#0b9bff;font-weight:700}
-.user-meta strong{display:block}.status{font-size:11px;color:#8ed9a6}
-.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{background:#284a68;color:#fff;padding:8px 10px;border-radius:9px}
-.notice-box{background:linear-gradient(135deg,#132c45,#10253a);border:1px solid #2c587d;border-radius:12px;padding:11px 13px;color:#dbeaf8;flex:0 0 auto}
-.notice-box b{color:#53c2ff}.notice-box small{display:block;color:#93a8bc;margin-top:3px}
-.typing{height:20px;padding:2px 8px;color:#91a9bd;font-size:12px;flex:0 0 auto}
-.messages{flex:1;min-height:0;overflow-y:auto;padding:7px;border-radius:13px;background:#07111c;border:1px solid #1d3349}
-.msg{background:#152638;border:1px solid #203c55;margin:6px 2px;padding:9px 10px;border-radius:11px;position:relative;word-break:break-word}
-.msg.mine{border-right:3px solid #0099ff}.msg .msg-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px;color:#63c6ff;margin-bottom:4px}
-.msg .msg-body{font-size:14px;white-space:pre-wrap}.msg .msg-foot{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:5px;font-size:11px;color:#8ca1b4}
-.msg button{background:#29445c;color:#dcecff;border-radius:6px;padding:3px 7px;font-size:11px}
-.tick.seen{color:#23d6a4}.tick.sent{color:#9bb1c5}
-.reply-preview{border-right:3px solid #00a8ff;background:#0c1d2e;padding:6px 9px;border-radius:8px;margin-bottom:7px;font-size:12px;color:#bdd1e3}
-.chat-input{display:flex;gap:7px;flex:0 0 auto;background:#0c1c2c;padding:7px;border-radius:12px;border:1px solid #223b52}
-.chat-input input{flex:1;min-width:0;padding:11px;border-radius:9px;border:1px solid #304b64;background:#071522;color:#fff;outline:none}
-.chat-input button{background:#008cff;color:#fff;padding:10px 15px;border-radius:9px}
-#privateView{display:flex;flex-direction:row}
-.sidebar{width:245px;min-width:210px;background:#0d1c2b;border:1px solid #20384f;border-radius:13px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.sidebar h3{margin:0;padding:13px;border-bottom:1px solid #20384f}
-#privateSearch{margin:8px;padding:9px;border-radius:8px;border:1px solid #2b465e;background:#081522;color:#fff;outline:none}
-#privateUserList{overflow-y:auto;min-height:0;flex:1}
-.userItem{padding:11px;border-bottom:1px solid #1c3043;cursor:pointer;display:flex;align-items:center;gap:7px}
-.userItem:hover,.userItem.selected{background:#123553}.user-name{flex:1}.online-dot{width:9px;height:9px;border-radius:50%;background:#20d879;box-shadow:0 0 8px #20d879;flex:0 0 auto}.offline-dot{width:9px;height:9px;border-radius:50%;background:#596979;flex:0 0 auto}
-.unread-count{background:#e43c55;color:#fff;border-radius:999px;padding:2px 7px;font-size:11px}
-#backBtn{margin:8px;background:#28445d;color:#fff;padding:9px;border-radius:9px}
-.privateChatWindow{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
-.private-header{background:#173b5e;border:1px solid #294e6d;border-radius:13px;padding:10px;margin-bottom:8px;flex:0 0 auto}
-.private-header strong{display:block}.private-header small{color:#9ec1dd}
-.empty-state{height:100%;display:grid;place-items:center;color:#6f8498;text-align:center;padding:20px}
-@media(max-width:700px){
-  #privateView{padding:7px;gap:7px}
-  .sidebar{width:155px;min-width:145px}
-  .sidebar h3{font-size:14px}.userItem{padding:9px 6px;font-size:12px}
-  .chat-input button{padding:10px 11px}.chat-input input{font-size:13px}
-  .topbar{padding:8px}.notice-box{font-size:12px}
-}
-@media(max-width:480px){
-  #privateView{flex-direction:column}
-  .sidebar{width:100%;height:135px;min-height:135px}
-  #privateUserList{display:flex;overflow-x:auto;overflow-y:hidden}
-  .userItem{min-width:120px;border-left:1px solid #1c3043;border-bottom:0}
-  #backBtn{margin:5px}
-}
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;color:white;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+#loadingScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0b1a2f;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;}
+#loadingScreen h1{font-size:32px;margin:10px;text-align:center;}
+#loadingScreen p{font-size:18px;color:#aaa;margin-top:5px;text-align:center;}
+#publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
+.messages{flex:1;overflow-y:auto;padding:5px;border-radius:6px;background:#111;margin-bottom:5px;}
+.msg{background:#222;margin:5px;padding:5px;border-radius:6px;position:relative;animation:fade .3s;display:flex;justify-content:space-between;align-items:center;}
+.msg .reactions span{cursor:pointer;margin-left:5px;}
+.msg .reply-box{background:#333;padding:3px;font-size:12px;color:#fff3cd;margin-bottom:3px;border-radius:3px;}
+.chat-input{display:flex;}
+.chat-input input{flex:1;padding:10px;border-radius:6px;border:none;margin-right:5px;}
+.chat-input button{padding:10px;border:none;border-radius:6px;background:#00aaff;color:white;cursor:pointer;}
+#privateBtn,#backBtn{padding:15px;margin:5px;border:none;border-radius:8px;background:#0d6efd;color:white;font-size:16px;cursor:pointer;}
+.sidebar{width:250px;background:#111;border-right:1px solid #444;display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar h3{margin:5px;padding:5px;border-bottom:1px solid #444;}
+.sidebar .userItem{padding:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.sidebar .userItem:hover{background:#0d6efd;}
+.online-dot{width:10px;height:10px;border-radius:50%;background:#0f0;display:inline-block;margin-left:5px;}
+.unread-count{background:red;color:white;border-radius:50%;padding:2px 6px;margin-left:5px;font-size:12px;}
+.privateChatWindow{flex:1;display:flex;flex-direction:column;}
+.ticks{margin-left:5px;font-size:12px;color:#0f0;}
+.sent{color:#aaa;}
+.seen{color:#0f0;}
+.msg button{margin-left:5px;background:#555;color:white;border:none;border-radius:3px;cursor:pointer;padding:2px 5px;font-size:12px;}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 </style>
 </head>
 <body>
 
 <div id="loadingScreen">
-  <div class="auth-card" id="authCard">
-    <h1>IRN Chat Pro</h1>
-    <p>سرعت، امنیت، ارتباط</p>
-    <h2 id="authTitle">ورود</h2>
-    <p id="authHint">نام کاربری و رمز اختصاصی خودت را وارد کن.</p>
-    <input id="authUsername" maxlength="20" placeholder="نام کاربری (۳ تا ۲۰ کاراکتر)">
-    <input id="authPassword" type="password" minlength="6" placeholder="رمز عبور (حداقل ۶ کاراکتر)">
-    <div class="auth-row">
-      <button class="primary" id="authSubmit">ورود</button>
-      <button class="secondary" id="toggleAuth">ساخت حساب</button>
-    </div>
-    <div id="authError" class="auth-error"></div>
-  </div>
+  <h1>پیام‌رسانی ساده برای همه</h1>
+  <p>«سرعت، امنیت، ارتباط»</p>
 </div>
 
-<div id="publicView" class="hidden">
-  <div class="topbar">
-    <div class="profile">
-      <div class="avatar">IR</div>
-      <div class="user-meta"><strong id="displayName">کاربر</strong><span class="status">● آنلاین</span></div>
-    </div>
-    <div class="actions">
-      <button id="changeNameBtn">تغییر نام</button>
-      <button id="logoutBtn">خروج</button>
-    </div>
-  </div>
-
-  <div class="notice-box">
-    <b>💬 به IRN Chat Pro خوش آمدید</b>
-    <small>اینجا می‌توانید با کاربران گفتگو کنید. لطفاً به حریم خصوصی و احترام متقابل پایبند باشید.</small>
-  </div>
-
-  <div id="typingStatus" class="typing"></div>
+<div id="publicView" style="display:none;">
+  <div>👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
+  <div id="typingStatus" style="font-size:12px;color:#aaa;"></div>
   <div class="messages" id="messagesPublic"></div>
-
-  <div id="publicReply" class="reply-preview hidden"></div>
   <div class="chat-input">
-    <input id="text" maxlength="2000" autocomplete="off" placeholder="پیام عمومی...">
-    <button id="sendPublicBtn">ارسال</button>
+    <input id="text" placeholder="پیام عمومی...">
+    <button onclick="sendPublicMessage()">ارسال</button>
   </div>
-  <button id="privateBtn" class="primary">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count hidden">0</span></button>
+  <button id="privateBtn">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count" style="display:none">0</span></button>
 </div>
 
-<div id="privateView" class="hidden">
-  <aside class="sidebar">
+<div id="privateView" style="display:none;flex:1;flex-direction:row;">
+  <div class="sidebar">
     <h3>چت خصوصی</h3>
-    <input id="privateSearch" placeholder="جستجوی کاربر">
+    <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:5px;border-radius:5px;border:none;">
     <div id="privateUserList"></div>
-    <button id="backBtn">⬅ بازگشت به عمومی</button>
-  </aside>
-
-  <main class="privateChatWindow">
-    <div class="private-header">
-      <strong id="privateTitle">یک کاربر را انتخاب کنید</strong>
-      <small id="privateTyping"></small>
+    <button id="backBtn">بازگشت به عمومی</button>
+  </div>
+  <div class="privateChatWindow">
+    <div id="privateChatContainer" style="flex:1;display:flex;flex-direction:column;">
+      <div class="messages" id="privateMessages"></div>
+      <div class="chat-input">
+        <input id="privateText" placeholder="پیام خصوصی...">
+        <button onclick="sendPrivateMessage()">ارسال</button>
+      </div>
     </div>
-    <div class="messages" id="privateMessages">
-      <div class="empty-state">برای شروع، یک کاربر را از فهرست انتخاب کنید.</div>
-    </div>
-    <div id="privateReply" class="reply-preview hidden"></div>
-    <div class="chat-input">
-      <input id="privateText" maxlength="2000" autocomplete="off" placeholder="پیام خصوصی...">
-      <button id="sendPrivateBtn">ارسال</button>
-    </div>
-  </main>
+  </div>
 </div>
 
 <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
-
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
+
 <script>
+/* Firebase configuration copied from the original IRN Chat Pro code */
 const firebaseConfig = {
-  apiKey:"AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
-  authDomain:"irn-chat-pro.firebaseapp.com",
-  projectId:"irn-chat-pro",
-  storageBucket:"irn-chat-pro.firebasestorage.app",
-  messagingSenderId:"1084279461221",
-  appId:"1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
+  apiKey: "AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
+  authDomain: "irn-chat-pro.firebaseapp.com",
+  projectId: "irn-chat-pro",
+  storageBucket: "irn-chat-pro.firebasestorage.app",
+  messagingSenderId: "1084279461221",
+  appId: "1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(), db=firebase.firestore();
-const messagesRef=db.collection("messages");
-const usersRef=db.collection("users");
-const typingRef=db.collection("typing");
-const usernamesRef=db.collection("usernames");
 
-let currentUser=null, username="", selectedPrivateUser=null;
-let publicUnsub=null, privateUnsub=null, usersUnsub=null, unreadUnsub=null, typingUnsub=null;
-let heartbeatTimer=null, publicTypingTimer=null, privateTypingTimer=null;
-let publicReply=null, privateReply=null, authMode="login";
+const db = firebase.firestore();
+const messagesRef = db.collection("messages");
+const usersRef = db.collection("users");
+const typingRef = db.collection("typing");
 
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const normalizeUsername=s=>String(s||"").trim().toLowerCase();
-function usernameEmail(name){
-  const bytes=new TextEncoder().encode(name);
-  let hex=""; for(const b of bytes) hex+=b.toString(16).padStart(2,"0");
-  return hex+"@irn-chat-pro.firebaseapp.com";
-}
-function showAuthError(e){
-  const map={
-    "auth/invalid-credential":"نام کاربری یا رمز عبور اشتباه است.",
-    "auth/wrong-password":"رمز عبور اشتباه است.",
-    "auth/user-not-found":"این نام کاربری وجود ندارد.",
-    "auth/email-already-in-use":"این نام کاربری قبلاً ثبت شده است.",
-    "auth/weak-password":"رمز عبور باید حداقل ۶ کاراکتر باشد.",
-    "auth/too-many-requests":"تلاش‌های زیادی انجام شده؛ کمی بعد دوباره امتحان کنید.",
-    "auth/network-request-failed":"اتصال اینترنت را بررسی کنید."
-  };
-  $("authError").textContent=map[e.code]||e.message||"خطای نامشخص.";
-}
-function setAuthMode(mode){
-  authMode=mode;
-  $("authTitle").textContent=mode==="login"?"ورود":"ساخت حساب";
-  $("authHint").textContent=mode==="login"?"نام کاربری و رمز اختصاصی خودت را وارد کن.":"نام کاربری یکتا بساز؛ رمزت را خودت انتخاب کن.";
-  $("authSubmit").textContent=mode==="login"?"ورود":"ساخت حساب";
-  $("toggleAuth").textContent=mode==="login"?"ساخت حساب":"ورود";
-  $("authError").textContent="";
-}
-$("toggleAuth").onclick=()=>setAuthMode(authMode==="login"?"register":"login");
+let userId = localStorage.getItem("userId");
+if(!userId){ userId=Math.random().toString(36).substr(2,9); localStorage.setItem("userId",userId);}
 
-$("authSubmit").onclick=async()=>{
-  const name=$("authUsername").value.trim(), pass=$("authPassword").value;
-  $("authError").textContent="";
-  if(!/^[A-Za-z0-9_]{3,20}$/.test(name)){ $("authError").textContent="نام کاربری فقط شامل حروف انگلیسی، عدد و _ باشد و ۳ تا ۲۰ کاراکتر باشد."; return; }
-  if(pass.length<6){ $("authError").textContent="رمز عبور حداقل ۶ کاراکتر باشد."; return; }
-  const email=usernameEmail(normalizeUsername(name));
-  try{
-    if(authMode==="register"){
-      const cred=await auth.createUserWithEmailAndPassword(email,pass);
-      const uid=cred.user.uid, key=normalizeUsername(name);
-      try{
-        await db.runTransaction(async tx=>{
-          const ref=usernamesRef.doc(key), snap=await tx.get(ref);
-          if(snap.exists) throw new Error("USERNAME_TAKEN");
-          tx.set(ref,{uid,name,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-          tx.set(usersRef.doc(uid),{uid,name,online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-        });
-      }catch(err){
-        await cred.user.delete().catch(()=>{});
-        if(err.message==="USERNAME_TAKEN") throw {code:"auth/email-already-in-use"};
-        throw err;
-      }
-    }else{
-      await auth.signInWithEmailAndPassword(email,pass);
+let username = localStorage.getItem("chatName") || "";
+let usernameReady = false;
+
+function normalizeUsername(name){
+  return String(name || "").trim().replace(/\\s+/g," ").toLowerCase();
+}
+
+async function usernameExists(name){
+  const normalized=normalizeUsername(name);
+  const snap=await usersRef.where("usernameLower","==",normalized).limit(1).get();
+  return snap.docs.some(d=>d.id!==userId);
+}
+
+async function setupUsername(){
+  while(true){
+    if(!username) username=prompt("نام کاربری خود را وارد کنید") || "";
+    username=username.trim();
+
+    if(username.length<3 || username.length>30){
+      alert("نام کاربری باید بین ۳ تا ۳۰ کاراکتر باشد.");
+      username="";
+      continue;
     }
-  }catch(e){showAuthError(e);}
-};
 
-auth.onAuthStateChanged(async user=>{
-  if(user){ currentUser=user; await loadCurrentProfile(); }
-  else { currentUser=null; $("loadingScreen").classList.remove("hidden"); $("publicView").classList.add("hidden"); $("privateView").classList.add("hidden"); setAuthMode("login"); }
+    try{
+      if(await usernameExists(username)){
+        alert("این نام کاربری قبلاً گرفته شده است. لطفاً نام دیگری انتخاب کنید.");
+        username="";
+        continue;
+      }
+
+      localStorage.setItem("chatName",username);
+      document.getElementById("displayName").innerText=username;
+      await usersRef.doc(userId).set({
+        name:username,
+        usernameLower:normalizeUsername(username),
+        online:true,
+        lastSeen:firebase.firestore.FieldValue.serverTimestamp()
+      },{merge:true});
+      usernameReady=true;
+      break;
+    }catch(e){
+      console.error(e);
+      alert("بررسی نام کاربری انجام نشد. اگر خطای دسترسی دیدی، Rules فعلی Firebase اجازه خواندن users را نمی‌دهد.");
+      break;
+    }
+  }
+}
+
+setupUsername();
+
+window.addEventListener("load", ()=>{
+  setTimeout(()=>{document.getElementById("loadingScreen").style.display="none"; document.getElementById("publicView").style.display="flex";},1500);
 });
 
-async function loadCurrentProfile(){
-  const snap=await usersRef.doc(currentUser.uid).get();
-  if(!snap.exists){
-    await auth.signOut(); return;
-  }
-  username=snap.data().name;
-  $("displayName").textContent=username;
-  $("loadingScreen").classList.add("hidden");
-  $("publicView").classList.remove("hidden");
-  startPresence();
-  startListeners();
-}
+document.getElementById("text").addEventListener("input", ()=>{
+  typingRef.doc(userId).set({name:username});
+  setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1500);
+});
+typingRef.onSnapshot(snap=>{
+  let names=[];
+  snap.forEach(d=>{ if(d.id!==userId) names.push(d.data().name) });
+  document.getElementById("typingStatus").innerText = names.length?names.join(" و ")+" در حال نوشتن...":"";
+});
 
-function startPresence(){
-  const ref=usersRef.doc(currentUser.uid);
-  const beat=()=>ref.set({uid:currentUser.uid,name:username,online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
-  beat(); clearInterval(heartbeatTimer); heartbeatTimer=setInterval(beat,20000);
-  window.addEventListener("beforeunload",()=>ref.set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));
-}
-function isOnline(data){
-  const ts=data.lastSeen?.toDate?.(); return !!ts && (Date.now()-ts.getTime()<45000);
-}
+const publicView=document.getElementById("publicView");
+const privateView=document.getElementById("privateView");
+const unreadCounter = document.getElementById("unreadPrivateCount");
+document.getElementById("privateBtn").onclick=()=>{
+  publicView.style.display="none"; privateView.style.display="flex"; markPrivateMessagesAsRead();
+};
+document.getElementById("backBtn").onclick=()=>{ publicView.style.display="flex"; privateView.style.display="none"; };
 
-function startListeners(){
-  publicUnsub?.(); usersUnsub?.(); unreadUnsub?.(); typingUnsub?.();
-  publicUnsub=messagesRef.where("type","==","public").orderBy("time","asc").onSnapshot(renderPublic,console.error);
-  usersUnsub=usersRef.onSnapshot(snap=>{
-    const arr=[]; snap.forEach(d=>{if(d.id!==currentUser.uid) arr.push({id:d.id,...d.data()})});
-    window.usersCache=arr; renderUsers();
-  },console.error);
-  unreadUnsub=messagesRef.where("receiverId","==",currentUser.uid).where("seen","==",false).onSnapshot(s=>{
-    let total=0,map={}; s.forEach(d=>{const m=d.data(); map[m.userId]=(map[m.userId]||0)+1; total++});
-    window.unreadMap=map; $("unreadPrivateCount").textContent=total; $("unreadPrivateCount").classList.toggle("hidden",!total); renderUsers();
-  },console.error);
-  typingUnsub=typingRef.onSnapshot(s=>renderTyping(s),console.error);
-}
-
-function renderUsers(){
-  const list=$("privateUserList"), q=$("privateSearch").value.trim().toLowerCase();
-  list.innerHTML="";
-  (window.usersCache||[]).filter(u=>u.name?.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(u=>{
-    const online=isOnline(u), el=document.createElement("div");
-    el.className="userItem"+(selectedPrivateUser?.id===u.id?" selected":"");
-    el.innerHTML=`<span class="${online?"online-dot":"offline-dot"}"></span><span class="user-name">${esc(u.name)}</span>${window.unreadMap?.[u.id]?`<span class="unread-count">${window.unreadMap[u.id]}</span>`:""}`;
-    el.onclick=()=>selectPrivateUser(u.id,u.name); list.appendChild(el);
+let usersCache=[];
+usersRef.onSnapshot(snap=>{
+  usersCache=[]; const listDiv=document.getElementById("privateUserList"); listDiv.innerHTML="";
+  snap.forEach(u=>{ if(u.id!==userId){ const data=u.data(); usersCache.push({id:u.id,name:data.name,online:data.online}); } });
+  renderPrivateUsers(usersCache);
+});
+function renderPrivateUsers(users){
+  const listDiv=document.getElementById("privateUserList"); listDiv.innerHTML="";
+  users.forEach(u=>{
+    const div=document.createElement("div"); div.className="userItem"; div.id="userItem-"+u.id;
+    div.innerHTML=`<span>${u.name}</span><span id="userUnread-${u.id}" class="unread-count" style="display:none">0</span>${u.online?'<span class="online-dot"></span>':''}`;
+    div.onclick=()=>selectPrivateUser(u.id,u.name);
+    listDiv.appendChild(div);
   });
 }
-$("privateSearch").oninput=renderUsers;
-
-function renderTyping(snapshot){
-  const now=Date.now(), publicNames=[], privateNames=[];
-  snapshot.forEach(d=>{
-    const x=d.data(); if(!x.active || !x.expiresAt || x.expiresAt<=now || x.uid===currentUser.uid) return;
-    if(x.room==="public") publicNames.push(x.name);
-    else if(selectedPrivateUser && x.room==="private" && x.to===currentUser.uid && x.uid===selectedPrivateUser.id) privateNames.push(x.name);
-  });
-  $("typingStatus").textContent=publicNames.length?publicNames.join(" و ")+" در حال نوشتن...":"";
-  $("privateTyping").textContent=privateNames.length?privateNames.join(" و ")+" در حال نوشتن...":"";
-}
-function setTyping(room,to,active){
-  const id=room==="public"?`public_${currentUser.uid}`:`private_${currentUser.uid}_${to}`;
-  typingRef.doc(id).set({uid:currentUser.uid,name:username,room,to:to||null,active,expiresAt:Date.now()+2200},{merge:true}).catch(()=>{});
-}
-function bindTyping(input,room){
-  input.addEventListener("input",()=>{
-    const to=room==="public"?null:selectedPrivateUser?.id; if(!to && room==="private") return;
-    setTyping(room,to,true);
-    clearTimeout(room==="public"?publicTypingTimer:privateTypingTimer);
-    const timer=setTimeout(()=>setTyping(room,to,false),1800);
-    if(room==="public") publicTypingTimer=timer; else privateTypingTimer=timer;
-  });
-}
-bindTyping($("text"),"public"); bindTyping($("privateText"),"private");
-
-function messageHTML(m,id){
-  const mine=m.uid===currentUser.uid, time=m.time?.toDate?.()?.toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"})||"";
-  const reply=m.replyTo?`<div class="reply-preview">↪ ${esc(m.replyTo)}</div>`:"";
-  return `<div class="msg ${mine?"mine":""}">
-    <div class="msg-head"><span>${esc(m.name)}</span><span>${time}</span></div>
-    ${reply}<div class="msg-body">${esc(m.text)}</div>
-    <div class="msg-foot">
-      ${mine?`<span class="tick ${m.seen?"seen":"sent"}">${m.seen?"✔✔":"✓"}</span><button data-delete="${id}">حذف</button>`:""}
-      <button data-reply="${esc(m.text)}">↩ پاسخ</button>
-    </div>
-  </div>`;
-}
-function renderPublic(snapshot){
-  const box=$("messagesPublic"); box.innerHTML="";
-  snapshot.forEach(d=>box.insertAdjacentHTML("beforeend",messageHTML(d.data(),d.id)));
-  box.scrollTop=box.scrollHeight; bindMessageButtons(box,"public");
-}
-function bindMessageButtons(box,room){
-  box.querySelectorAll("[data-delete]").forEach(b=>b.onclick=async()=>{try{await messagesRef.doc(b.dataset.delete).delete()}catch(e){alert("حذف پیام انجام نشد: "+e.message)}});
-  box.querySelectorAll("[data-reply]").forEach(b=>b.onclick=()=>startReply(b.dataset.reply,room));
-}
-function startReply(text,room){
-  if(room==="public"){publicReply=text; $("publicReply").textContent="↪ "+text; $("publicReply").classList.remove("hidden"); $("text").focus();}
-  else {privateReply=text; $("privateReply").textContent="↪ "+text; $("privateReply").classList.remove("hidden"); $("privateText").focus();}
-}
-
-$("sendPublicBtn").onclick=sendPublic;
-$("text").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendPublic()}});
-async function sendPublic(){
-  const input=$("text"), text=input.value.trim(); if(!text||!currentUser)return;
-  await messagesRef.add({type:"public",name:username,text,uid:currentUser.uid,userId:currentUser.uid,receiverId:null,replyTo:publicReply,reactions:{heart:[],like:[]},seen:false,time:firebase.firestore.FieldValue.serverTimestamp()});
-  input.value=""; publicReply=null; $("publicReply").classList.add("hidden"); setTyping("public",null,false);
-}
-
-function selectPrivateUser(id,name){
-  selectedPrivateUser={id,name}; $("privateTitle").textContent="چت با "+name; $("privateText").placeholder="پیام خصوصی برای "+name+"...";
-  renderUsers(); loadPrivateMessages(); markMessagesRead(id);
-}
-function loadPrivateMessages(){
-  privateUnsub?.();
-  if(!selectedPrivateUser)return;
-  privateUnsub=messagesRef.orderBy("time","asc").onSnapshot(s=>{
-    const box=$("privateMessages"); box.innerHTML="";
-    let has=false;
-    s.forEach(d=>{
-      const m=d.data(), ok=m.type==="private"&&((m.uid===currentUser.uid&&m.receiverId===selectedPrivateUser.id)||(m.uid===selectedPrivateUser.id&&m.receiverId===currentUser.uid));
-      if(ok){has=true;box.insertAdjacentHTML("beforeend",messageHTML(m,d.id))}
+function updateUnreadPerUser(){
+  messagesRef.where("receiverId","==",userId).where("seen","==",false).onSnapshot(snap=>{
+    let countMap={};
+    snap.forEach(doc=>{ const m=doc.data(); if(m.userId){ countMap[m.userId]=(countMap[m.userId]||0)+1; } });
+    usersCache.forEach(u=>{
+      const el=document.getElementById("userUnread-"+u.id);
+      if(el){ if(countMap[u.id]>0){ el.style.display="inline-block"; el.innerText=countMap[u.id]; } else { el.style.display="none"; } }
     });
-    if(!has)box.innerHTML='<div class="empty-state">هنوز پیامی بین شما نیست.</div>';
-    box.scrollTop=box.scrollHeight; bindMessageButtons(box,"private");
-  },console.error);
+    const totalUnread=Object.values(countMap).reduce((a,b)=>a+b,0);
+    if(totalUnread>0){ unreadCounter.style.display="inline-block"; unreadCounter.innerText=totalUnread; } else unreadCounter.style.display="none";
+  });
 }
-async function markMessagesRead(senderId){
-  const s=await messagesRef.where("receiverId","==",currentUser.uid).where("uid","==",senderId).where("seen","==",false).get();
-  const batch=db.batch(); s.forEach(d=>batch.update(d.ref,{seen:true})); if(!s.empty)await batch.commit();
-}
-$("sendPrivateBtn").onclick=sendPrivate;
-$("privateText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendPrivate()}});
-async function sendPrivate(){
-  if(!selectedPrivateUser)return alert("ابتدا یک کاربر را انتخاب کنید");
-  const input=$("privateText"), text=input.value.trim(); if(!text)return;
-  await messagesRef.add({type:"private",name:username,text,uid:currentUser.uid,userId:currentUser.uid,receiverId:selectedPrivateUser.id,replyTo:privateReply,reactions:{heart:[],like:[]},seen:false,time:firebase.firestore.FieldValue.serverTimestamp()});
-  input.value=""; privateReply=null; $("privateReply").classList.add("hidden"); setTyping("private",selectedPrivateUser.id,false);
-}
-$("privateBtn").onclick=()=>{ $("publicView").classList.add("hidden"); $("privateView").classList.remove("hidden"); };
-$("backBtn").onclick=()=>{ $("privateView").classList.add("hidden"); $("publicView").classList.remove("hidden"); };
 
-$("changeNameBtn").onclick=async()=>{
-  const n=prompt("نام نمایشی جدید:",username)?.trim(); if(!n||n===username)return;
-  if(n.length>30)return alert("نام بیش از حد طولانی است.");
-  await usersRef.doc(currentUser.uid).update({name:n});
-  username=n; $("displayName").textContent=n;
-};
-$("logoutBtn").onclick=async()=>{
-  clearInterval(heartbeatTimer); await usersRef.doc(currentUser.uid).set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); await auth.signOut();
-};
+let selectedPrivateUser=null;
+let privateMessagesUnsubscribe=null;
+function selectPrivateUser(id,name){ selectedPrivateUser={id,name}; loadPrivateMessages(); markMessagesAsReadFrom(id); }
+function loadPrivateMessages(){
+  const box=document.getElementById("privateMessages"); if(!selectedPrivateUser) return; if(privateMessagesUnsubscribe) privateMessagesUnsubscribe(); privateMessagesUnsubscribe=messagesRef.orderBy("time").onSnapshot(snapshot=>{
+    box.innerHTML="";
+    snapshot.forEach(docSnap=>{
+      const m=docSnap.data();
+      const isPrivate=(m.userId===userId && m.receiverId===selectedPrivateUser.id)||(m.userId===selectedPrivateUser.id && m.receiverId===userId);
+      if(isPrivate){
+        const msgDiv=document.createElement("div"); msgDiv.className="msg";
+        let tick=""; if(m.userId===userId){ tick=m.seen?"<span class='ticks seen'>✔️</span>":"<span class='ticks sent'>✅</span>"; }
+        let buttons="";
+        if(m.userId===userId){
+          buttons=`<button onclick="deleteMsg('${docSnap.id}')">❌</button>`;
+        }
+        buttons+=`<button onclick="replyMsg(${JSON.stringify(m.text)}, ${m.userId===userId})">↩️</button>`;
+        msgDiv.innerHTML=`<span>${m.name}: ${m.text}</span>${tick}${buttons}`;
+        box.appendChild(msgDiv); box.scrollTop=box.scrollHeight;
+      }
+    });
+  });
+}
+function deleteMsg(msgId){ messagesRef.doc(msgId).delete(); }
+function replyMsg(text,isMine){ 
+  const input = isMine ? document.getElementById("text") : document.getElementById("privateText");
+  input.value = `↪ ${text}`;
+}
+function markMessagesAsReadFrom(senderId){ messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); }); }
+function markPrivateMessagesAsRead(){ messagesRef.where("receiverId","==",userId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); }); }
+
+function sendPrivateMessage(){
+  if(!selectedPrivateUser) return alert("کاربر را انتخاب کنید");
+  const input=document.getElementById("privateText"); const text=input.value.trim(); if(!text) return;
+  messagesRef.add({ name:username,text,userId,receiverId:selectedPrivateUser.id,reactions:{heart:[],like:[]},replyTo:null,time:firebase.firestore.FieldValue.serverTimestamp(),seen:false });
+  input.value="";
+}
+messagesRef.orderBy("time").onSnapshot(snapshot=>{
+  const box=document.getElementById("messagesPublic"); box.innerHTML="";
+  snapshot.forEach(docSnap=>{
+    const m=docSnap.data(); if(!m.receiverId){
+      const div=document.createElement("div"); div.className="msg";
+      let tick=""; if(m.userId===userId){ tick=m.seen?"<span class='ticks seen'>✔️</span>":"<span class='ticks sent'>✅</span>"; }
+      let buttons="";
+      if(m.userId===userId){ buttons=`<button onclick="deleteMsg('${docSnap.id}')">❌</button>`; }
+      buttons+=`<button onclick="replyMsg(${JSON.stringify(m.text)}, true)">↩️</button>`;
+      div.innerHTML=`<span>${m.name}: ${m.text}</span>${tick}${buttons}`;
+      box.prepend(div);
+    }
+  });
+});
+function sendPublicMessage(){
+  const text=document.getElementById("text").value.trim(); if(!text) return alert("پیام وارد نشده");
+  messagesRef.add({ name:username,text,userId,receiverId:null,reactions:{heart:[],like:[]},replyTo:null,time:firebase.firestore.FieldValue.serverTimestamp(),seen:false });
+  document.getElementById("text").value="";
+}
+async function changeName(){
+  let n=prompt("نام کاربری جدید:");
+  if(!n) return;
+  n=n.trim();
+  if(n.length<3 || n.length>30){
+    alert("نام کاربری باید بین ۳ تا ۳۰ کاراکتر باشد.");
+    return;
+  }
+  try{
+    if(await usernameExists(n)){
+      alert("این نام کاربری قبلاً گرفته شده است.");
+      return;
+    }
+    username=n;
+    localStorage.setItem("chatName",n);
+    document.getElementById("displayName").innerText=n;
+    await usersRef.doc(userId).set({
+      name:n,
+      usernameLower:normalizeUsername(n),
+      online:true,
+      lastSeen:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+  }catch(e){
+    console.error(e);
+    alert("تغییر نام انجام نشد.");
+  }
+}
+if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
+updateUnreadPerUser();
 </script>
 </body>
-</html>
+        </html>
