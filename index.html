@@ -70,9 +70,7 @@ body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;
 </div>
 
 <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
-<script
-  src="https://www.gstatic.com/fireb
-  asejs/12.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
 <script>
@@ -155,8 +153,7 @@ let selectedPrivateUser=null;
 let privateMessagesUnsubscribe=null;
 function selectPrivateUser(id,name){ selectedPrivateUser={id,name}; loadPrivateMessages(); markMessagesAsReadFrom(id); }
 function loadPrivateMessages(){
-  const box=document.getElementById("privateMessages"
-                                    ); if(!selectedPrivateUser) return; if(privateMessagesUnsubscribe) privateMessagesUnsubscribe(); privateMessagesUnsubscribe=messagesRef.orderBy("time").onSnapshot(snapshot=>{
+  const box=document.getElementById("privateMessages"); if(!selectedPrivateUser) return; if(privateMessagesUnsubscribe) privateMessagesUnsubscribe(); privateMessagesUnsubscribe=messagesRef.orderBy("time").onSnapshot(snapshot=>{
     box.innerHTML="";
     snapshot.forEach(docSnap=>{
       const m=docSnap.data();
@@ -178,7 +175,7 @@ function loadPrivateMessages(){
 function deleteMsg(msgId){ messagesRef.doc(msgId).delete(); }
 function replyMsg(text,isMine){ 
   const input = isMine ? document.getElementById("text") : document.getElementById("privateText");
-  input.value = ↪ ${text};
+  input.value = `↪ ${text}`;
 }
 function markMessagesAsReadFrom(senderId){ messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); }); }
 function markPrivateMessagesAsRead(){ messagesRef.where("receiverId","==",userId).where("seen","==",false).get().then(snapshot=>{ snapshot.forEach(doc=>{ messagesRef.doc(doc.id).update({seen:true}); }); }); }
