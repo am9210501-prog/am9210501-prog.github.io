@@ -31,6 +31,36 @@ body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;
 .seen{color:#0f0;}
 .msg button{margin-left:5px;background:#555;color:white;border:none;border-radius:3px;cursor:pointer;padding:2px 5px;font-size:12px;}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
+
+/* FINAL MOBILE + NOTICE FIX */
+html,body{width:100%;height:100%;overflow:hidden}
+body{min-height:100dvh}
+.page{height:100dvh;min-height:0}
+.messages{min-height:0;overscroll-behavior:contain}
+.private,.chat{min-height:0}
+.private{height:100%}
+.chat{height:100%;min-width:0;overflow:hidden}
+.chat .messages{min-height:0}
+.box{flex:0 0 auto}
+.notice-box{
+  flex:0 0 auto;margin:8px 0 0;padding:10px 12px;border-radius:10px;
+  background:linear-gradient(135deg,#173b5b,#24577e);
+  border:1px solid rgba(255,255,255,.12);color:#fff;font-size:13px;line-height:1.9
+}
+.notice-box strong{display:block;font-size:14px;margin-bottom:2px}
+@media(max-width:700px){
+  .page{padding:6px}.private{gap:6px}
+  .users{width:112px;flex:0 0 112px}
+  .user{padding:9px 7px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chat .header{padding:8px;margin-bottom:5px;font-size:13px}
+  .messages{padding:6px}.msg{padding:8px;font-size:13px}
+  .box{gap:5px;margin-top:6px}
+  .box input{min-width:0;height:42px;font-size:14px}
+  .box button{height:42px;padding:7px 10px;flex:0 0 auto}
+  #privatePage .chat>button{flex:0 0 auto;height:38px;margin-top:5px}
+  .notice-box{padding:8px 10px;font-size:12px}
+}
+
 </style>
 </head>
 <body>
@@ -70,7 +100,17 @@ body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;
 </div>
 
 <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js">async function deleteMessage(id){
+  if(!id) return;
+  if(!confirm("این پیام حذف شود؟")) return;
+  try{
+    await messagesRef.doc(id).delete();
+  }catch(err){
+    console.error("Delete message error:", err);
+    alert("حذف پیام انجام نشد. خطای دسترسی یا اتصال Firebase را بررسی کنید.");
+  }
+}
+</script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 
 <script>
@@ -281,5 +321,19 @@ async function changeName(){
 if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
 updateUnreadPerUser();
 </script>
+
+<script>
+(function(){
+  function irnSetViewport(){
+    document.documentElement.style.setProperty('--irn-vh', window.innerHeight + 'px');
+  }
+  irnSetViewport();
+  window.addEventListener('resize', irnSetViewport, {passive:true});
+  window.addEventListener('orientationchange', function(){
+    setTimeout(irnSetViewport,150);
+  }, {passive:true});
+})();
+</script>
+
 </body>
         </html>
