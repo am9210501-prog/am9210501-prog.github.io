@@ -69,48 +69,6 @@ button{border:0;cursor:pointer}
   #backBtn{margin:5px}
 }
 
-/* ===== IRN Chat Pro Complete UI ===== */
-html,body{width:100%;height:100%;overflow:hidden}
-body{min-height:100dvh}
-.page{height:100dvh;min-height:0}
-.messages{min-height:0;overflow-y:auto;overscroll-behavior:contain}
-.private,.chat{min-height:0}
-.chat{height:100%;min-width:0;overflow:hidden}
-.box{flex:0 0 auto}
-.msg{position:relative}
-.reply-btn{background:#315a7b;padding:4px 8px;font-size:11px}
-.reply-preview{margin:0 0 6px;padding:6px 8px;border-right:3px solid #08f;background:#172838;border-radius:6px;font-size:11px}
-.reply-preview.hidden{display:none}
-.expire{display:block;margin-top:4px;font-size:10px;opacity:.6}
-.presence{font-size:10px;opacity:.8;margin-top:2px}
-.typing-indicator{min-height:20px;padding:2px 8px;font-size:11px;color:#8fd5ff}
-.announcement-box{
-  flex:0 0 auto;display:flex;align-items:center;gap:10px;
-  margin-top:8px;padding:11px 13px;border-radius:12px;
-  background:linear-gradient(135deg,#173b5b,#214f73);
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 5px 18px rgba(0,0,0,.18)
-}
-.announcement-icon{width:38px;height:38px;display:grid;place-items:center;flex:0 0 38px;border-radius:10px;background:rgba(0,140,255,.18);font-size:20px}
-.announcement-content{min-width:0}.announcement-title{font-weight:700;font-size:14px;margin-bottom:2px}
-.announcement-text{font-size:12px;line-height:1.8;opacity:.92}
-@media(max-width:700px){
-  .page{padding:6px}.private{gap:6px}.users{width:112px;flex:0 0 112px}
-  .user{padding:9px 7px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .chat .header{padding:8px;margin-bottom:5px}.messages{padding:6px}
-  .msg{padding:8px;font-size:13px}.box{gap:5px;margin-top:6px}
-  .box input{min-width:0;height:42px;font-size:14px}.box button{height:42px;padding:7px 10px}
-  .announcement-box{padding:8px 10px;margin-top:6px;gap:8px}
-  .announcement-icon{width:34px;height:34px;flex-basis:34px;font-size:18px}
-  .announcement-title{font-size:13px}.announcement-text{font-size:11px;line-height:1.7}
-}
-
-
-.irn-reply-action{background:#315a7b!important;padding:4px 8px!important;font-size:11px!important}
-</style>
-</head>
-<body>
-
 <div id="loadingScreen">
   <div class="auth-card" id="authCard">
     <h1>IRN Chat Pro</h1>
