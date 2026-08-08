@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRN Chat Pro - با حذف و ریپلای</title>
+<title>IRN Chat </title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;color:white;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
@@ -61,9 +61,6 @@ body{min-height:100dvh}
   .notice-box{padding:8px 10px;font-size:12px}
 }
 
-
-.extra-btn{padding:7px 9px;border:0;border-radius:7px;background:#183c5d;color:#fff;cursor:pointer}.notice-box{flex:0 0 auto;margin:7px 0;padding:9px 11px;border-radius:10px;background:linear-gradient(135deg,#173b5b,#24577e);border:1px solid rgba(255,255,255,.12);font-size:12px;line-height:1.8}.notice-box strong{display:block;font-size:14px}.reaction-active{outline:1px solid #00aaff;background:#12405a!important}
-@media(max-width:700px){#extraPanel{padding:10px}.notice-box{font-size:11px}.notice-box strong{font-size:13px}}
 </style>
 </head>
 <body>
@@ -74,8 +71,8 @@ body{min-height:100dvh}
 </div>
 
 <div id="publicView" style="display:none;">
-  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;direction:rtl">👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button><button onclick="openPanel('notice')">📢 اطلاعیه</button><button onclick="openPanel('settings')">⚙️ تنظیمات</button><button onclick="openPanel('rules')">📜 قوانین</button></div>
-  <div id="typingStatus" style="font-size:12px;color:#aaa;"></div><div class="notice-box"><strong>📢 اطلاعیه</strong><span>به IRN Chat Pro خوش آمدید؛ برای یک تجربه بهتر، احترام به دیگر کاربران را رعایت کنید.</span></div>
+  <div>👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
+  <div id="typingStatus" style="font-size:12px;color:#aaa;"></div>
   <div class="messages" id="messagesPublic"></div>
   <div class="chat-input">
     <input id="text" placeholder="پیام عمومی...">
@@ -84,7 +81,6 @@ body{min-height:100dvh}
   <button id="privateBtn">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count" style="display:none">0</span></button>
 </div>
 
-<div id="extraPanel" style="display:none;position:fixed;inset:0;background:#0b1a2f;z-index:5000;padding:14px;overflow:auto;direction:rtl"><div style="display:flex;justify-content:space-between;align-items:center"><h2 id="panelTitle" style="margin:0"></h2><button onclick="closePanel()">✕ بستن</button></div><div id="panelBody" style="margin-top:14px;line-height:2"></div></div>
 <div id="privateView" style="display:none;flex:1;flex-direction:row;">
   <div class="sidebar">
     <h3>چت خصوصی</h3>
@@ -168,7 +164,7 @@ async function setupUsername(){
       return true;
     }catch(e){
       console.error(e);
-      showError("خطا در اتصال به Firebase. صفحه را نبند؛ Rules دیتابیس را بررسی کن.");
+      showError("خطا در اتصال.");
       return false;
     }
   }
@@ -227,10 +223,10 @@ function renderMessage(m,id,privateRoom){
       ${reply}
       <div>${esc(m.text)}${m.edited?" <small>(ویرایش‌شده)</small>":""}</div>
       <div class="reactions">
-        <span class="${(react.reactedBy&&react.reactedBy[userId]&&react.reactedBy[userId].like)?"reaction-active":""}" data-react="${id}" data-r="like">👍 ${react.like||0}</span>
-        <span class="${(react.reactedBy&&react.reactedBy[userId]&&react.reactedBy[userId].heart)?"reaction-active":""}" data-react="${id}" data-r="heart">❤️ ${react.heart||0}</span>
-        <span class="${(react.reactedBy&&react.reactedBy[userId]&&react.reactedBy[userId].laugh)?"reaction-active":""}" data-react="${id}" data-r="laugh">😂 ${react.laugh||0}</span>
-        <span class="${(react.reactedBy&&react.reactedBy[userId]&&react.reactedBy[userId].fire)?"reaction-active":""}" data-react="${id}" data-r="fire">🔥 ${react.fire||0}</span>
+        <span data-react="${id}" data-r="like">👍 ${react.like||0}</span>
+        <span data-react="${id}" data-r="heart">❤️ ${react.heart||0}</span>
+        <span data-react="${id}" data-r="laugh">😂 ${react.laugh||0}</span>
+        <span data-react="${id}" data-r="fire">🔥 ${react.fire||0}</span>
       </div>
     </div>
     ${tick}
@@ -311,7 +307,7 @@ async function sendPublicMessage(){
       time:serverTime(),seen:false
     });
     input.value="";
-  }catch(e){console.error(e);alert("ارسال پیام انجام نشد. Rules Firebase را بررسی کن.")}
+  }catch(e){console.error(e);alert("ارسال پیام انجام نشد..")}
 }
 
 async function sendPrivateMessage(){
@@ -354,13 +350,10 @@ async function replyToMessage(id,isPrivate){
 document.addEventListener("click",async e=>{
   const el=e.target.closest("[data-react]");
   if(!el)return;
-  const id=el.dataset.react,field=el.dataset.r,ref=messagesRef.doc(id);
-  try{await db.runTransaction(async tx=>{
-    const snap=await tx.get(ref); if(!snap.exists)return;
-    const m=snap.data(),r=m.reactions||{},by=r.reactedBy||{},mine=by[userId]||{};
-    if(mine[field]) return;
-    tx.set(ref,{reactions:{[field]:firebase.firestore.FieldValue.increment(1),reactedBy:{[userId]:{[field]:true}}}},{merge:true});
-  })}catch(err){console.error(err)}
+  const id=el.dataset.react,field=el.dataset.r;
+  await messagesRef.doc(id).set({
+    reactions:{[field]:firebase.firestore.FieldValue.increment(1)}
+  },{merge:true});
 });
 
 function startTyping(){
@@ -387,15 +380,6 @@ function startTyping(){
     $("typingStatus").textContent=pub.length?pub.join(" و ")+" در حال نوشتن...":"";
   });
 }
-
-
-function openPanel(type){
- const p=$("extraPanel"),t=$("panelTitle"),b=$("panelBody"); p.style.display="block";
- if(type==="notice"){t.textContent="📢 اطلاعیه";b.innerHTML="<div class='notice-box'><strong>اطلاعیه پیام‌رسان</strong>به IRN Chat Pro خوش آمدید. قابلیت‌های جدید به‌مرور اضافه می‌شوند.</div>"}
- if(type==="settings"){t.textContent="⚙️ تنظیمات";b.innerHTML="<button onclick="changeName()">تغییر نام کاربری</button><p>نام کاربری فعلی: <b>"+esc(username)+"</b></p><p>اعلان‌ها از تنظیمات مرورگر قابل فعال‌سازی هستند.</p>"}
- if(type==="rules"){t.textContent="📜 قوانین";b.innerHTML="<ol><li>احترام به دیگر کاربران الزامی است.</li><li>ارسال محتوای غیرقانونی یا آزاردهنده ممنوع است.</li><li>از انتشار اطلاعات خصوصی دیگران خودداری کنید.</li><li>اسپم و پیام‌های تکراری ارسال نکنید.</li></ol>"}
-}
-function closePanel(){$("extraPanel").style.display="none"}
 
 async function boot(){
   try{
@@ -435,7 +419,7 @@ async function boot(){
     $("text").addEventListener("focus",()=>{});
   }catch(e){
     console.error("BOOT ERROR:",e);
-    showError("اتصال به Firebase برقرار نشد. کنسول مرورگر را بررسی کن.");
+    showError("مثل اینکه اتصال برقرار نشد.لطفا فیلتر شکن رو برسی کن.");
   }
 }
 
