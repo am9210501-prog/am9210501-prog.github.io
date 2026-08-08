@@ -105,197 +105,339 @@ body{min-height:100dvh}
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
 <script>
 const firebaseConfig={
- apiKey:"AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
- authDomain:"irn-chat-pro.firebaseapp.com",
- projectId:"irn-chat-pro",
- storageBucket:"irn-chat-pro.firebasestorage.app",
- messagingSenderId:"1084279461221",
- appId:"1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
+  apiKey:"AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
+  authDomain:"irn-chat-pro.firebaseapp.com",
+  projectId:"irn-chat-pro",
+  storageBucket:"irn-chat-pro.firebasestorage.app",
+  messagingSenderId:"1084279461221",
+  appId:"1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
 };
-firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
-const messages=db.collection("messages"), users=db.collection("users"), typing=db.collection("typing");
-const uid=localStorage.getItem("irnUid")||crypto.randomUUID();
-localStorage.setItem("irnUid",uid);
-let name=localStorage.getItem("chatName")||"";
-let selected=null, pubReply=null, privReply=null;
-let unsubPub=null, unsubPriv=null, unsubUsers=null, unsubTyping=null, heartbeat=null;
 
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const ts=()=>firebase.firestore.FieldValue.serverTimestamp();
-const toast=t=>{let e=$("irnToast");if(!e){e=document.createElement("div");e.id="irnToast";document.body.appendChild(e)}e.textContent=t;e.style.display="block";clearTimeout(window.__t);window.__t=setTimeout(()=>e.style.display="none",2200)};
-function conn(text,cls){let e=$("connectionStatus");if(e){e.textContent=text;e.className=cls||""}}
-function nameOK(n){return n.length>=3&&n.length<=30&&!/[<>]/.test(n)}
+let db,messagesRef,usersRef,typingRef;
+let userId=localStorage.getItem("userId")||crypto.randomUUID();
+let username=localStorage.getItem("chatName")||"";
+let selectedPrivateUser=null;
+let usersCache=[];
+let publicUnsub=null,privateUnsub=null,typingUnsub=null,usersUnsub=null,unreadUnsub=null,heartbeat=null;
 
-async function login(){
- const input=$("authUsername")||$("usernameInput")||document.querySelector('input[placeholder*="نام"]');
- const err=$("authError");
- const n=(input?.value||"").trim();
- if(!nameOK(n)){if(err)err.textContent="نام کاربری باید بین ۳ تا ۳۰ کاراکتر باشد.";return}
- try{
-  const q=await users.where("name","==",n).limit(10).get();
-  if(q.docs.some(d=>d.id!==uid)){if(err)err.textContent="این نام کاربری قبلاً استفاده شده است.";return}
-  name=n;localStorage.setItem("chatName",name);
-  await users.doc(uid).set({userId:uid,name,online:true,lastSeen:ts(),updatedAt:ts()},{merge:true});
-  showMain();start();
- }catch(e){console.error(e);if(err)err.textContent="دسترسی Firebase اجازه ورود نمی‌دهد."}
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function serverTime(){return firebase.firestore.FieldValue.serverTimestamp()}
+function normalize(n){return String(n||"").trim().replace(/\s+/g," ").toLowerCase()}
+function validName(n){return n.length>=3&&n.length<=30&&!/[<>]/.test(n)}
+
+function showApp(){
+  $("displayName").textContent=username;
+  $("loadingScreen").style.display="none";
+  $("publicView").style.display="flex";
 }
-function showMain(){
- $("loadingScreen")?.classList.add("hidden");
- $("publicView")?.classList.remove("hidden");
- document.querySelectorAll("[data-display-name]").forEach(e=>e.textContent=name);
- const dn=$("displayName");if(dn)dn.textContent=name;
+
+function showError(text){
+  const p=$("loadingScreen").querySelector("p");
+  if(p){p.textContent=text;p.style.color="#ffb4b4"}
 }
-function start(){
- conn("🟢 متصل","connected");
- heartbeat=setInterval(()=>users.doc(uid).set({online:true,lastSeen:ts()},{merge:true}).catch(()=>{}),20000);
- users.doc(uid).set({online:true,lastSeen:ts()},{merge:true});
- listenPublic();listenUsers();listenTyping();
+
+async function setupUsername(){
+  let n=username;
+  while(true){
+    n=prompt("نام کاربری خود را وارد کنید",n||"");
+    if(n===null){showError("برای ورود، یک نام کاربری وارد کن.");return false}
+    n=n.trim();
+    if(!validName(n)){alert("نام کاربری باید بین ۳ تا ۳۰ کاراکتر باشد.");continue}
+
+    try{
+      // IMPORTANT: use the same "name" field that the current Firebase Rules allow.
+      const snap=await usersRef.where("name","==",n).limit(10).get();
+      const duplicate=snap.docs.some(d=>d.id!==userId);
+      if(duplicate){alert("این نام کاربری قبلاً گرفته شده است.");continue}
+
+      username=n;
+      localStorage.setItem("chatName",username);
+      await usersRef.doc(userId).set({
+        userId:userId,
+        name:username,
+        online:true,
+        lastSeen:serverTime(),
+        updatedAt:serverTime()
+      },{merge:true});
+
+      return true;
+    }catch(e){
+      console.error(e);
+      showError("خطا در اتصال به Firebase. صفحه را نبند؛ Rules دیتابیس را بررسی کن.");
+      return false;
+    }
+  }
 }
-function listenPublic(){
- unsubPub?.();
- unsubPub=messages.onSnapshot(s=>{
-  const a=s.docs.filter(d=>d.data().type!=="private")
-   .sort((x,y)=>(x.data().time?.toMillis?.()||0)-(y.data().time?.toMillis?.()||0));
-  renderMessages($("messagesPublic")||$("messages"),a,"public");
- },e=>{console.error(e);conn("🟡 خطای دسترسی","")});
+
+function setOnline(){
+  usersRef.doc(userId).set({
+    userId,name:username,online:true,lastSeen:serverTime(),updatedAt:serverTime()
+  },{merge:true}).catch(console.error);
+  clearInterval(heartbeat);
+  heartbeat=setInterval(()=>usersRef.doc(userId).set({
+    online:true,lastSeen:serverTime()
+  },{merge:true}).catch(()=>{}),20000);
 }
-function listenUsers(){
- unsubUsers?.();
- unsubUsers=users.onSnapshot(s=>{
-  window.userCache=s.docs.filter(d=>d.id!==uid).map(d=>({id:d.id,...d.data()}));
-  renderUsers();
- },console.error);
+
+function isOnline(u){
+  const t=u.lastSeen?.toMillis?.()||0;
+  return !!u.online && t>0 && Date.now()-t<45000;
 }
-function online(u){const t=u.lastSeen?.toMillis?.()||0;return !!u.online&&t&&Date.now()-t<45000}
+
 function renderUsers(){
- const box=$("privateUserList")||$("userList");if(!box)return;
- const q=($("privateSearch")?.value||"").trim().toLowerCase();
- box.innerHTML="";
- (window.userCache||[]).filter(u=>(u.name||"").toLowerCase().includes(q)).forEach(u=>{
-  const d=document.createElement("button");d.className="userItem";
-  d.innerHTML=`<span class="${online(u)?"online-dot":"offline-dot"}"></span>${esc(u.name)}${online(u)?"":" <small>آفلاین</small>"}`;
-  d.onclick=()=>openPrivate(u);
-  box.appendChild(d);
- });
+  const list=$("privateUserList");
+  if(!list)return;
+  const q=($("privateSearch").value||"").trim().toLowerCase();
+  list.innerHTML="";
+  usersCache.filter(u=>(u.name||"").toLowerCase().includes(q)).forEach(u=>{
+    const d=document.createElement("div");
+    d.className="userItem";
+    d.innerHTML=`<span>${esc(u.name)}</span><span>${isOnline(u)?"<span class='online-dot'></span>":"<span style='color:#888;font-size:11px'>آفلاین</span>"}</span>`;
+    d.onclick=()=>selectPrivateUser(u.id,u.name);
+    list.appendChild(d);
+  });
 }
-function openPrivate(u){
- selected=u;
- if($("privateTitle"))$("privateTitle").textContent="چت با "+u.name;
- $("publicView")?.classList.add("hidden");$("privateView")?.classList.remove("hidden");
- listenPrivate();markSeen();
-}
-function listenPrivate(){
- unsubPriv?.();
- if(!selected)return;
- unsubPriv=messages.onSnapshot(s=>{
-  const a=s.docs.filter(d=>{
-   const m=d.data();
-   return m.type==="private"&&((m.userId===uid&&m.receiverId===selected.id)||(m.userId===selected.id&&m.receiverId===uid));
-  }).sort((x,y)=>(x.data().time?.toMillis?.()||0)-(y.data().time?.toMillis?.()||0));
-  renderMessages($("privateMessages")||$("privateChat"),a,"private");
- },console.error);
-}
-async function markSeen(){
- if(!selected)return;
- const s=await messages.where("receiverId","==",uid).get();
- const b=db.batch();let n=0;
- s.forEach(d=>{const m=d.data();if(m.userId===selected.id&&!m.seen){b.update(d.ref,{seen:true});n++}});
- if(n)await b.commit();
-}
-function when(t){return t?.toDate?.().toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"})||""}
-function msgHTML(m,id,room){
- const mine=m.userId===uid, r=m.reactions||{};
- const seen=mine?(m.seen?"✔✔":"✓"):"";
- const react=["👍","❤️","😂","🔥","😢","😡"].map(x=>`<button data-react="${id}" data-emoji="${x}">${x}${r[x]?` ${r[x]}`:""}</button>`).join("");
- return `<div class="msg ${mine?"mine":""}" data-id="${id}">
-  <div class="msg-head"><b>${esc(m.name)}</b><span>${when(m.time)}</span></div>
-  ${m.replyTo?`<div class="reply-preview">↩ ${esc(m.replyTo.text)}</div>`:""}
-  <div class="msg-body">${esc(m.text)}${m.edited?" <small>(ویرایش‌شده)</small>":""}</div>
-  <div class="msg-actions">${mine?`<button data-edit="${id}">✏️</button><button data-del="${id}">🗑️</button>`:""}<button data-reply="${id}" data-room="${room}">↩️</button><span>${seen}</span></div>
-  <div class="reaction-row">${react}</div>
-  <small class="expire" data-time="${m.time?.toMillis?.()||0}"></small>
- </div>`;
-}
-function renderMessages(box,docs,room){
- if(!box)return;
- box.innerHTML=docs.map(d=>msgHTML(d.data(),d.id,room)).join("");
- box.scrollTop=box.scrollHeight;bindActions(box);
- updateTimers();
-}
-function bindActions(box){
- box.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{try{await messages.doc(b.dataset.del).delete();toast("پیام حذف شد")}catch(e){toast("حذف پیام در قوانین Firebase مجاز نیست")}});
- box.querySelectorAll("[data-edit]").forEach(b=>b.onclick=async()=>{
-  const s=await messages.doc(b.dataset.edit).get(),m=s.data();if(!m||m.userId!==uid)return;
-  const t=prompt("ویرایش پیام:",m.text);if(t?.trim()&&t.trim()!==m.text)await messages.doc(b.dataset.edit).update({text:t.trim(),edited:true,editedAt:ts()});
- });
- box.querySelectorAll("[data-reply]").forEach(b=>b.onclick=async()=>{
-  const m=(await messages.doc(b.dataset.reply).get()).data();if(!m)return;
-  const obj={name:m.name,text:m.text};
-  if(b.dataset.room==="public"){pubReply=obj;toast("حالت پاسخ فعال شد")}
-  else{privReply=obj;toast("حالت پاسخ فعال شد")}
- });
- box.querySelectorAll("[data-react]").forEach(b=>b.onclick=()=>messages.doc(b.closest(".msg").dataset.id).set({reactions:{[b.dataset.emoji]:firebase.firestore.FieldValue.increment(1)}},{merge:true}));
-}
-function updateTimers(){
- document.querySelectorAll(".expire").forEach(e=>{
-  const t=Number(e.dataset.time);if(!t)return;
-  const left=Math.max(0,86400000-(Date.now()-t));
-  const h=Math.floor(left/3600000),m=Math.floor(left%3600000/60000),s=Math.floor(left%60000/1000);
-  e.textContent=`محو در ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
- });
-}
-setInterval(updateTimers,1000);
 
-async function send(room){
- const input=room==="public"?($("text")||$("messageInput")):($("privateText")||$("privateInput"));
- const text=(input?.value||"").trim();if(!text)return;
- try{
-  if(room==="private"&&!selected){toast("یک کاربر را انتخاب کن");return}
-  await messages.add({type:room==="public"?"public":"private",name,text,userId:uid,uid,receiverId:room==="private"?selected.id:null,seen:false,time:ts(),replyTo:room==="public"?pubReply:privReply,reactions:{}});
-  input.value="";if(room==="public")pubReply=null;else privReply=null;
- }catch(e){console.error(e);toast("ارسال پیام انجام نشد؛ Rules Firebase را بررسی کن")}
+function listenUsers(){
+  usersUnsub=usersRef.onSnapshot(s=>{
+    usersCache=[];
+    s.forEach(d=>{if(d.id!==userId)usersCache.push({id:d.id,...d.data()})});
+    renderUsers();
+  },e=>console.error("users:",e));
 }
-function bind(id,fn){const e=$(id);if(e)e.onclick=fn}
-bind("sendPublicBtn",()=>send("public"));bind("sendBtn",()=>send("public"));bind("sendPrivateBtn",()=>send("private"));bind("privateSendBtn",()=>send("private"));
-["text","messageInput","privateText","privateInput"].forEach(id=>{const e=$(id);if(e)e.addEventListener("keydown",x=>{if(x.key==="Enter"&&!x.shiftKey){x.preventDefault();send(id.includes("private")?"private":"public")}})});
 
-const search=$("privateSearch");if(search)search.oninput=renderUsers;
-bind("privateBtn",()=>{$("publicView")?.classList.add("hidden");$("privateView")?.classList.remove("hidden");renderUsers()});
-bind("backBtn",()=>{$("privateView")?.classList.add("hidden");$("publicView")?.classList.remove("hidden")});
-
-function typingSet(room,to,active){
- const id=room==="public"?"public_"+uid:"private_"+uid+"_"+to;
- typing.doc(id).set({userId:uid,name,room,receiverId:to||null,active,expiresAt:Date.now()+2500},{merge:true}).catch(()=>{});
+function formatTime(t){
+  return t?.toDate?.().toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"})||"";
 }
-function listenTyping(){
- unsubTyping?.();unsubTyping=typing.onSnapshot(s=>{
-  let pub="",priv="";
-  s.forEach(d=>{const m=d.data();if(!m.active||m.expiresAt<Date.now()||m.userId===uid)return;if(m.room==="public")pub=m.name+" در حال نوشتن...";if(m.room==="private"&&selected&&m.userId===selected.id)priv=m.name+" در حال نوشتن..."});
-  if($("typingStatus"))$("typingStatus").textContent=pub;
-  if($("privateTyping"))$("privateTyping").textContent=priv;
- });
-}
-function bindType(id,room){const e=$(id);if(!e)return;e.oninput=()=>{const to=room==="private"?selected?.id:null;if(room==="private"&&!to)return;typingSet(room,to,true);clearTimeout(e.__typing);e.__typing=setTimeout(()=>typingSet(room,to,false),1800)}}
-bindType("text","public");bindType("messageInput","public");bindType("privateText","private");bindType("privateInput","private");
 
-window.addEventListener("online",()=>conn("🟢 متصل","connected"));
-window.addEventListener("offline",()=>conn("🔴 آفلاین","offline"));
-window.addEventListener("beforeunload",()=>users.doc(uid).set({online:false,lastSeen:ts()},{merge:true}).catch(()=>{}));
-
-if($("authSubmit"))$("authSubmit").onclick=login;
-else if($("guestEnter"))$("guestEnter").onclick=login;
-else {
- const inp=$("authUsername")||document.querySelector('input[placeholder*="نام"]');
- const btn=document.querySelector('button.primary,button');
- if(inp&&btn)btn.onclick=login;
+function renderMessage(m,id,privateRoom){
+  const mine=m.userId===userId;
+  const tick=mine?(m.seen?"<span class='ticks seen'>✔✔</span>":"<span class='ticks sent'>✓</span>"):"";
+  const reply=m.replyTo?`<div class="reply-box">↩ ${esc(m.replyTo.text)}</div>`:"";
+  const react=m.reactions||{};
+  return `<div class="msg" data-id="${id}">
+    <div style="flex:1">
+      <b>${esc(m.name)}</b>
+      <small style="opacity:.6;margin-right:5px">${formatTime(m.time)}</small>
+      ${reply}
+      <div>${esc(m.text)}${m.edited?" <small>(ویرایش‌شده)</small>":""}</div>
+      <div class="reactions">
+        <span data-react="${id}" data-r="like">👍 ${react.like||0}</span>
+        <span data-react="${id}" data-r="heart">❤️ ${react.heart||0}</span>
+        <span data-react="${id}" data-r="laugh">😂 ${react.laugh||0}</span>
+        <span data-react="${id}" data-r="fire">🔥 ${react.fire||0}</span>
+      </div>
+    </div>
+    ${tick}
+    ${mine?`<button onclick="editMessage('${id}')">✏️</button><button onclick="deleteMsg('${id}')">❌</button>`:""}
+    <button onclick="replyToMessage('${id}',${privateRoom?'true':'false'})">↩️</button>
+  </div>`;
 }
-if(name){
- users.doc(uid).get().then(s=>{
-  if(s.exists&&s.data().name===name){showMain();start()}else{$("loadingScreen")?.classList.remove("hidden")}
- }).catch(()=>{$("loadingScreen")?.classList.remove("hidden")});
-}else{$("loadingScreen")?.classList.remove("hidden")}
-conn("🟡 در حال اتصال","");
+
+function renderPublic(snap){
+  const box=$("messagesPublic");
+  box.innerHTML="";
+  const docs=snap.docs.filter(d=>{
+    const m=d.data();
+    return !m.receiverId;
+  }).sort((a,b)=>(a.data().time?.toMillis?.()||0)-(b.data().time?.toMillis?.()||0));
+  docs.forEach(d=>box.insertAdjacentHTML("beforeend",renderMessage(d.data(),d.id,false)));
+  box.scrollTop=box.scrollHeight;
+}
+
+function listenPublic(){
+  publicUnsub=messagesRef.onSnapshot(renderPublic,e=>console.error("public:",e));
+}
+
+function selectPrivateUser(id,name){
+  selectedPrivateUser={id,name};
+  loadPrivateMessages();
+  markMessagesAsReadFrom(id);
+}
+
+function loadPrivateMessages(){
+  if(privateUnsub)privateUnsub();
+  if(!selectedPrivateUser)return;
+  privateUnsub=messagesRef.onSnapshot(snap=>{
+    const box=$("privateMessages");
+    box.innerHTML="";
+    const docs=snap.docs.filter(d=>{
+      const m=d.data();
+      return m.receiverId &&
+       ((m.userId===userId&&m.receiverId===selectedPrivateUser.id)||
+        (m.userId===selectedPrivateUser.id&&m.receiverId===userId));
+    }).sort((a,b)=>(a.data().time?.toMillis?.()||0)-(b.data().time?.toMillis?.()||0));
+    if(!docs.length)box.innerHTML="<div style='opacity:.5;text-align:center;padding:20px'>هنوز پیامی نیست.</div>";
+    docs.forEach(d=>box.insertAdjacentHTML("beforeend",renderMessage(d.data(),d.id,true)));
+    box.scrollTop=box.scrollHeight;
+  },e=>console.error("private:",e));
+}
+
+async function markMessagesAsReadFrom(senderId){
+  try{
+    const snap=await messagesRef.where("receiverId","==",userId).get();
+    const batch=db.batch();
+    let n=0;
+    snap.forEach(d=>{
+      const m=d.data();
+      if(m.userId===senderId&&!m.seen){batch.update(d.ref,{seen:true});n++}
+    });
+    if(n)await batch.commit();
+  }catch(e){console.error(e)}
+}
+
+function updateUnread(){
+  if(unreadUnsub)unreadUnsub();
+  unreadUnsub=messagesRef.onSnapshot(s=>{
+    let count=0;
+    s.forEach(d=>{const m=d.data();if(m.receiverId===userId&&!m.seen)count++});
+    const el=$("unreadPrivateCount");
+    if(el){el.style.display=count?"inline-block":"none";el.textContent=count}
+  });
+}
+
+async function sendPublicMessage(){
+  const input=$("text"),text=input.value.trim();
+  if(!text)return;
+  try{
+    await messagesRef.add({
+      type:"public",name:username,userId,uid:userId,
+      receiverId:null,text,replyTo:null,reactions:{},
+      time:serverTime(),seen:false
+    });
+    input.value="";
+  }catch(e){console.error(e);alert("ارسال پیام انجام نشد. Rules Firebase را بررسی کن.")}
+}
+
+async function sendPrivateMessage(){
+  if(!selectedPrivateUser){alert("اول یک کاربر را از بخش چت خصوصی انتخاب کن.");return}
+  const input=$("privateText"),text=input.value.trim();
+  if(!text)return;
+  try{
+    await messagesRef.add({
+      type:"private",name:username,userId,uid:userId,
+      receiverId:selectedPrivateUser.id,text,replyTo:null,reactions:{},
+      time:serverTime(),seen:false
+    });
+    input.value="";
+  }catch(e){console.error(e);alert("ارسال پیام خصوصی انجام نشد.")}
+}
+
+async function deleteMsg(id){
+  try{await messagesRef.doc(id).delete()}catch(e){alert("حذف پیام انجام نشد؛ اجازه Delete در Rules لازم است.")}
+}
+
+async function editMessage(id){
+  const snap=await messagesRef.doc(id).get();
+  if(!snap.exists)return;
+  const m=snap.data();
+  if(m.userId!==userId)return;
+  const n=prompt("متن جدید پیام:",m.text);
+  if(n&&n.trim()&&n.trim()!==m.text){
+    await messagesRef.doc(id).update({text:n.trim(),edited:true,editedAt:serverTime()});
+  }
+}
+
+async function replyToMessage(id,isPrivate){
+  const m=(await messagesRef.doc(id).get()).data();
+  if(!m)return;
+  const input=isPrivate?$("privateText"):$("text");
+  input.value="↩ "+m.text+" ";
+  input.focus();
+}
+
+document.addEventListener("click",async e=>{
+  const el=e.target.closest("[data-react]");
+  if(!el)return;
+  const id=el.dataset.react,field=el.dataset.r;
+  await messagesRef.doc(id).set({
+    reactions:{[field]:firebase.firestore.FieldValue.increment(1)}
+  },{merge:true});
+});
+
+function startTyping(){
+  $("text").addEventListener("input",()=>{
+    typingRef.doc(userId).set({name:username,active:true,room:"public",expiresAt:Date.now()+1800},{merge:true}).catch(()=>{});
+    clearTimeout(window.__pubTyping);
+    window.__pubTyping=setTimeout(()=>typingRef.doc(userId).delete().catch(()=>{}),1800);
+  });
+  $("privateText").addEventListener("input",()=>{
+    if(!selectedPrivateUser)return;
+    const id="private_"+userId+"_"+selectedPrivateUser.id;
+    typingRef.doc(id).set({name:username,userId,receiverId:selectedPrivateUser.id,active:true,room:"private",expiresAt:Date.now()+1800},{merge:true}).catch(()=>{});
+    clearTimeout(window.__privTyping);
+    window.__privTyping=setTimeout(()=>typingRef.doc(id).delete().catch(()=>{}),1800);
+  });
+  typingUnsub=typingRef.onSnapshot(s=>{
+    let pub=[],priv=[];
+    s.forEach(d=>{
+      const m=d.data();
+      if(d.id===userId||!m.active||m.expiresAt<Date.now())return;
+      if(m.room==="public")pub.push(m.name);
+      if(m.room==="private"&&selectedPrivateUser&&m.userId===selectedPrivateUser.id)priv.push(m.name);
+    });
+    $("typingStatus").textContent=pub.length?pub.join(" و ")+" در حال نوشتن...":"";
+  });
+}
+
+async function boot(){
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+    db=firebase.firestore();
+    messagesRef=db.collection("messages");
+    usersRef=db.collection("users");
+    typingRef=db.collection("typing");
+
+    // If a saved name exists, verify it; otherwise ask for a name.
+    if(!username || !(await usersRef.doc(userId).get()).exists){
+      const ok=await setupUsername();
+      if(!ok)return;
+    }else{
+      await usersRef.doc(userId).set({name:username,online:true,lastSeen:serverTime()},{merge:true});
+    }
+
+    showApp();
+    setOnline();
+    listenPublic();
+    listenUsers();
+    updateUnread();
+    startTyping();
+
+    $("privateBtn").onclick=()=>{
+      $("publicView").style.display="none";
+      $("privateView").style.display="flex";
+      renderUsers();
+    };
+    $("backBtn").onclick=()=>{
+      $("privateView").style.display="none";
+      $("publicView").style.display="flex";
+    };
+    $("privateSearch").oninput=renderUsers;
+    $("text").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendPublicMessage()}});
+    $("privateText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendPrivateMessage()}});
+    $("text").addEventListener("focus",()=>{});
+  }catch(e){
+    console.error("BOOT ERROR:",e);
+    showError("اتصال به Firebase برقرار نشد. کنسول مرورگر را بررسی کن.");
+  }
+}
+
+window.addEventListener("online",()=>{});
+window.addEventListener("offline",()=>{});
+window.addEventListener("beforeunload",()=>{if(usersRef)usersRef.doc(userId).set({online:false,lastSeen:serverTime()},{merge:true}).catch(()=>{})});
+
+boot();
 </script>
-</body></html>
+
+<style>
+#connectionStatus{
+ position:fixed;top:8px;right:8px;z-index:10000;
+ background:#173b5b;color:#fff;padding:6px 10px;border-radius:999px;
+ font-size:11px;direction:rtl
+}
+</style>
+<div id="connectionStatus">🟡 در حال اتصال...</div>
+<script>setTimeout(()=>{const e=document.getElementById("connectionStatus");if(e)e.textContent="🟢 آماده";},1200)</script>
+</body>
+        </html>
