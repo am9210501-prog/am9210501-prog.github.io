@@ -112,20 +112,15 @@ body{min-height:100dvh}
 <body>
 
 <div id="loadingScreen">
-  <div class="auth-card">
-    <h1>IRN Chat Pro</h1>
-    <p>سرعت، امنیت، ارتباط</p>
-    <h2>انتخاب نام کاربری</h2>
-    <p>رمز و ساخت حساب نداریم؛ فقط یک نام کاربری یکتا انتخاب کنید.</p>
-    <input id="guestUsername" maxlength="30" placeholder="نام کاربری (حداقل 3 کاراکتر)" autocomplete="off">
-    <button class="primary" id="guestEnter">ورود به پیام‌رسان</button>
-    <div id="guestError" class="auth-error"></div>
-  </div>
-</div>
-  </div>
-</div>
-
-<div id="publicView" class="hidden">
+      <div class="auth-card">
+        <h1>IRN Chat Pro</h1>
+        <p>نامت رو وارد کن و وارد شو</p>
+        <input id="guestUsername" maxlength="30" placeholder="نام کاربری" autocomplete="off">
+        <button class="primary" id="guestEnter">ورود</button>
+        <div id="guestError" class="auth-error"></div>
+      </div>
+    </div>
+    <div id="publicView class="hidden">
   <div class="topbar">
     <div class="profile">
       <div class="avatar">IR</div>
@@ -222,7 +217,7 @@ const db=firebase.firestore();
 const messagesRef=db.collection("messages");
 const usersRef=db.collection("users");
 const typingRef=db.collection("typing");
-const usernamesRef=db.collection("usernames");
+const usernamesRef=null;
 
 let userId=localStorage.getItem("irnUserId")||crypto.randomUUID?.()||Math.random().toString(36).slice(2)+Date.now();
 localStorage.setItem("irnUserId",userId);
@@ -265,17 +260,14 @@ function validateName(n){
 async function claimUsername(name){
   const clean=name.trim();
   if(!validateName(clean)) throw new Error("نام کاربری باید بین ۳ تا ۳۰ کاراکتر باشد.");
-  const key=clean.toLowerCase().replace(/\s+/g," ");
-  const ref=usernamesRef.doc(key);
-  await db.runTransaction(async tx=>{
-    const snap=await tx.get(ref);
-    if(snap.exists && snap.data().userId!==userId) throw new Error("این نام کاربری قبلاً استفاده شده است.");
-    tx.set(ref,{userId,name:clean,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-    tx.set(usersRef.doc(userId),{
-      userId,name:clean,online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp(),
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-    },{merge:true});
-  });
+  const snap=await usersRef.where("name","==",clean).limit(10).get();
+  const conflict=snap.docs.some(d=>d.id!==userId);
+  if(conflict) throw new Error("این نام کاربری قبلاً استفاده شده است.");
+  await usersRef.doc(userId).set({
+    userId,name:clean,online:true,
+    lastSeen:firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true});
   username=clean;
   localStorage.setItem("chatName",username);
 }
