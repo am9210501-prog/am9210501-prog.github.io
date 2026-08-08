@@ -1,514 +1,301 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>IRN Chat Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRN Chat Pro - با حذف و ریپلای</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;font-family:Vazirmatn,Tahoma,sans-serif;background:#081525;color:#fff;overflow:hidden}
-button,input{font:inherit}
-button{border:0;cursor:pointer}
-.hidden{display:none!important}
-#loadingScreen{position:fixed;inset:0;background:radial-gradient(circle at top,#17385b,#081525 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
-#loadingScreen h1{margin:0 0 8px;font-size:34px}
-#loadingScreen p{color:#b9c8d8;margin:0}
-.auth-card{width:min(430px,calc(100% - 28px));background:rgba(17,35,56,.96);border:1px solid #274563;border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
-.auth-card h2{margin:0 0 6px}.auth-card p{color:#aebed0;font-size:13px;margin:0 0 18px}
-.auth-card input{width:100%;margin:6px 0;padding:12px;border-radius:10px;border:1px solid #304c68;background:#0c1c2d;color:#fff;outline:none}
-.auth-card input:focus{border-color:#16a6ff}
-.auth-row{display:flex;gap:8px;margin-top:8px}
-.primary{background:linear-gradient(135deg,#008cff,#0068e8);color:#fff;padding:11px 15px;border-radius:10px}
-.secondary{background:#263d55;color:#fff;padding:11px 15px;border-radius:10px}
-.auth-error{color:#ff9d9d;min-height:20px;font-size:12px;margin-top:7px}
-#publicView,#privateView{height:100%;min-height:0;padding:10px;gap:8px}
-#publicView{display:flex;flex-direction:column}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(135deg,#173b5e,#122d48);padding:10px 12px;border-radius:13px;border:1px solid #284d6c;flex:0 0 auto}
-.profile{display:flex;align-items:center;gap:9px}.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#0b9bff;font-weight:700}
-.user-meta strong{display:block}.status{font-size:11px;color:#8ed9a6}
-.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{background:#284a68;color:#fff;padding:8px 10px;border-radius:9px}
-.notice-box{background:linear-gradient(135deg,#132c45,#10253a);border:1px solid #2c587d;border-radius:12px;padding:11px 13px;color:#dbeaf8;flex:0 0 auto}
-.notice-box b{color:#53c2ff}.notice-box small{display:block;color:#93a8bc;margin-top:3px}
-.typing{height:20px;padding:2px 8px;color:#91a9bd;font-size:12px;flex:0 0 auto}
-.messages{flex:1;min-height:0;overflow-y:auto;padding:7px;border-radius:13px;background:#07111c;border:1px solid #1d3349}
-.msg{background:#152638;border:1px solid #203c55;margin:6px 2px;padding:9px 10px;border-radius:11px;position:relative;word-break:break-word}
-.msg.mine{border-right:3px solid #0099ff}.msg .msg-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px;color:#63c6ff;margin-bottom:4px}
-.msg .msg-body{font-size:14px;white-space:pre-wrap}.msg .msg-foot{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:5px;font-size:11px;color:#8ca1b4}
-.msg button{background:#29445c;color:#dcecff;border-radius:6px;padding:3px 7px;font-size:11px}
-.tick.seen{color:#23d6a4}.tick.sent{color:#9bb1c5}
-.reply-preview{border-right:3px solid #00a8ff;background:#0c1d2e;padding:6px 9px;border-radius:8px;margin-bottom:7px;font-size:12px;color:#bdd1e3}
-.chat-input{display:flex;gap:7px;flex:0 0 auto;background:#0c1c2c;padding:7px;border-radius:12px;border:1px solid #223b52}
-.chat-input input{flex:1;min-width:0;padding:11px;border-radius:9px;border:1px solid #304b64;background:#071522;color:#fff;outline:none}
-.chat-input button{background:#008cff;color:#fff;padding:10px 15px;border-radius:9px}
-#privateView{display:flex;flex-direction:row}
-.sidebar{width:245px;min-width:210px;background:#0d1c2b;border:1px solid #20384f;border-radius:13px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.sidebar h3{margin:0;padding:13px;border-bottom:1px solid #20384f}
-#privateSearch{margin:8px;padding:9px;border-radius:8px;border:1px solid #2b465e;background:#081522;color:#fff;outline:none}
-#privateUserList{overflow-y:auto;min-height:0;flex:1}
-.userItem{padding:11px;border-bottom:1px solid #1c3043;cursor:pointer;display:flex;align-items:center;gap:7px}
-.userItem:hover,.userItem.selected{background:#123553}.user-name{flex:1}.online-dot{width:9px;height:9px;border-radius:50%;background:#20d879;box-shadow:0 0 8px #20d879;flex:0 0 auto}.offline-dot{width:9px;height:9px;border-radius:50%;background:#596979;flex:0 0 auto}
-.unread-count{background:#e43c55;color:#fff;border-radius:999px;padding:2px 7px;font-size:11px}
-#backBtn{margin:8px;background:#28445d;color:#fff;padding:9px;border-radius:9px}
-.privateChatWindow{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
-.private-header{background:#173b5e;border:1px solid #294e6d;border-radius:13px;padding:10px;margin-bottom:8px;flex:0 0 auto}
-.private-header strong{display:block}.private-header small{color:#9ec1dd}
-.empty-state{height:100%;display:grid;place-items:center;color:#6f8498;text-align:center;padding:20px}
-@media(max-width:700px){
-  #privateView{padding:7px;gap:7px}
-  .sidebar{width:155px;min-width:145px}
-  .sidebar h3{font-size:14px}.userItem{padding:9px 6px;font-size:12px}
-  .chat-input button{padding:10px 11px}.chat-input input{font-size:13px}
-  .topbar{padding:8px}.notice-box{font-size:12px}
-}
-@media(max-width:480px){
-  #privateView{flex-direction:column}
-  .sidebar{width:100%;height:135px;min-height:135px}
-  #privateUserList{display:flex;overflow-x:auto;overflow-y:hidden}
-  .userItem{min-width:120px;border-left:1px solid #1c3043;border-bottom:0}
-  #backBtn{margin:5px}
-}
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+body, html{margin:0;padding:0;font-family:'Vazirmatn',tahoma;background:#0b1a2f;color:white;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+#loadingScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0b1a2f;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;}
+#loadingScreen h1{font-size:32px;margin:10px;text-align:center;}
+#loadingScreen p{font-size:18px;color:#aaa;margin-top:5px;text-align:center;}
+#publicView,#privateView{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;}
+.messages{flex:1;overflow-y:auto;padding:5px;border-radius:6px;background:#111;margin-bottom:5px;}
+.msg{background:#222;margin:5px;padding:5px;border-radius:6px;position:relative;animation:fade .3s;display:flex;justify-content:space-between;align-items:center;}
+.msg .reactions span{cursor:pointer;margin-left:5px;}
+.msg .reply-box{background:#333;padding:3px;font-size:12px;color:#fff3cd;margin-bottom:3px;border-radius:3px;}
+.chat-input{display:flex;}
+.chat-input input{flex:1;padding:10px;border-radius:6px;border:none;margin-right:5px;}
+.chat-input button{padding:10px;border:none;border-radius:6px;background:#00aaff;color:white;cursor:pointer;}
+#privateBtn,#backBtn{padding:15px;margin:5px;border:none;border-radius:8px;background:#0d6efd;color:white;font-size:16px;cursor:pointer;}
+.sidebar{width:250px;background:#111;border-right:1px solid #444;display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar h3{margin:5px;padding:5px;border-bottom:1px solid #444;}
+.sidebar .userItem{padding:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.sidebar .userItem:hover{background:#0d6efd;}
+.online-dot{width:10px;height:10px;border-radius:50%;background:#0f0;display:inline-block;margin-left:5px;}
+.unread-count{background:red;color:white;border-radius:50%;padding:2px 6px;margin-left:5px;font-size:12px;}
+.privateChatWindow{flex:1;display:flex;flex-direction:column;}
+.ticks{margin-left:5px;font-size:12px;color:#0f0;}
+.sent{color:#aaa;}
+.seen{color:#0f0;}
+.msg button{margin-left:5px;background:#555;color:white;border:none;border-radius:3px;cursor:pointer;padding:2px 5px;font-size:12px;}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
 
-/* ===== IRN Chat Pro Complete UI ===== */
+/* FINAL MOBILE + NOTICE FIX */
 html,body{width:100%;height:100%;overflow:hidden}
 body{min-height:100dvh}
 .page{height:100dvh;min-height:0}
-.messages{min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.messages{min-height:0;overscroll-behavior:contain}
 .private,.chat{min-height:0}
+.private{height:100%}
 .chat{height:100%;min-width:0;overflow:hidden}
+.chat .messages{min-height:0}
 .box{flex:0 0 auto}
-.msg{position:relative}
-.reply-btn{background:#315a7b;padding:4px 8px;font-size:11px}
-.reply-preview{margin:0 0 6px;padding:6px 8px;border-right:3px solid #08f;background:#172838;border-radius:6px;font-size:11px}
-.reply-preview.hidden{display:none}
-.expire{display:block;margin-top:4px;font-size:10px;opacity:.6}
-.presence{font-size:10px;opacity:.8;margin-top:2px}
-.typing-indicator{min-height:20px;padding:2px 8px;font-size:11px;color:#8fd5ff}
-.announcement-box{
-  flex:0 0 auto;display:flex;align-items:center;gap:10px;
-  margin-top:8px;padding:11px 13px;border-radius:12px;
-  background:linear-gradient(135deg,#173b5b,#214f73);
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 5px 18px rgba(0,0,0,.18)
+.notice-box{
+  flex:0 0 auto;margin:8px 0 0;padding:10px 12px;border-radius:10px;
+  background:linear-gradient(135deg,#173b5b,#24577e);
+  border:1px solid rgba(255,255,255,.12);color:#fff;font-size:13px;line-height:1.9
 }
-.announcement-icon{width:38px;height:38px;display:grid;place-items:center;flex:0 0 38px;border-radius:10px;background:rgba(0,140,255,.18);font-size:20px}
-.announcement-content{min-width:0}.announcement-title{font-weight:700;font-size:14px;margin-bottom:2px}
-.announcement-text{font-size:12px;line-height:1.8;opacity:.92}
+.notice-box strong{display:block;font-size:14px;margin-bottom:2px}
 @media(max-width:700px){
-  .page{padding:6px}.private{gap:6px}.users{width:112px;flex:0 0 112px}
+  .page{padding:6px}.private{gap:6px}
+  .users{width:112px;flex:0 0 112px}
   .user{padding:9px 7px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .chat .header{padding:8px;margin-bottom:5px}.messages{padding:6px}
-  .msg{padding:8px;font-size:13px}.box{gap:5px;margin-top:6px}
-  .box input{min-width:0;height:42px;font-size:14px}.box button{height:42px;padding:7px 10px}
-  .announcement-box{padding:8px 10px;margin-top:6px;gap:8px}
-  .announcement-icon{width:34px;height:34px;flex-basis:34px;font-size:18px}
-  .announcement-title{font-size:13px}.announcement-text{font-size:11px;line-height:1.7}
+  .chat .header{padding:8px;margin-bottom:5px;font-size:13px}
+  .messages{padding:6px}.msg{padding:8px;font-size:13px}
+  .box{gap:5px;margin-top:6px}
+  .box input{min-width:0;height:42px;font-size:14px}
+  .box button{height:42px;padding:7px 10px;flex:0 0 auto}
+  #privatePage .chat>button{flex:0 0 auto;height:38px;margin-top:5px}
+  .notice-box{padding:8px 10px;font-size:12px}
 }
 
-
-.irn-reply-action{background:#315a7b!important;padding:4px 8px!important;font-size:11px!important}
 </style>
 </head>
 <body>
 
 <div id="loadingScreen">
-      <div class="auth-card">
-        <h1>IRN Chat Pro</h1>
-        <p>نامت رو وارد کن و وارد شو</p>
-        <input id="guestUsername" maxlength="30" placeholder="نام کاربری" autocomplete="off">
-        <button class="primary" id="guestEnter">ورود</button>
-        <div id="guestError" class="auth-error"></div>
+  <h1>پیام‌رسانی ساده برای همه</h1>
+  <p>«سرعت، امنیت، ارتباط»</p>
+</div>
+
+<div id="publicView" style="display:none;">
+  <div>👤 <strong id="displayName"></strong> <button onclick="changeName()">تغییر نام</button></div>
+  <div id="typingStatus" style="font-size:12px;color:#aaa;"></div>
+  <div class="messages" id="messagesPublic"></div>
+  <div class="chat-input">
+    <input id="text" placeholder="پیام عمومی...">
+    <button onclick="sendPublicMessage()">ارسال</button>
+  </div>
+  <button id="privateBtn">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count" style="display:none">0</span></button>
+</div>
+
+<div id="privateView" style="display:none;flex:1;flex-direction:row;">
+  <div class="sidebar">
+    <h3>چت خصوصی</h3>
+    <input id="privateSearch" placeholder="جستجو کاربران" style="margin:5px;padding:5px;border-radius:5px;border:none;">
+    <div id="privateUserList"></div>
+    <button id="backBtn">بازگشت به عمومی</button>
+  </div>
+  <div class="privateChatWindow">
+    <div id="privateChatContainer" style="flex:1;display:flex;flex-direction:column;">
+      <div class="messages" id="privateMessages"></div>
+      <div class="chat-input">
+        <input id="privateText" placeholder="پیام خصوصی...">
+        <button onclick="sendPrivateMessage()">ارسال</button>
       </div>
     </div>
-    <div id="publicView class="hidden">
-  <div class="topbar">
-    <div class="profile">
-      <div class="avatar">IR</div>
-      <div class="user-meta"><strong id="displayName">کاربر</strong><span class="status">● آنلاین</span></div>
-    </div>
-    <div class="actions">
-      <button id="changeNameBtn">تغییر نام</button>
-      <button id="logoutBtn">خروج</button>
-    </div>
   </div>
-
-  <div class="notice-box">
-    <b>💬 به IRN Chat Pro خوش آمدید</b>
-    <small>اینجا می‌توانید با کاربران گفتگو کنید. لطفاً به حریم خصوصی و احترام متقابل پایبند باشید.</small>
-  </div>
-
-  <div id="typingStatus" class="typing"></div>
-  <div class="messages" id="messagesPublic"></div>
-
-  <div id="publicReply" class="reply-preview hidden"></div>
-  <div class="chat-input">
-    <input id="text" maxlength="2000" autocomplete="off" placeholder="پیام عمومی...">
-    <button id="sendPublicBtn">ارسال</button>
-  </div>
-  <button id="privateBtn" class="primary">💬 چت خصوصی <span id="unreadPrivateCount" class="unread-count hidden">0</span></button>
 </div>
 
-<div id="privateView" class="hidden">
-  <aside class="sidebar">
-    <h3>چت خصوصی</h3>
-    <input id="privateSearch" placeholder="جستجوی کاربر">
-    <div id="privateUserList"></div>
-    <button id="backBtn">⬅ بازگشت به عمومی</button>
-  </aside>
-
-  <main class="privateChatWindow">
-    <div class="private-header">
-      <strong id="privateTitle">یک کاربر را انتخاب کنید</strong>
-      <small id="privateTyping"></small>
-    </div>
-    <div class="messages" id="privateMessages">
-      <div class="empty-state">برای شروع، یک کاربر را از فهرست انتخاب کنید.</div>
-    </div>
-    <div id="privateReply" class="reply-preview hidden"></div>
-    <div class="chat-input">
-      <input id="privateText" maxlength="2000" autocomplete="off" placeholder="پیام خصوصی...">
-      <button id="sendPrivateBtn">ارسال</button>
-    </div>
-  </main>
-</div>
-
-
-<audio id="notifSound" preload="auto"></audio>
+<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
-
-<style>
-#connectionStatus{position:fixed;top:9px;left:9px;z-index:9998;padding:6px 11px;border-radius:999px;font-size:11px;background:#b7791f}
-#connectionStatus.connected{background:#16803c}
-#connectionStatus.offline{background:#b42318}
-#settingsBar{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
-#settingsBar button{background:#284a68;color:#fff;padding:7px 9px;border-radius:8px;font-size:11px}
-#irnModal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);align-items:center;justify-content:center;padding:15px}
-#irnModal.open{display:flex}
-#irnModalCard{width:min(560px,100%);max-height:88vh;overflow:auto;background:#13283d;border:1px solid #31536f;border-radius:16px;padding:18px}
-#irnModalCard h2{margin-top:0}
-.reaction-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
-.reaction-row button{background:#29445c!important;padding:3px 7px!important;font-size:11px!important}
-.editing-bar{display:none;background:#172f44;border-right:3px solid #00a8ff;padding:6px 9px;border-radius:8px;margin-bottom:5px;font-size:11px}
-.editing-bar.show{display:block}
-</style>
-
-<div id="connectionStatus">🟡 در حال اتصال...</div>
-<div id="irnModal" onclick="if(event.target===this)IRN.closeModal()">
-  <div id="irnModalCard">
-    <button style="float:left;background:#29445c;color:#fff;padding:5px 8px;border-radius:7px" onclick="IRN.closeModal()">✕</button>
-    <div id="irnModalContent"></div>
-  </div>
-</div>
-
 <script>
-const firebaseConfig = {
-  apiKey:"AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
-  authDomain:"irn-chat-pro.firebaseapp.com",
-  projectId:"irn-chat-pro",
-  storageBucket:"irn-chat-pro.firebasestorage.app",
-  messagingSenderId:"1084279461221",
-  appId:"1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
+const firebaseConfig={
+ apiKey:"AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
+ authDomain:"irn-chat-pro.firebaseapp.com",
+ projectId:"irn-chat-pro",
+ storageBucket:"irn-chat-pro.firebasestorage.app",
+ messagingSenderId:"1084279461221",
+ appId:"1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-const messagesRef=db.collection("messages");
-const usersRef=db.collection("users");
-const typingRef=db.collection("typing");
-const usernamesRef=null;
-
-let userId=localStorage.getItem("irnUserId")||crypto.randomUUID?.()||Math.random().toString(36).slice(2)+Date.now();
-localStorage.setItem("irnUserId",userId);
-let username=localStorage.getItem("chatName")||"";
-let selectedPrivateUser=null;
-let publicReply=null,privateReply=null;
-let publicUnsub=null,privateUnsub=null,usersUnsub=null,typingUnsub=null,unreadUnsub=null;
-let heartbeat=null,publicTypingTimer=null,privateTypingTimer=null;
+const messages=db.collection("messages"), users=db.collection("users"), typing=db.collection("typing");
+const uid=localStorage.getItem("irnUid")||crypto.randomUUID();
+localStorage.setItem("irnUid",uid);
+let name=localStorage.getItem("chatName")||"";
+let selected=null, pubReply=null, privReply=null;
+let unsubPub=null, unsubPriv=null, unsubUsers=null, unsubTyping=null, heartbeat=null;
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const nowMs=()=>Date.now();
+const ts=()=>firebase.firestore.FieldValue.serverTimestamp();
+const toast=t=>{let e=$("irnToast");if(!e){e=document.createElement("div");e.id="irnToast";document.body.appendChild(e)}e.textContent=t;e.style.display="block";clearTimeout(window.__t);window.__t=setTimeout(()=>e.style.display="none",2200)};
+function conn(text,cls){let e=$("connectionStatus");if(e){e.textContent=text;e.className=cls||""}}
+function nameOK(n){return n.length>=3&&n.length<=30&&!/[<>]/.test(n)}
 
-function setConnection(s){
-  const e=$("connectionStatus");
-  e.className=s;
-  e.textContent=s==="connected"?"🟢 متصل":s==="offline"?"🔴 اتصال قطع شد":"🟡 در حال اتصال...";
+async function login(){
+ const input=$("authUsername")||$("usernameInput")||document.querySelector('input[placeholder*="نام"]');
+ const err=$("authError");
+ const n=(input?.value||"").trim();
+ if(!nameOK(n)){if(err)err.textContent="نام کاربری باید بین ۳ تا ۳۰ کاراکتر باشد.";return}
+ try{
+  const q=await users.where("name","==",n).limit(10).get();
+  if(q.docs.some(d=>d.id!==uid)){if(err)err.textContent="این نام کاربری قبلاً استفاده شده است.";return}
+  name=n;localStorage.setItem("chatName",name);
+  await users.doc(uid).set({userId:uid,name,online:true,lastSeen:ts(),updatedAt:ts()},{merge:true});
+  showMain();start();
+ }catch(e){console.error(e);if(err)err.textContent="دسترسی Firebase اجازه ورود نمی‌دهد."}
 }
-async function probeConnection(){
-  setConnection("connecting");
-  try{ await usersRef.limit(1).get(); setConnection("connected"); }
-  catch(e){ setConnection(navigator.onLine?"connecting":"offline"); }
+function showMain(){
+ $("loadingScreen")?.classList.add("hidden");
+ $("publicView")?.classList.remove("hidden");
+ document.querySelectorAll("[data-display-name]").forEach(e=>e.textContent=name);
+ const dn=$("displayName");if(dn)dn.textContent=name;
 }
-window.addEventListener("online",probeConnection);
-window.addEventListener("offline",()=>setConnection("offline"));
-setInterval(probeConnection,15000);
-
-function showGuest(){
-  $("loadingScreen").classList.remove("hidden");
-  $("publicView").classList.add("hidden");
-  $("privateView").classList.add("hidden");
+function start(){
+ conn("🟢 متصل","connected");
+ heartbeat=setInterval(()=>users.doc(uid).set({online:true,lastSeen:ts()},{merge:true}).catch(()=>{}),20000);
+ users.doc(uid).set({online:true,lastSeen:ts()},{merge:true});
+ listenPublic();listenUsers();listenTyping();
 }
-function showApp(){
-  $("loadingScreen").classList.add("hidden");
-  $("publicView").classList.remove("hidden");
+function listenPublic(){
+ unsubPub?.();
+ unsubPub=messages.onSnapshot(s=>{
+  const a=s.docs.filter(d=>d.data().type!=="private")
+   .sort((x,y)=>(x.data().time?.toMillis?.()||0)-(y.data().time?.toMillis?.()||0));
+  renderMessages($("messagesPublic")||$("messages"),a,"public");
+ },e=>{console.error(e);conn("🟡 خطای دسترسی","")});
 }
-function validateName(n){
-  return n.length>=3 && n.length<=30 && !/[<>]/.test(n);
+function listenUsers(){
+ unsubUsers?.();
+ unsubUsers=users.onSnapshot(s=>{
+  window.userCache=s.docs.filter(d=>d.id!==uid).map(d=>({id:d.id,...d.data()}));
+  renderUsers();
+ },console.error);
 }
-async function claimUsername(name){
-  const clean=name.trim();
-  if(!validateName(clean)) throw new Error("نام کاربری باید بین ۳ تا ۳۰ کاراکتر باشد.");
-  const snap=await usersRef.where("name","==",clean).limit(10).get();
-  const conflict=snap.docs.some(d=>d.id!==userId);
-  if(conflict) throw new Error("این نام کاربری قبلاً استفاده شده است.");
-  await usersRef.doc(userId).set({
-    userId,name:clean,online:true,
-    lastSeen:firebase.firestore.FieldValue.serverTimestamp(),
-    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  },{merge:true});
-  username=clean;
-  localStorage.setItem("chatName",username);
-}
-$("guestEnter").onclick=async()=>{
-  const n=$("guestUsername").value.trim();
-  $("guestError").textContent="";
-  try{
-    await claimUsername(n);
-    $("displayName").textContent=username;
-    showApp();
-    startApp();
-  }catch(e){$("guestError").textContent=e.message||"ثبت نام کاربری انجام نشد."}
-};
-$("guestUsername").addEventListener("keydown",e=>{if(e.key==="Enter")$("guestEnter").click();});
-
-if(username){
-  claimUsername(username).then(()=>{ $("displayName").textContent=username; showApp(); startApp(); })
-    .catch(()=>{ localStorage.removeItem("chatName"); showGuest(); });
-}else showGuest();
-
-function startPresence(){
-  const ref=usersRef.doc(userId);
-  const beat=()=>ref.set({userId,name:username,online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
-  beat(); clearInterval(heartbeat); heartbeat=setInterval(beat,20000);
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden)beat()});
-  window.addEventListener("beforeunload",()=>{ref.set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{})});
-}
-function online(u){
-  const t=u.lastSeen?.toMillis?.()||0;
-  return !!u.online && !!t && nowMs()-t<45000;
-}
-
-function startApp(){
-  startPresence();
-  publicUnsub?.(); usersUnsub?.(); typingUnsub?.(); unreadUnsub?.();
-  publicUnsub=messagesRef.where("type","==","public").orderBy("time","asc").onSnapshot(renderPublic,console.error);
-  usersUnsub=usersRef.onSnapshot(s=>{
-    window.usersCache=[];
-    s.forEach(d=>{if(d.id!==userId)window.usersCache.push({id:d.id,...d.data()})});
-    renderUsers();
-  },console.error);
-  typingUnsub=typingRef.onSnapshot(renderTyping,console.error);
-  unreadUnsub=messagesRef.where("receiverId","==",userId).where("seen","==",false).onSnapshot(s=>{
-    let total=0; window.unreadMap={};
-    s.forEach(d=>{const m=d.data();total++;window.unreadMap[m.userId]=(window.unreadMap[m.userId]||0)+1});
-    $("unreadPrivateCount").textContent=total;
-    $("unreadPrivateCount").classList.toggle("hidden",total===0);
-    renderUsers();
-  },console.error);
-}
-
+function online(u){const t=u.lastSeen?.toMillis?.()||0;return !!u.online&&t&&Date.now()-t<45000}
 function renderUsers(){
-  const q=$("privateSearch").value.trim().toLowerCase();
-  $("privateUserList").innerHTML="";
-  (window.usersCache||[]).filter(u=>(u.name||"").toLowerCase().includes(q))
-    .sort((a,b)=>(a.name||"").localeCompare(b.name||""))
-    .forEach(u=>{
-      const e=document.createElement("div");
-      e.className="userItem"+(selectedPrivateUser?.id===u.id?" selected":"");
-      e.innerHTML=`<span class="${online(u)?"online-dot":"offline-dot"}"></span><span class="user-name">${esc(u.name)}</span>${window.unreadMap?.[u.id]?`<span class="unread-count">${window.unreadMap[u.id]}</span>`:""}`;
-      e.onclick=()=>selectPrivateUser(u.id,u.name);
-      $("privateUserList").appendChild(e);
-    });
+ const box=$("privateUserList")||$("userList");if(!box)return;
+ const q=($("privateSearch")?.value||"").trim().toLowerCase();
+ box.innerHTML="";
+ (window.userCache||[]).filter(u=>(u.name||"").toLowerCase().includes(q)).forEach(u=>{
+  const d=document.createElement("button");d.className="userItem";
+  d.innerHTML=`<span class="${online(u)?"online-dot":"offline-dot"}"></span>${esc(u.name)}${online(u)?"":" <small>آفلاین</small>"}`;
+  d.onclick=()=>openPrivate(u);
+  box.appendChild(d);
+ });
 }
-$("privateSearch").oninput=renderUsers;
+function openPrivate(u){
+ selected=u;
+ if($("privateTitle"))$("privateTitle").textContent="چت با "+u.name;
+ $("publicView")?.classList.add("hidden");$("privateView")?.classList.remove("hidden");
+ listenPrivate();markSeen();
+}
+function listenPrivate(){
+ unsubPriv?.();
+ if(!selected)return;
+ unsubPriv=messages.onSnapshot(s=>{
+  const a=s.docs.filter(d=>{
+   const m=d.data();
+   return m.type==="private"&&((m.userId===uid&&m.receiverId===selected.id)||(m.userId===selected.id&&m.receiverId===uid));
+  }).sort((x,y)=>(x.data().time?.toMillis?.()||0)-(y.data().time?.toMillis?.()||0));
+  renderMessages($("privateMessages")||$("privateChat"),a,"private");
+ },console.error);
+}
+async function markSeen(){
+ if(!selected)return;
+ const s=await messages.where("receiverId","==",uid).get();
+ const b=db.batch();let n=0;
+ s.forEach(d=>{const m=d.data();if(m.userId===selected.id&&!m.seen){b.update(d.ref,{seen:true});n++}});
+ if(n)await b.commit();
+}
+function when(t){return t?.toDate?.().toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"})||""}
+function msgHTML(m,id,room){
+ const mine=m.userId===uid, r=m.reactions||{};
+ const seen=mine?(m.seen?"✔✔":"✓"):"";
+ const react=["👍","❤️","😂","🔥","😢","😡"].map(x=>`<button data-react="${id}" data-emoji="${x}">${x}${r[x]?` ${r[x]}`:""}</button>`).join("");
+ return `<div class="msg ${mine?"mine":""}" data-id="${id}">
+  <div class="msg-head"><b>${esc(m.name)}</b><span>${when(m.time)}</span></div>
+  ${m.replyTo?`<div class="reply-preview">↩ ${esc(m.replyTo.text)}</div>`:""}
+  <div class="msg-body">${esc(m.text)}${m.edited?" <small>(ویرایش‌شده)</small>":""}</div>
+  <div class="msg-actions">${mine?`<button data-edit="${id}">✏️</button><button data-del="${id}">🗑️</button>`:""}<button data-reply="${id}" data-room="${room}">↩️</button><span>${seen}</span></div>
+  <div class="reaction-row">${react}</div>
+  <small class="expire" data-time="${m.time?.toMillis?.()||0}"></small>
+ </div>`;
+}
+function renderMessages(box,docs,room){
+ if(!box)return;
+ box.innerHTML=docs.map(d=>msgHTML(d.data(),d.id,room)).join("");
+ box.scrollTop=box.scrollHeight;bindActions(box);
+ updateTimers();
+}
+function bindActions(box){
+ box.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{try{await messages.doc(b.dataset.del).delete();toast("پیام حذف شد")}catch(e){toast("حذف پیام در قوانین Firebase مجاز نیست")}});
+ box.querySelectorAll("[data-edit]").forEach(b=>b.onclick=async()=>{
+  const s=await messages.doc(b.dataset.edit).get(),m=s.data();if(!m||m.userId!==uid)return;
+  const t=prompt("ویرایش پیام:",m.text);if(t?.trim()&&t.trim()!==m.text)await messages.doc(b.dataset.edit).update({text:t.trim(),edited:true,editedAt:ts()});
+ });
+ box.querySelectorAll("[data-reply]").forEach(b=>b.onclick=async()=>{
+  const m=(await messages.doc(b.dataset.reply).get()).data();if(!m)return;
+  const obj={name:m.name,text:m.text};
+  if(b.dataset.room==="public"){pubReply=obj;toast("حالت پاسخ فعال شد")}
+  else{privReply=obj;toast("حالت پاسخ فعال شد")}
+ });
+ box.querySelectorAll("[data-react]").forEach(b=>b.onclick=()=>messages.doc(b.closest(".msg").dataset.id).set({reactions:{[b.dataset.emoji]:firebase.firestore.FieldValue.increment(1)}},{merge:true}));
+}
+function updateTimers(){
+ document.querySelectorAll(".expire").forEach(e=>{
+  const t=Number(e.dataset.time);if(!t)return;
+  const left=Math.max(0,86400000-(Date.now()-t));
+  const h=Math.floor(left/3600000),m=Math.floor(left%3600000/60000),s=Math.floor(left%60000/1000);
+  e.textContent=`محو در ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+ });
+}
+setInterval(updateTimers,1000);
 
-function renderTyping(snap){
-  const pub=[],priv=[];
-  snap.forEach(d=>{
-    const x=d.data();
-    if(!x.active || !x.expiresAt || x.expiresAt<nowMs() || x.userId===userId)return;
-    if(x.room==="public")pub.push(x.name);
-    if(x.room==="private"&&selectedPrivateUser&&x.userId===selectedPrivateUser.id&&x.receiverId===userId)priv.push(x.name);
-  });
-  $("typingStatus").textContent=pub.length?pub.join(" و ")+" در حال نوشتن...":"";
-  $("privateTyping").textContent=priv.length?priv.join(" و ")+" در حال نوشتن...":"";
+async function send(room){
+ const input=room==="public"?($("text")||$("messageInput")):($("privateText")||$("privateInput"));
+ const text=(input?.value||"").trim();if(!text)return;
+ try{
+  if(room==="private"&&!selected){toast("یک کاربر را انتخاب کن");return}
+  await messages.add({type:room==="public"?"public":"private",name,text,userId:uid,uid,receiverId:room==="private"?selected.id:null,seen:false,time:ts(),replyTo:room==="public"?pubReply:privReply,reactions:{}});
+  input.value="";if(room==="public")pubReply=null;else privReply=null;
+ }catch(e){console.error(e);toast("ارسال پیام انجام نشد؛ Rules Firebase را بررسی کن")}
 }
-function typing(room,to,active){
-  const id=room==="public"?"public_"+userId:"private_"+userId+"_"+to;
-  typingRef.doc(id).set({userId,name:username,room,receiverId:to||null,active,expiresAt:nowMs()+2200},{merge:true}).catch(()=>{});
-}
-function bindTyping(input,room){
-  input.addEventListener("input",()=>{
-    const to=room==="private"?selectedPrivateUser?.id:null;
-    if(room==="private"&&!to)return;
-    typing(room,to,true);
-    const key=room==="public"?"publicTypingTimer":"privateTypingTimer";
-    clearTimeout(window[key]);
-    window[key]=setTimeout(()=>typing(room,to,false),1800);
-  });
-}
-bindTyping($("text"),"public");
-bindTyping($("privateText"),"private");
+function bind(id,fn){const e=$(id);if(e)e.onclick=fn}
+bind("sendPublicBtn",()=>send("public"));bind("sendBtn",()=>send("public"));bind("sendPrivateBtn",()=>send("private"));bind("privateSendBtn",()=>send("private"));
+["text","messageInput","privateText","privateInput"].forEach(id=>{const e=$(id);if(e)e.addEventListener("keydown",x=>{if(x.key==="Enter"&&!x.shiftKey){x.preventDefault();send(id.includes("private")?"private":"public")}})});
 
-function formatTime(v){
-  try{return v?.toDate?.().toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"})||""}catch(e){return""}
-}
-function remaining(v){
-  const t=v?.toMillis?.()||0;
-  if(!t)return "";
-  const left=Math.max(0,t+86400000-nowMs());
-  const h=Math.floor(left/3600000),m=Math.floor((left%3600000)/60000),s=Math.floor((left%60000)/1000);
-  return `محو در ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-}
-function msgHTML(m,id){
-  const mine=m.userId===userId;
-  const reactions=m.reactions||{};
-  const rx=["👍","❤️","😂","🔥","😢","😡"];
-  return `<div class="msg ${mine?"mine":""}">
-    <div class="msg-head"><span>${esc(m.name)}</span><span>${formatTime(m.time)}</span></div>
-    ${m.replyTo?`<div class="reply-preview">↩ ${esc(m.replyTo.text||"")}</div>`:""}
-    <div class="msg-body">${esc(m.text)}</div>
-    <span class="expire" data-expire="${id}">${remaining(m.time)}</span>
-    <div class="msg-foot">
-      ${mine?`<span class="tick ${m.seen?"seen":"sent"}">${m.seen?"✔✔":"✓"}</span><button data-edit="${id}">ویرایش</button><button data-delete="${id}">حذف</button>`:""}
-      <button data-reply="${id}">↩ پاسخ</button>
-    </div>
-    <div class="reaction-row">${rx.map(x=>`<button data-react="${id}" data-emoji="${x}">${x} ${Number(reactions[x]||0)||""}</button>`).join("")}</div>
-  </div>`;
-}
-function bindMessageActions(box){
-  box.querySelectorAll("[data-delete]").forEach(b=>b.onclick=async()=>{
-    try{await messagesRef.doc(b.dataset.delete).delete()}catch(e){alert("حذف پیام انجام نشد؛ قوانین Firebase را بررسی کنید.")}
-  });
-  box.querySelectorAll("[data-edit]").forEach(b=>b.onclick=async()=>{
-    const snap=await messagesRef.doc(b.dataset.edit).get(), m=snap.data();
-    if(!m||m.userId!==userId)return;
-    const t=prompt("ویرایش پیام:",m.text);
-    if(t&&t.trim()&&t.trim()!==m.text)await messagesRef.doc(b.dataset.edit).update({text:t.trim(),edited:true,editedAt:firebase.firestore.FieldValue.serverTimestamp()});
-  });
-  box.querySelectorAll("[data-reply]").forEach(b=>b.onclick=async()=>{
-    const m=(await messagesRef.doc(b.dataset.reply).get()).data();
-    if(!m)return;
-    const target=box.id==="messagesPublic"?"public":"private";
-    if(target==="public"){publicReply={name:m.name,text:m.text};$("publicReply").textContent="↩ پاسخ به "+m.name+": "+m.text;$("publicReply").classList.remove("hidden");$("text").focus();}
-    else{privateReply={name:m.name,text:m.text};$("privateReply").textContent="↩ پاسخ به "+m.name+": "+m.text;$("privateReply").classList.remove("hidden");$("privateText").focus();}
-  });
-  box.querySelectorAll("[data-react]").forEach(b=>b.onclick=async()=>{
-    const ref=messagesRef.doc(b.dataset.react);
-    await ref.set({reactions:{[b.dataset.emoji]:firebase.firestore.FieldValue.increment(1)}},{merge:true});
-  });
-}
-function renderPublic(s){
-  const box=$("messagesPublic");box.innerHTML="";
-  s.forEach(d=>box.insertAdjacentHTML("beforeend",msgHTML(d.data(),d.id)));
-  box.scrollTop=box.scrollHeight;bindMessageActions(box);startExpiryTicker();
-}
-function startExpiryTicker(){
-  if(window.__expiryTimer)return;
-  window.__expiryTimer=setInterval(()=>{
-    document.querySelectorAll(".expire").forEach(e=>{
-      const id=e.dataset.expire;
-      messagesRef.doc(id).get().then(s=>{if(s.exists)e.textContent=remaining(s.data().time)}).catch(()=>{});
-    });
-  },1000);
-}
+const search=$("privateSearch");if(search)search.oninput=renderUsers;
+bind("privateBtn",()=>{$("publicView")?.classList.add("hidden");$("privateView")?.classList.remove("hidden");renderUsers()});
+bind("backBtn",()=>{$("privateView")?.classList.add("hidden");$("publicView")?.classList.remove("hidden")});
 
-async function sendPublic(){
-  const text=$("text").value.trim();if(!text)return;
-  await messagesRef.add({type:"public",name:username,text,userId,receiverId:null,seen:false,replyTo:publicReply,time:firebase.firestore.FieldValue.serverTimestamp()});
-  $("text").value="";publicReply=null;$("publicReply").classList.add("hidden");typing("public",null,false);
+function typingSet(room,to,active){
+ const id=room==="public"?"public_"+uid:"private_"+uid+"_"+to;
+ typing.doc(id).set({userId:uid,name,room,receiverId:to||null,active,expiresAt:Date.now()+2500},{merge:true}).catch(()=>{});
 }
-$("sendPublicBtn").onclick=sendPublic;
-$("text").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendPublic()}});
+function listenTyping(){
+ unsubTyping?.();unsubTyping=typing.onSnapshot(s=>{
+  let pub="",priv="";
+  s.forEach(d=>{const m=d.data();if(!m.active||m.expiresAt<Date.now()||m.userId===uid)return;if(m.room==="public")pub=m.name+" در حال نوشتن...";if(m.room==="private"&&selected&&m.userId===selected.id)priv=m.name+" در حال نوشتن..."});
+  if($("typingStatus"))$("typingStatus").textContent=pub;
+  if($("privateTyping"))$("privateTyping").textContent=priv;
+ });
+}
+function bindType(id,room){const e=$(id);if(!e)return;e.oninput=()=>{const to=room==="private"?selected?.id:null;if(room==="private"&&!to)return;typingSet(room,to,true);clearTimeout(e.__typing);e.__typing=setTimeout(()=>typingSet(room,to,false),1800)}}
+bindType("text","public");bindType("messageInput","public");bindType("privateText","private");bindType("privateInput","private");
 
-function selectPrivateUser(id,name){
-  selectedPrivateUser={id,name};
-  $("privateTitle").textContent="چت با "+name;
-  $("privateText").placeholder="پیام خصوصی...";
-  renderUsers();loadPrivate();markRead(id);
-}
-function loadPrivate(){
-  privateUnsub?.();if(!selectedPrivateUser)return;
-  privateUnsub=messagesRef.orderBy("time","asc").onSnapshot(s=>{
-    const box=$("privateMessages");box.innerHTML="";let found=false;
-    s.forEach(d=>{
-      const m=d.data();
-      if(m.type==="private"&&((m.userId===userId&&m.receiverId===selectedPrivateUser.id)||(m.userId===selectedPrivateUser.id&&m.receiverId===userId))){
-        found=true;box.insertAdjacentHTML("beforeend",msgHTML(m,d.id));
-      }
-    });
-    if(!found)box.innerHTML='<div class="empty-state">هنوز پیامی بین شما نیست.</div>';
-    box.scrollTop=box.scrollHeight;bindMessageActions(box);
-  },console.error);
-}
-async function markRead(senderId){
-  const s=await messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get();
-  if(s.empty)return;
-  const b=db.batch();s.forEach(d=>b.update(d.ref,{seen:true}));await b.commit();
-}
-async function sendPrivate(){
-  if(!selectedPrivateUser)return alert("ابتدا یک کاربر را انتخاب کنید.");
-  const text=$("privateText").value.trim();if(!text)return;
-  await messagesRef.add({type:"private",name:username,text,userId,receiverId:selectedPrivateUser.id,seen:false,replyTo:privateReply,time:firebase.firestore.FieldValue.serverTimestamp()});
-  $("privateText").value="";privateReply=null;$("privateReply").classList.add("hidden");typing("private",selectedPrivateUser.id,false);
-}
-$("sendPrivateBtn").onclick=sendPrivate;
-$("privateText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendPrivate()}});
+window.addEventListener("online",()=>conn("🟢 متصل","connected"));
+window.addEventListener("offline",()=>conn("🔴 آفلاین","offline"));
+window.addEventListener("beforeunload",()=>users.doc(uid).set({online:false,lastSeen:ts()},{merge:true}).catch(()=>{}));
 
-$("privateBtn").onclick=()=>{$("publicView").classList.add("hidden");$("privateView").classList.remove("hidden")};
-$("backBtn").onclick=()=>{$("privateView").classList.add("hidden");$("publicView").classList.remove("hidden")};
-
-$("changeNameBtn").onclick=async()=>{
-  const n=prompt("نام کاربری جدید:",username)?.trim();if(!n||n===username)return;
-  try{await claimUsername(n);$("displayName").textContent=username}
-  catch(e){alert(e.message)}
-};
-$("logoutBtn").onclick=()=>{
-  usersRef.doc(userId).set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-  localStorage.removeItem("chatName");username="";showGuest();
-};
-
-window.IRN={
-  closeModal(){ $("irnModal").classList.remove("open") },
-  openModal(type){
-    const data={
-      settings:["⚙️ تنظیمات","<p>اعلان‌ها، وضعیت صدا و تنظیمات ظاهری.</p><button onclick=\"IRN.notify()\">🔔 فعال‌سازی اعلان</button>"],
-      rules:["📜 قوانین و حریم خصوصی","<p>احترام به کاربران، عدم ارسال محتوای غیرقانونی و رعایت حریم خصوصی الزامی است.</p>"],
-      about:["ℹ️ درباره","<p>IRN Chat Pro — ارتباط سریع، ساده و کاربردی 🚀</p>"],
-      report:["⚠️ گزارش مشکل","<p>مشکل خود را یادداشت و برای پشتیبانی ارسال کنید.</p>"]
-    }[type];
-    $("irnModalContent").innerHTML="<h2>"+data[0]+"</h2>"+data[1];
-    $("irnModal").classList.add("open");
-  },
-  notify:async()=>{
-    if(!("Notification" in window))return alert("اعلان در این مرورگر پشتیبانی نمی‌شود.");
-    const p=await Notification.requestPermission();
-    if(p==="granted")new Notification("IRN Chat Pro",{body:"اعلان‌ها فعال شد 🔔"});
-  }
-};
+if($("authSubmit"))$("authSubmit").onclick=login;
+else if($("guestEnter"))$("guestEnter").onclick=login;
+else {
+ const inp=$("authUsername")||document.querySelector('input[placeholder*="نام"]');
+ const btn=document.querySelector('button.primary,button');
+ if(inp&&btn)btn.onclick=login;
+}
+if(name){
+ users.doc(uid).get().then(s=>{
+  if(s.exists&&s.data().name===name){showMain();start()}else{$("loadingScreen")?.classList.remove("hidden")}
+ }).catch(()=>{$("loadingScreen")?.classList.remove("hidden")});
+}else{$("loadingScreen")?.classList.remove("hidden")}
+conn("🟡 در حال اتصال","");
 </script>
-
-<script>
-document.addEventListener("DOMContentLoaded",()=>{
-  const bar=document.createElement("div");
-  bar.id="settingsBar";
-  bar.innerHTML='<button onclick="IRN.openModal(\'settings\')">⚙️ تنظیمات</button><button onclick="IRN.openModal(\'rules\')">📜 قوانین</button><button onclick="IRN.openModal(\'about\')">ℹ️ درباره</button><button onclick="IRN.openModal(\'report\')">⚠️ گزارش مشکل</button>';
-  const pub=document.getElementById("publicView");
-  if(pub)pub.insertBefore(bar,document.getElementById("typingStatus"));
-});
-</script>
-
-</body>
-</html>
+</body></html>
