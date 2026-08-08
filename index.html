@@ -112,8 +112,16 @@ body{min-height:100dvh}
 <body>
 
 <div id="loadingScreen">
-  
-    
+  <div class="auth-card">
+    <h1>IRN Chat Pro</h1>
+    <p>سرعت، امنیت، ارتباط</p>
+    <h2>انتخاب نام کاربری</h2>
+    <p>رمز و ساخت حساب نداریم؛ فقط یک نام کاربری یکتا انتخاب کنید.</p>
+    <input id="guestUsername" maxlength="30" placeholder="نام کاربری (حداقل 3 کاراکتر)" autocomplete="off">
+    <button class="primary" id="guestEnter">ورود به پیام‌رسان</button>
+    <div id="guestError" class="auth-error"></div>
+  </div>
+</div>
   </div>
 </div>
 
@@ -169,20 +177,36 @@ body{min-height:100dvh}
   </main>
 </div>
 
-<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/notification_simple-02.mp3"></audio>
 
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js">async function deleteMessage(id){
-  if(!id || !confirm("این پیام حذف شود؟")) return;
-  try{
-    await messagesRef.doc(id).delete();
-  }catch(err){
-    console.error(err);
-    alert("حذف پیام انجام نشد؛ دسترسی Firebase را بررسی کنید.");
-  }
-}
-</script>
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-auth-compat.js"></script>
+<audio id="notifSound" preload="auto"></audio>
+
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
+
+<style>
+#connectionStatus{position:fixed;top:9px;left:9px;z-index:9998;padding:6px 11px;border-radius:999px;font-size:11px;background:#b7791f}
+#connectionStatus.connected{background:#16803c}
+#connectionStatus.offline{background:#b42318}
+#settingsBar{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+#settingsBar button{background:#284a68;color:#fff;padding:7px 9px;border-radius:8px;font-size:11px}
+#irnModal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);align-items:center;justify-content:center;padding:15px}
+#irnModal.open{display:flex}
+#irnModalCard{width:min(560px,100%);max-height:88vh;overflow:auto;background:#13283d;border:1px solid #31536f;border-radius:16px;padding:18px}
+#irnModalCard h2{margin-top:0}
+.reaction-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.reaction-row button{background:#29445c!important;padding:3px 7px!important;font-size:11px!important}
+.editing-bar{display:none;background:#172f44;border-right:3px solid #00a8ff;padding:6px 9px;border-radius:8px;margin-bottom:5px;font-size:11px}
+.editing-bar.show{display:block}
+</style>
+
+<div id="connectionStatus">🟡 در حال اتصال...</div>
+<div id="irnModal" onclick="if(event.target===this)IRN.closeModal()">
+  <div id="irnModalCard">
+    <button style="float:left;background:#29445c;color:#fff;padding:5px 8px;border-radius:7px" onclick="IRN.closeModal()">✕</button>
+    <div id="irnModalContent"></div>
+  </div>
+</div>
+
 <script>
 const firebaseConfig = {
   apiKey:"AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",
@@ -194,330 +218,304 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(), db=firebase.firestore();
+const db=firebase.firestore();
 const messagesRef=db.collection("messages");
 const usersRef=db.collection("users");
 const typingRef=db.collection("typing");
 const usernamesRef=db.collection("usernames");
 
-let currentUser=null, username="", selectedPrivateUser=null;
-let publicUnsub=null, privateUnsub=null, usersUnsub=null, unreadUnsub=null, typingUnsub=null;
-let heartbeatTimer=null, publicTypingTimer=null, privateTypingTimer=null;
-let publicReply=null, privateReply=null, authMode="login";
+let userId=localStorage.getItem("irnUserId")||crypto.randomUUID?.()||Math.random().toString(36).slice(2)+Date.now();
+localStorage.setItem("irnUserId",userId);
+let username=localStorage.getItem("chatName")||"";
+let selectedPrivateUser=null;
+let publicReply=null,privateReply=null;
+let publicUnsub=null,privateUnsub=null,usersUnsub=null,typingUnsub=null,unreadUnsub=null;
+let heartbeat=null,publicTypingTimer=null,privateTypingTimer=null;
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const normalizeUsername=s=>String(s||"").trim().toLowerCase();
-function usernameEmail(name){
-  const bytes=new TextEncoder().encode(name);
-  let hex=""; for(const b of bytes) hex+=b.toString(16).padStart(2,"0");
-  return hex+"@irn-chat-pro.firebaseapp.com";
-}
-function showAuthError(e){
-  const map={
-    "auth/invalid-credential":"نام کاربری یا رمز عبور اشتباه است.",
-    "auth/wrong-password":"رمز عبور اشتباه است.",
-    "auth/user-not-found":"این نام کاربری وجود ندارد.",
-    "auth/email-already-in-use":"این نام کاربری قبلاً ثبت شده است.",
-    "auth/weak-password":"رمز عبور باید حداقل ۶ کاراکتر باشد.",
-    "auth/too-many-requests":"تلاش‌های زیادی انجام شده؛ کمی بعد دوباره امتحان کنید.",
-    "auth/network-request-failed":"اتصال اینترنت را بررسی کنید."
-  };
-  $("authError").textContent=map[e.code]||e.message||"خطای نامشخص.";
-}
-function setAuthMode(mode){
-  authMode=mode;
-  $("authTitle").textContent=mode==="login"?"ورود":"ساخت حساب";
-  $("authHint").textContent=mode==="login"?"نام کاربری و رمز اختصاصی خودت را وارد کن.":"نام کاربری یکتا بساز؛ رمزت را خودت انتخاب کن.";
-  $("authSubmit").textContent=mode==="login"?"ورود":"ساخت حساب";
-  $("toggleAuth").textContent=mode==="login"?"ساخت حساب":"ورود";
-  $("authError").textContent="";
-}
-$("toggleAuth").onclick=()=>setAuthMode(authMode==="login"?"register":"login");
+const nowMs=()=>Date.now();
 
-$("authSubmit").onclick=async()=>{
-  const name=$("authUsername").value.trim(), pass=$("authPassword").value;
-  $("authError").textContent="";
-  if(!/^[A-Za-z0-9_]{3,20}$/.test(name)){ $("authError").textContent="نام کاربری فقط شامل حروف انگلیسی، عدد و _ باشد و ۳ تا ۲۰ کاراکتر باشد."; return; }
-  if(pass.length<6){ $("authError").textContent="رمز عبور حداقل ۶ کاراکتر باشد."; return; }
-  const email=usernameEmail(normalizeUsername(name));
-  try{
-    if(authMode==="register"){
-      const cred=await auth.createUserWithEmailAndPassword(email,pass);
-      const uid=cred.user.uid, key=normalizeUsername(name);
-      try{
-        await db.runTransaction(async tx=>{
-          const ref=usernamesRef.doc(key), snap=await tx.get(ref);
-          if(snap.exists) throw new Error("USERNAME_TAKEN");
-          tx.set(ref,{uid,name,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-          tx.set(usersRef.doc(uid),{uid,name,online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-        });
-      }catch(err){
-        await cred.user.delete().catch(()=>{});
-        if(err.message==="USERNAME_TAKEN") throw {code:"auth/email-already-in-use"};
-        throw err;
-      }
-    }else{
-      await auth.signInWithEmailAndPassword(email,pass);
-    }
-  }catch(e){showAuthError(e);}
-};
+function setConnection(s){
+  const e=$("connectionStatus");
+  e.className=s;
+  e.textContent=s==="connected"?"🟢 متصل":s==="offline"?"🔴 اتصال قطع شد":"🟡 در حال اتصال...";
+}
+async function probeConnection(){
+  setConnection("connecting");
+  try{ await usersRef.limit(1).get(); setConnection("connected"); }
+  catch(e){ setConnection(navigator.onLine?"connecting":"offline"); }
+}
+window.addEventListener("online",probeConnection);
+window.addEventListener("offline",()=>setConnection("offline"));
+setInterval(probeConnection,15000);
 
-auth.onAuthStateChanged(async user=>{
-  if(user){ currentUser=user; await loadCurrentProfile(); }
-  else { currentUser=null; $("loadingScreen").classList.remove("hidden"); $("publicView").classList.add("hidden"); $("privateView").classList.add("hidden"); setAuthMode("login"); }
-});
-
-async function loadCurrentProfile(){
-  const snap=await usersRef.doc(currentUser.uid).get();
-  if(!snap.exists){
-    await auth.signOut(); return;
-  }
-  username=snap.data().name;
-  $("displayName").textContent=username;
+function showGuest(){
+  $("loadingScreen").classList.remove("hidden");
+  $("publicView").classList.add("hidden");
+  $("privateView").classList.add("hidden");
+}
+function showApp(){
   $("loadingScreen").classList.add("hidden");
   $("publicView").classList.remove("hidden");
-  startPresence();
-  startListeners();
 }
+function validateName(n){
+  return n.length>=3 && n.length<=30 && !/[<>]/.test(n);
+}
+async function claimUsername(name){
+  const clean=name.trim();
+  if(!validateName(clean)) throw new Error("نام کاربری باید بین ۳ تا ۳۰ کاراکتر باشد.");
+  const key=clean.toLowerCase().replace(/\s+/g," ");
+  const ref=usernamesRef.doc(key);
+  await db.runTransaction(async tx=>{
+    const snap=await tx.get(ref);
+    if(snap.exists && snap.data().userId!==userId) throw new Error("این نام کاربری قبلاً استفاده شده است.");
+    tx.set(ref,{userId,name:clean,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    tx.set(usersRef.doc(userId),{
+      userId,name:clean,online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+  });
+  username=clean;
+  localStorage.setItem("chatName",username);
+}
+$("guestEnter").onclick=async()=>{
+  const n=$("guestUsername").value.trim();
+  $("guestError").textContent="";
+  try{
+    await claimUsername(n);
+    $("displayName").textContent=username;
+    showApp();
+    startApp();
+  }catch(e){$("guestError").textContent=e.message||"ثبت نام کاربری انجام نشد."}
+};
+$("guestUsername").addEventListener("keydown",e=>{if(e.key==="Enter")$("guestEnter").click();});
+
+if(username){
+  claimUsername(username).then(()=>{ $("displayName").textContent=username; showApp(); startApp(); })
+    .catch(()=>{ localStorage.removeItem("chatName"); showGuest(); });
+}else showGuest();
 
 function startPresence(){
-  const ref=usersRef.doc(currentUser.uid);
-  const beat=()=>ref.set({uid:currentUser.uid,name:username,online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
-  beat(); clearInterval(heartbeatTimer); heartbeatTimer=setInterval(beat,20000);
-  window.addEventListener("beforeunload",()=>ref.set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));
+  const ref=usersRef.doc(userId);
+  const beat=()=>ref.set({userId,name:username,online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
+  beat(); clearInterval(heartbeat); heartbeat=setInterval(beat,20000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)beat()});
+  window.addEventListener("beforeunload",()=>{ref.set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{})});
 }
-function isOnline(data){
-  const ts=data.lastSeen?.toDate?.(); return !!ts && (Date.now()-ts.getTime()<45000);
+function online(u){
+  const t=u.lastSeen?.toMillis?.()||0;
+  return !!u.online && !!t && nowMs()-t<45000;
 }
 
-function startListeners(){
-  publicUnsub?.(); usersUnsub?.(); unreadUnsub?.(); typingUnsub?.();
+function startApp(){
+  startPresence();
+  publicUnsub?.(); usersUnsub?.(); typingUnsub?.(); unreadUnsub?.();
   publicUnsub=messagesRef.where("type","==","public").orderBy("time","asc").onSnapshot(renderPublic,console.error);
-  usersUnsub=usersRef.onSnapshot(snap=>{
-    const arr=[]; snap.forEach(d=>{if(d.id!==currentUser.uid) arr.push({id:d.id,...d.data()})});
-    window.usersCache=arr; renderUsers();
+  usersUnsub=usersRef.onSnapshot(s=>{
+    window.usersCache=[];
+    s.forEach(d=>{if(d.id!==userId)window.usersCache.push({id:d.id,...d.data()})});
+    renderUsers();
   },console.error);
-  unreadUnsub=messagesRef.where("receiverId","==",currentUser.uid).where("seen","==",false).onSnapshot(s=>{
-    let total=0,map={}; s.forEach(d=>{const m=d.data(); map[m.userId]=(map[m.userId]||0)+1; total++});
-    window.unreadMap=map; $("unreadPrivateCount").textContent=total; $("unreadPrivateCount").classList.toggle("hidden",!total); renderUsers();
+  typingUnsub=typingRef.onSnapshot(renderTyping,console.error);
+  unreadUnsub=messagesRef.where("receiverId","==",userId).where("seen","==",false).onSnapshot(s=>{
+    let total=0; window.unreadMap={};
+    s.forEach(d=>{const m=d.data();total++;window.unreadMap[m.userId]=(window.unreadMap[m.userId]||0)+1});
+    $("unreadPrivateCount").textContent=total;
+    $("unreadPrivateCount").classList.toggle("hidden",total===0);
+    renderUsers();
   },console.error);
-  typingUnsub=typingRef.onSnapshot(s=>renderTyping(s),console.error);
 }
 
 function renderUsers(){
-  const list=$("privateUserList"), q=$("privateSearch").value.trim().toLowerCase();
-  list.innerHTML="";
-  (window.usersCache||[]).filter(u=>u.name?.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(u=>{
-    const online=isOnline(u), el=document.createElement("div");
-    el.className="userItem"+(selectedPrivateUser?.id===u.id?" selected":"");
-    el.innerHTML=`<span class="${online?"online-dot":"offline-dot"}"></span><span class="user-name">${esc(u.name)}</span>${window.unreadMap?.[u.id]?`<span class="unread-count">${window.unreadMap[u.id]}</span>`:""}`;
-    el.onclick=()=>selectPrivateUser(u.id,u.name); list.appendChild(el);
-  });
+  const q=$("privateSearch").value.trim().toLowerCase();
+  $("privateUserList").innerHTML="";
+  (window.usersCache||[]).filter(u=>(u.name||"").toLowerCase().includes(q))
+    .sort((a,b)=>(a.name||"").localeCompare(b.name||""))
+    .forEach(u=>{
+      const e=document.createElement("div");
+      e.className="userItem"+(selectedPrivateUser?.id===u.id?" selected":"");
+      e.innerHTML=`<span class="${online(u)?"online-dot":"offline-dot"}"></span><span class="user-name">${esc(u.name)}</span>${window.unreadMap?.[u.id]?`<span class="unread-count">${window.unreadMap[u.id]}</span>`:""}`;
+      e.onclick=()=>selectPrivateUser(u.id,u.name);
+      $("privateUserList").appendChild(e);
+    });
 }
 $("privateSearch").oninput=renderUsers;
 
-function renderTyping(snapshot){
-  const now=Date.now(), publicNames=[], privateNames=[];
-  snapshot.forEach(d=>{
-    const x=d.data(); if(!x.active || !x.expiresAt || x.expiresAt<=now || x.uid===currentUser.uid) return;
-    if(x.room==="public") publicNames.push(x.name);
-    else if(selectedPrivateUser && x.room==="private" && x.to===currentUser.uid && x.uid===selectedPrivateUser.id) privateNames.push(x.name);
+function renderTyping(snap){
+  const pub=[],priv=[];
+  snap.forEach(d=>{
+    const x=d.data();
+    if(!x.active || !x.expiresAt || x.expiresAt<nowMs() || x.userId===userId)return;
+    if(x.room==="public")pub.push(x.name);
+    if(x.room==="private"&&selectedPrivateUser&&x.userId===selectedPrivateUser.id&&x.receiverId===userId)priv.push(x.name);
   });
-  $("typingStatus").textContent=publicNames.length?publicNames.join(" و ")+" در حال نوشتن...":"";
-  $("privateTyping").textContent=privateNames.length?privateNames.join(" و ")+" در حال نوشتن...":"";
+  $("typingStatus").textContent=pub.length?pub.join(" و ")+" در حال نوشتن...":"";
+  $("privateTyping").textContent=priv.length?priv.join(" و ")+" در حال نوشتن...":"";
 }
-function setTyping(room,to,active){
-  const id=room==="public"?`public_${currentUser.uid}`:`private_${currentUser.uid}_${to}`;
-  typingRef.doc(id).set({uid:currentUser.uid,name:username,room,to:to||null,active,expiresAt:Date.now()+2200},{merge:true}).catch(()=>{});
+function typing(room,to,active){
+  const id=room==="public"?"public_"+userId:"private_"+userId+"_"+to;
+  typingRef.doc(id).set({userId,name:username,room,receiverId:to||null,active,expiresAt:nowMs()+2200},{merge:true}).catch(()=>{});
 }
 function bindTyping(input,room){
   input.addEventListener("input",()=>{
-    const to=room==="public"?null:selectedPrivateUser?.id; if(!to && room==="private") return;
-    setTyping(room,to,true);
-    clearTimeout(room==="public"?publicTypingTimer:privateTypingTimer);
-    const timer=setTimeout(()=>setTyping(room,to,false),1800);
-    if(room==="public") publicTypingTimer=timer; else privateTypingTimer=timer;
+    const to=room==="private"?selectedPrivateUser?.id:null;
+    if(room==="private"&&!to)return;
+    typing(room,to,true);
+    const key=room==="public"?"publicTypingTimer":"privateTypingTimer";
+    clearTimeout(window[key]);
+    window[key]=setTimeout(()=>typing(room,to,false),1800);
   });
 }
-bindTyping($("text"),"public"); bindTyping($("privateText"),"private");
+bindTyping($("text"),"public");
+bindTyping($("privateText"),"private");
 
-function messageHTML(m,id){
-  const mine=m.uid===currentUser.uid, time=m.time?.toDate?.()?.toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"})||"";
-  const reply=m.replyTo?`<div class="reply-preview">↪ ${esc(m.replyTo)}</div>`:"";
+function formatTime(v){
+  try{return v?.toDate?.().toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"})||""}catch(e){return""}
+}
+function remaining(v){
+  const t=v?.toMillis?.()||0;
+  if(!t)return "";
+  const left=Math.max(0,t+86400000-nowMs());
+  const h=Math.floor(left/3600000),m=Math.floor((left%3600000)/60000),s=Math.floor((left%60000)/1000);
+  return `محو در ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+function msgHTML(m,id){
+  const mine=m.userId===userId;
+  const reactions=m.reactions||{};
+  const rx=["👍","❤️","😂","🔥","😢","😡"];
   return `<div class="msg ${mine?"mine":""}">
-    <div class="msg-head"><span>${esc(m.name)}</span><span>${time}</span></div>
-    ${reply}<div class="msg-body">${esc(m.text)}</div>
+    <div class="msg-head"><span>${esc(m.name)}</span><span>${formatTime(m.time)}</span></div>
+    ${m.replyTo?`<div class="reply-preview">↩ ${esc(m.replyTo.text||"")}</div>`:""}
+    <div class="msg-body">${esc(m.text)}</div>
+    <span class="expire" data-expire="${id}">${remaining(m.time)}</span>
     <div class="msg-foot">
-      ${mine?`<span class="tick ${m.seen?"seen":"sent"}">${m.seen?"✔✔":"✓"}</span><button data-delete="${id}">حذف</button>`:""}
-      <button data-reply="${esc(m.text)}">↩ پاسخ</button>
+      ${mine?`<span class="tick ${m.seen?"seen":"sent"}">${m.seen?"✔✔":"✓"}</span><button data-edit="${id}">ویرایش</button><button data-delete="${id}">حذف</button>`:""}
+      <button data-reply="${id}">↩ پاسخ</button>
     </div>
+    <div class="reaction-row">${rx.map(x=>`<button data-react="${id}" data-emoji="${x}">${x} ${Number(reactions[x]||0)||""}</button>`).join("")}</div>
   </div>`;
 }
-function renderPublic(snapshot){
-  const box=$("messagesPublic"); box.innerHTML="";
-  snapshot.forEach(d=>box.insertAdjacentHTML("beforeend",messageHTML(d.data(),d.id)));
-  box.scrollTop=box.scrollHeight; bindMessageButtons(box,"public");
+function bindMessageActions(box){
+  box.querySelectorAll("[data-delete]").forEach(b=>b.onclick=async()=>{
+    try{await messagesRef.doc(b.dataset.delete).delete()}catch(e){alert("حذف پیام انجام نشد؛ قوانین Firebase را بررسی کنید.")}
+  });
+  box.querySelectorAll("[data-edit]").forEach(b=>b.onclick=async()=>{
+    const snap=await messagesRef.doc(b.dataset.edit).get(), m=snap.data();
+    if(!m||m.userId!==userId)return;
+    const t=prompt("ویرایش پیام:",m.text);
+    if(t&&t.trim()&&t.trim()!==m.text)await messagesRef.doc(b.dataset.edit).update({text:t.trim(),edited:true,editedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  });
+  box.querySelectorAll("[data-reply]").forEach(b=>b.onclick=async()=>{
+    const m=(await messagesRef.doc(b.dataset.reply).get()).data();
+    if(!m)return;
+    const target=box.id==="messagesPublic"?"public":"private";
+    if(target==="public"){publicReply={name:m.name,text:m.text};$("publicReply").textContent="↩ پاسخ به "+m.name+": "+m.text;$("publicReply").classList.remove("hidden");$("text").focus();}
+    else{privateReply={name:m.name,text:m.text};$("privateReply").textContent="↩ پاسخ به "+m.name+": "+m.text;$("privateReply").classList.remove("hidden");$("privateText").focus();}
+  });
+  box.querySelectorAll("[data-react]").forEach(b=>b.onclick=async()=>{
+    const ref=messagesRef.doc(b.dataset.react);
+    await ref.set({reactions:{[b.dataset.emoji]:firebase.firestore.FieldValue.increment(1)}},{merge:true});
+  });
 }
-function bindMessageButtons(box,room){
-  box.querySelectorAll("[data-delete]").forEach(b=>b.onclick=async()=>{try{await messagesRef.doc(b.dataset.delete).delete()}catch(e){alert("حذف پیام انجام نشد: "+e.message)}});
-  box.querySelectorAll("[data-reply]").forEach(b=>b.onclick=()=>startReply(b.dataset.reply,room));
+function renderPublic(s){
+  const box=$("messagesPublic");box.innerHTML="";
+  s.forEach(d=>box.insertAdjacentHTML("beforeend",msgHTML(d.data(),d.id)));
+  box.scrollTop=box.scrollHeight;bindMessageActions(box);startExpiryTicker();
 }
-function startReply(text,room){
-  if(room==="public"){publicReply=text; $("publicReply").textContent="↪ "+text; $("publicReply").classList.remove("hidden"); $("text").focus();}
-  else {privateReply=text; $("privateReply").textContent="↪ "+text; $("privateReply").classList.remove("hidden"); $("privateText").focus();}
+function startExpiryTicker(){
+  if(window.__expiryTimer)return;
+  window.__expiryTimer=setInterval(()=>{
+    document.querySelectorAll(".expire").forEach(e=>{
+      const id=e.dataset.expire;
+      messagesRef.doc(id).get().then(s=>{if(s.exists)e.textContent=remaining(s.data().time)}).catch(()=>{});
+    });
+  },1000);
 }
 
+async function sendPublic(){
+  const text=$("text").value.trim();if(!text)return;
+  await messagesRef.add({type:"public",name:username,text,userId,receiverId:null,seen:false,replyTo:publicReply,time:firebase.firestore.FieldValue.serverTimestamp()});
+  $("text").value="";publicReply=null;$("publicReply").classList.add("hidden");typing("public",null,false);
+}
 $("sendPublicBtn").onclick=sendPublic;
 $("text").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendPublic()}});
-async function sendPublic(){
-  const input=$("text"), text=input.value.trim(); if(!text||!currentUser)return;
-  await messagesRef.add({type:"public",name:username,text,uid:currentUser.uid,userId:currentUser.uid,receiverId:null,replyTo:publicReply,reactions:{heart:[],like:[]},seen:false,time:firebase.firestore.FieldValue.serverTimestamp()});
-  input.value=""; publicReply=null; $("publicReply").classList.add("hidden"); setTyping("public",null,false);
-}
 
 function selectPrivateUser(id,name){
-  selectedPrivateUser={id,name}; $("privateTitle").textContent="چت با "+name; $("privateText").placeholder="پیام خصوصی برای "+name+"...";
-  renderUsers(); loadPrivateMessages(); markMessagesRead(id);
+  selectedPrivateUser={id,name};
+  $("privateTitle").textContent="چت با "+name;
+  $("privateText").placeholder="پیام خصوصی...";
+  renderUsers();loadPrivate();markRead(id);
 }
-function loadPrivateMessages(){
-  privateUnsub?.();
-  if(!selectedPrivateUser)return;
+function loadPrivate(){
+  privateUnsub?.();if(!selectedPrivateUser)return;
   privateUnsub=messagesRef.orderBy("time","asc").onSnapshot(s=>{
-    const box=$("privateMessages"); box.innerHTML="";
-    let has=false;
+    const box=$("privateMessages");box.innerHTML="";let found=false;
     s.forEach(d=>{
-      const m=d.data(), ok=m.type==="private"&&((m.uid===currentUser.uid&&m.receiverId===selectedPrivateUser.id)||(m.uid===selectedPrivateUser.id&&m.receiverId===currentUser.uid));
-      if(ok){has=true;box.insertAdjacentHTML("beforeend",messageHTML(m,d.id))}
+      const m=d.data();
+      if(m.type==="private"&&((m.userId===userId&&m.receiverId===selectedPrivateUser.id)||(m.userId===selectedPrivateUser.id&&m.receiverId===userId))){
+        found=true;box.insertAdjacentHTML("beforeend",msgHTML(m,d.id));
+      }
     });
-    if(!has)box.innerHTML='<div class="empty-state">هنوز پیامی بین شما نیست.</div>';
-    box.scrollTop=box.scrollHeight; bindMessageButtons(box,"private");
+    if(!found)box.innerHTML='<div class="empty-state">هنوز پیامی بین شما نیست.</div>';
+    box.scrollTop=box.scrollHeight;bindMessageActions(box);
   },console.error);
 }
-async function markMessagesRead(senderId){
-  const s=await messagesRef.where("receiverId","==",currentUser.uid).where("uid","==",senderId).where("seen","==",false).get();
-  const batch=db.batch(); s.forEach(d=>batch.update(d.ref,{seen:true})); if(!s.empty)await batch.commit();
+async function markRead(senderId){
+  const s=await messagesRef.where("receiverId","==",userId).where("userId","==",senderId).where("seen","==",false).get();
+  if(s.empty)return;
+  const b=db.batch();s.forEach(d=>b.update(d.ref,{seen:true}));await b.commit();
+}
+async function sendPrivate(){
+  if(!selectedPrivateUser)return alert("ابتدا یک کاربر را انتخاب کنید.");
+  const text=$("privateText").value.trim();if(!text)return;
+  await messagesRef.add({type:"private",name:username,text,userId,receiverId:selectedPrivateUser.id,seen:false,replyTo:privateReply,time:firebase.firestore.FieldValue.serverTimestamp()});
+  $("privateText").value="";privateReply=null;$("privateReply").classList.add("hidden");typing("private",selectedPrivateUser.id,false);
 }
 $("sendPrivateBtn").onclick=sendPrivate;
 $("privateText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendPrivate()}});
-async function sendPrivate(){
-  if(!selectedPrivateUser)return alert("ابتدا یک کاربر را انتخاب کنید");
-  const input=$("privateText"), text=input.value.trim(); if(!text)return;
-  await messagesRef.add({type:"private",name:username,text,uid:currentUser.uid,userId:currentUser.uid,receiverId:selectedPrivateUser.id,replyTo:privateReply,reactions:{heart:[],like:[]},seen:false,time:firebase.firestore.FieldValue.serverTimestamp()});
-  input.value=""; privateReply=null; $("privateReply").classList.add("hidden"); setTyping("private",selectedPrivateUser.id,false);
-}
-$("privateBtn").onclick=()=>{ $("publicView").classList.add("hidden"); $("privateView").classList.remove("hidden"); };
-$("backBtn").onclick=()=>{ $("privateView").classList.add("hidden"); $("publicView").classList.remove("hidden"); };
+
+$("privateBtn").onclick=()=>{$("publicView").classList.add("hidden");$("privateView").classList.remove("hidden")};
+$("backBtn").onclick=()=>{$("privateView").classList.add("hidden");$("publicView").classList.remove("hidden")};
 
 $("changeNameBtn").onclick=async()=>{
-  const n=prompt("نام نمایشی جدید:",username)?.trim(); if(!n||n===username)return;
-  if(n.length>30)return alert("نام بیش از حد طولانی است.");
-  await usersRef.doc(currentUser.uid).update({name:n});
-  username=n; $("displayName").textContent=n;
+  const n=prompt("نام کاربری جدید:",username)?.trim();if(!n||n===username)return;
+  try{await claimUsername(n);$("displayName").textContent=username}
+  catch(e){alert(e.message)}
 };
-$("logoutBtn").onclick=async()=>{
-  clearInterval(heartbeatTimer); await usersRef.doc(currentUser.uid).set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); await auth.signOut();
+$("logoutBtn").onclick=()=>{
+  usersRef.doc(userId).set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  localStorage.removeItem("chatName");username="";showGuest();
+};
+
+window.IRN={
+  closeModal(){ $("irnModal").classList.remove("open") },
+  openModal(type){
+    const data={
+      settings:["⚙️ تنظیمات","<p>اعلان‌ها، وضعیت صدا و تنظیمات ظاهری.</p><button onclick=\"IRN.notify()\">🔔 فعال‌سازی اعلان</button>"],
+      rules:["📜 قوانین و حریم خصوصی","<p>احترام به کاربران، عدم ارسال محتوای غیرقانونی و رعایت حریم خصوصی الزامی است.</p>"],
+      about:["ℹ️ درباره","<p>IRN Chat Pro — ارتباط سریع، ساده و کاربردی 🚀</p>"],
+      report:["⚠️ گزارش مشکل","<p>مشکل خود را یادداشت و برای پشتیبانی ارسال کنید.</p>"]
+    }[type];
+    $("irnModalContent").innerHTML="<h2>"+data[0]+"</h2>"+data[1];
+    $("irnModal").classList.add("open");
+  },
+  notify:async()=>{
+    if(!("Notification" in window))return alert("اعلان در این مرورگر پشتیبانی نمی‌شود.");
+    const p=await Notification.requestPermission();
+    if(p==="granted")new Notification("IRN Chat Pro",{body:"اعلان‌ها فعال شد 🔔"});
+  }
 };
 </script>
 
 <script>
-window.IRN_COMPLETE_FEATURES=true;
-(function(){
-  const LIFE=24*60*60*1000;
-  let replyTarget=null, typingTimer=null, previousPrivateCount=0;
-
-  window.irnMillis=function(v){
-    try{
-      if(!v)return 0;
-      if(typeof v.toMillis==="function")return v.toMillis();
-      if(typeof v.seconds==="number")return v.seconds*1000;
-      const n=new Date(v).getTime(); return isNaN(n)?0:n;
-    }catch(e){return 0}
-  };
-  window.irnExpiry=function(v){
-    const t=irnMillis(v); if(!t)return "";
-    let left=Math.max(0,LIFE-(Date.now()-t));
-    let s=Math.floor(left/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60);s%=60;
-    return "محو در "+String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
-  };
-  window.irnRequestNotifications=async function(){
-    if(!("Notification"in window))return;
-    if(Notification.permission==="default")try{await Notification.requestPermission()}catch(e){}
-  };
-  window.irnNotify=function(title,body){
-    try{if("Notification"in window&&Notification.permission==="granted")new Notification(title||"IRN Chat Pro",{body:body||"پیام جدید"})}catch(e){}
-  };
-  window.irnBeep=function(){
-    try{
-      const A=window.AudioContext||window.webkitAudioContext;if(!A)return;
-      const a=new A(),o=a.createOscillator(),g=a.createGain();
-      o.frequency.value=880;g.gain.value=.04;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.1)
-    }catch(e){}
-  };
-  window.irnSetReply=function(id,name,text){
-    replyTarget={id:id,name:name,text:text};
-    const el=document.getElementById("replyPreview");
-    if(el){el.classList.remove("hidden");el.innerHTML="↩️ پاسخ به <b>"+(name||"کاربر")+"</b>: "+String(text||"").slice(0,100)}
-  };
-  window.irnCancelReply=function(){
-    replyTarget=null;
-    const el=document.getElementById("replyPreview");
-    if(el){el.classList.add("hidden");el.innerHTML=""}
-  };
-
-  document.addEventListener("click",function(){
-    irnRequestNotifications();
-  },{once:true});
-
-  document.addEventListener("input",function(e){
-    if(e.target && e.target.id==="privateInput" && typeof selectedUser!=="undefined" && selectedUser){
-      clearTimeout(typingTimer);
-      try{
-        db.collection("typing").doc(userId+"_"+selectedUser.id).set({
-          userId:userId,name:username,receiverId:selectedUser.id,typing:true,
-          updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-        },{merge:true});
-        typingTimer=setTimeout(function(){
-          db.collection("typing").doc(userId+"_"+selectedUser.id).delete().catch(()=>{});
-        },1200);
-      }catch(err){}
-    }
-  });
-
-  window.irnStartTicker=function(){
-    if(window.__irnTicker)clearInterval(window.__irnTicker);
-    window.__irnTicker=setInterval(function(){
-      document.querySelectorAll("[data-expire-ms]").forEach(function(el){
-        const t=Number(el.getAttribute("data-expire-ms"));
-        if(t)el.textContent=irnExpiry({toMillis:()=>t});
-      });
-    },1000);
-  };
-  irnStartTicker();
-})();
-</script>
-
-
-<script>
-window.IRN_ENTER_TO_SEND=true;
-document.addEventListener("keydown",function(e){
-  if(e.key!=="Enter"||e.shiftKey||e.isComposing)return;
-  if(e.target&&e.target.id==="publicInput"){e.preventDefault();if(typeof sendPublic==="function")sendPublic();}
-  if(e.target&&e.target.id==="privateInput"){e.preventDefault();if(typeof sendPrivate==="function")sendPrivate();}
+document.addEventListener("DOMContentLoaded",()=>{
+  const bar=document.createElement("div");
+  bar.id="settingsBar";
+  bar.innerHTML='<button onclick="IRN.openModal(\'settings\')">⚙️ تنظیمات</button><button onclick="IRN.openModal(\'rules\')">📜 قوانین</button><button onclick="IRN.openModal(\'about\')">ℹ️ درباره</button><button onclick="IRN.openModal(\'report\')">⚠️ گزارش مشکل</button>';
+  const pub=document.getElementById("publicView");
+  if(pub)pub.insertBefore(bar,document.getElementById("typingStatus"));
 });
-</script>
-
-
-<!-- IRN NO AUTH / UNIQUE USERNAME -->
-<script>
-window.IRN_UniqueUsername = async function(name){
-  const n = String(name || '').trim();
-  if (n.length < 3) return {ok:false, reason:'short'};
-  if (typeof usersRef === 'undefined') return {ok:false, reason:'firebase'};
-  const snap = await usersRef.where('name','==',n).limit(2).get();
-  const usedByOther = snap.docs.some(d => typeof userId === 'undefined' || d.id !== userId);
-  return {ok:!usedByOther, reason:usedByOther ? 'taken' : 'available'};
-};
 </script>
 
 </body>
