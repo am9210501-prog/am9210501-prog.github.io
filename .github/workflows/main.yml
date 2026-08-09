@@ -16,6 +16,11 @@ jobs:
         with:
           node-version: 20
 
+      - name: Prepare web files
+        run: |
+          mkdir www
+          rsync -av --exclude='.git' --exclude='.github' --exclude='www' --exclude='android' ./ www/
+
       - name: Install Capacitor
         run: |
           npm init -y
@@ -23,7 +28,7 @@ jobs:
 
       - name: Initialize Capacitor
         run: |
-          npx cap init "My Messenger" "com.mymessenger.app" --web-dir=.
+          npx cap init "My Messenger" "com.mymessenger.app" --web-dir=www
 
       - name: Add Android
         run: npx cap add android
