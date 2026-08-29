@@ -1,4 +1,4 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IRN Chat</title><style>
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IRN Chat </title><style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#081426;color:#fff;font-family:Tahoma,Arial}.app{height:100dvh;display:flex}.side{width:260px;background:#0d1c31;padding:14px;display:flex;flex-direction:column;gap:8px}.side button{background:#162b46;color:#fff;border:0;border-radius:10px;padding:11px;text-align:right}.brand{font-size:22px;font-weight:bold}.users{overflow:auto;min-height:0}.user{padding:9px;border-radius:9px;display:flex;justify-content:space-between}.main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}.top{height:58px;flex:0 0 58px;padding:10px 14px;background:#0c1b2f;border-bottom:1px solid #20344f;display:flex;align-items:center;justify-content:space-between}.view{display:none;flex:1;min-height:0;flex-direction:column;padding:12px}.view.active{display:flex}.messages{flex:1;min-height:0;overflow:auto;padding:5px}.msg{max-width:78%;background:#132844;border-radius:14px;padding:9px 11px;margin:7px 0;position:relative}.actions{margin-top:5px}.actions button{background:#203a58;color:#fff;border:0;border-radius:7px;padding:3px 6px;font-size:11px}.ticks{font-size:11px;margin-right:5px}.tick-sent{color:#b8c5d6}.tick-seen{color:#55d98a}.mine{margin-right:auto;background:#075f8f}.meta{font-size:11px;color:#a9b7ca;margin-bottom:4px}.react button{background:none;color:white;border:0}.composer{display:flex;gap:7px;flex:0 0 auto;padding:8px 0}.composer input{flex:1;min-width:0;background:#142943;color:white;border:1px solid #284461;border-radius:12px;padding:12px}.composer button,.primary{background:#087bc7;color:white;border:0;border-radius:12px;padding:10px 15px}.card{background:#10233c;border:1px solid #213b5a;border-radius:16px;padding:16px;margin-bottom:10px}.notice{background:#153d61}.empty{text-align:center;color:#8494aa;padding:30px}@media(max-width:700px){.side{width:70px;padding:7px}.brand{font-size:12px}.side .me,.side .users{display:none}.side button{font-size:0;text-align:center}.side button:first-letter{font-size:18px}.msg{max-width:88%}}
 </style></head><body><div class="app"><aside class="side"><div class="brand">IRN</div><div class="me"><b id="sideName">مهمان</b><small id="conn">🟡 اتصال</small></div><button onclick="show('public')">💬 عمومی</button><button onclick="show('private')">👥 خصوصی</button><button onclick="show('notice')">📢 اطلاعیه</button><button onclick="show('rules')">📜 قوانین</button><button onclick="show('settings')">⚙️ تنظیمات</button><div class="users" id="users"></div></aside><main class="main"><header class="top"><b id="title">چت عمومی</b><span id="topStatus">🟢</span></header>
 <section id="public" class="view active"><div id="publicMessages" class="messages"><div class="empty">در حال دریافت پیام‌ها...</div></div><div class="composer"><input id="publicInput" placeholder="پیام عمومی..."><button onclick="sendPublic()">ارسال</button></div></section>
@@ -46,38 +46,159 @@ function connection(){
 async function boot(){try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);db=firebase.firestore();usersRef=db.collection("users");msgRef=db.collection("messages");await ensureName();paint();connection();users();listenPublic()}catch(e){console.error(e);$("conn").textContent="🔴 خطای اتصال";alert("اتصال به Firebase برقرار نشد.")}}
 $("publicInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendPublic()}});$("privateInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendPrivate()}});boot();
 </script>
-<style id="irn13-fixes">
-.users-panel,.users{min-height:0;overflow:hidden;display:flex;flex-direction:column}
-.users-list,#privateUserList{min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.user-search,#privateSearch{display:block!important;width:100%;box-sizing:border-box}
-.private-layout,.privateChatWindow{min-height:0}
-.private-messages,#privateMessages{min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
-@media(max-width:700px){
-  .users-panel,.users{width:100%!important;flex:0 0 auto}
-  .user-search,#privateSearch{font-size:16px!important;min-height:42px}
-  .users-list,#privateUserList{max-height:38vh}
-}
-</style>
+<div id="irnUserPanel" style="background:#111;border-radius:10px;padding:8px;margin:6px 0;flex:0 0 auto">
+  <div style="font-weight:700;margin-bottom:6px">👥 کاربران</div>
+  <input id="irnUserSearch" type="search" placeholder="🔎 جستجوی نام کاربری..."
+    style="width:100%;box-sizing:border-box;padding:10px;border:0;border-radius:8px;background:#222;color:white;font-size:15px">
+  <div id="irnUserList" style="max-height:28vh;overflow:auto;margin-top:6px;-webkit-overflow-scrolling:touch">
+    <div style="opacity:.6;text-align:center;padding:10px">در حال دریافت کاربران...</div>
+  </div>
+</div>
+
+
 <script>
 (function(){
-  function setStatus(text){
-    var e=document.getElementById('connectionStatus')||document.getElementById('conn');
-    if(e)e.textContent=text;
+  const clean=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function getCache(){
+    return Array.isArray(window.usersCache) ? window.usersCache :
+           Array.isArray(window.cache) ? window.cache :
+           Array.isArray(window.usersList) ? window.usersList : [];
   }
-  async function check(){
-    if(!navigator.onLine){setStatus('🔴 آفلاین');return;}
-    try{
-      if(window.db && db.collection){
-        await db.collection('_connection_check').doc('ping').get({source:'server'});
-        setStatus('🟢 متصل');
-      }else setStatus('🟡 در حال اتصال...');
-    }catch(e){setStatus('🔴 قطع از Firebase');}
+  function render(){
+    const box=document.getElementById("irnUserList");
+    const input=document.getElementById("irnUserSearch");
+    if(!box)return;
+    const q=(input?.value||"").trim().toLowerCase();
+    const me=window.userId||window.uid||localStorage.getItem("userId")||"";
+    const list=getCache().filter(u=>u && u.id!==me && String(u.name||"").toLowerCase().includes(q));
+    if(!list.length){
+      box.innerHTML='<div style="opacity:.6;text-align:center;padding:10px">کاربری پیدا نشد.</div>';
+      return;
+    }
+    box.innerHTML=list.map(u=>{
+      const last=u.lastSeen && typeof u.lastSeen.toDate==="function" ? u.lastSeen.toDate() : null;
+      const online=!!u.online && last && Date.now()-last.getTime()<45000;
+      const status=online ? "🟢 آنلاین" :
+        last ? "⚪ آخرین بازدید "+last.toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"}) : "⚪ آفلاین";
+      return `<div data-irn-id="${clean(u.id)}" style="display:flex;justify-content:space-between;align-items:center;padding:10px;margin:4px 0;background:#222;border-radius:8px;cursor:pointer">
+        <b>👤 ${clean(u.name||"کاربر")}</b><small style="opacity:.75">${status}</small>
+      </div>`;
+    }).join("");
   }
-  addEventListener('online',check);
-  addEventListener('offline',check);
-  setTimeout(check,800);
-  setInterval(check,15000);
+  document.addEventListener("input",e=>{if(e.target?.id==="irnUserSearch")render()});
+  document.addEventListener("click",e=>{
+    const row=e.target.closest("[data-irn-id]");
+    if(!row)return;
+    const u=getCache().find(x=>String(x.id)===row.dataset.irnId);
+    if(!u)return;
+    if(typeof window.selectPrivateUser==="function") window.selectPrivateUser(u.id,u.name);
+    else if(typeof window.selectUser==="function") window.selectUser(u);
+  });
+  setInterval(render,1500);
+  window.addEventListener("load",render);
+})();
+</script>
+
+
+<style id="irn15-style">
+#irnPeopleButton{
+  position:fixed;right:14px;bottom:14px;z-index:5000;
+  width:52px;height:52px;border:0;border-radius:50%;
+  background:#0d6efd;color:#fff;font-size:22px;box-shadow:0 4px 14px #0006;cursor:pointer
+}
+#irnPeopleBadge{position:absolute;right:-2px;top:-2px;background:#e53935;border-radius:20px;font-size:10px;padding:2px 5px}
+#irnPeoplePanel{
+  position:fixed;right:14px;bottom:76px;z-index:4999;width:min(340px,calc(100vw - 28px));
+  max-height:70vh;overflow:auto;background:#101f33;border:1px solid #29425d;border-radius:14px;
+  padding:10px;box-shadow:0 12px 30px #0008;display:none
+}
+.irn-profile{background:#132844;border-radius:12px;padding:12px;margin:8px 0}
+.irn-profile img{width:58px;height:58px;border-radius:50%;object-fit:cover;float:right;margin-left:10px;background:#203a58}
+.irn-bottom-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.irn-bottom-actions button{flex:1;min-width:110px}
+</style>
+
+
+<button id="irnPeopleButton" title="کاربران">👥<span id="irnPeopleBadge" style="display:none">0</span></button>
+<div id="irnPeoplePanel">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <b>👥 کاربران</b><button id="irnPeopleClose">✕</button>
+  </div>
+  <input id="irnPeopleSearch" placeholder="جستجوی کاربر..." style="width:100%;box-sizing:border-box;margin:8px 0;padding:10px;border-radius:9px;border:0;background:#222;color:#fff">
+  <div id="irnPeopleList"></div>
+  <div class="irn-bottom-actions">
+    <button id="irnProfileBtn">👤 پروفایل من</button>
+    <button id="irnSettingsBtn">⚙️ تنظیمات</button>
+  </div>
+</div>
+
+
+<script id="irn15-js">
+(function(){
+  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const panel=document.getElementById("irnPeoplePanel");
+  const list=document.getElementById("irnPeopleList");
+  const search=document.getElementById("irnPeopleSearch");
+
+  function cache(){
+    return Array.isArray(window.usersCache)?window.usersCache:
+           Array.isArray(window.cache)?window.cache:[];
+  }
+  function render(){
+    if(!list)return;
+    const q=(search?.value||"").trim().toLowerCase();
+    const me=window.userId||window.uid||localStorage.getItem("userId")||"";
+    const arr=cache().filter(u=>u.id!==me && String(u.name||"").toLowerCase().includes(q));
+    list.innerHTML=arr.length?arr.map(u=>{
+      const t=u.lastSeen?.toDate?.();
+      const online=!!u.online&&t&&(Date.now()-t.getTime()<45000);
+      const status=online?"🟢 آنلاین":(t?"⚪ آخرین بازدید "+t.toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"}):"⚪ آفلاین");
+      return `<div class="irn-profile" data-irn15-id="${esc(u.id)}">
+        <b>👤 ${esc(u.name||"کاربر")}</b><div style="font-size:11px;opacity:.75">${status}</div>
+        <button style="margin-top:7px" data-irn15-chat="${esc(u.id)}">💬 چت</button>
+      </div>`;
+    }).join(""):'<div style="opacity:.6;text-align:center;padding:12px">کاربری پیدا نشد.</div>';
+  }
+
+  document.getElementById("irnPeopleButton")?.addEventListener("click",()=>{
+    panel.style.display=panel.style.display==="block"?"none":"block"; render();
+  });
+  document.getElementById("irnPeopleClose")?.addEventListener("click",()=>panel.style.display="none");
+  search?.addEventListener("input",render);
+
+  document.addEventListener("click",e=>{
+    const b=e.target.closest("[data-irn15-chat]");
+    if(!b)return;
+    const u=cache().find(x=>String(x.id)===b.dataset.irn15Chat);
+    if(!u)return;
+    panel.style.display="none";
+    if(typeof window.selectPrivateUser==="function") window.selectPrivateUser(u.id,u.name);
+    else if(typeof window.selectUser==="function") window.selectUser(u);
+  });
+
+  document.getElementById("irnProfileBtn")?.addEventListener("click",()=>{
+    const me=cache().find(x=>x.id===(window.userId||window.uid||localStorage.getItem("userId")));
+    alert(me ? "نام: "+(me.name||"")+"\nبیو: "+(me.bio||"هنوز ثبت نشده") : "پروفایل شما هنوز بارگذاری نشده است.");
+  });
+  document.getElementById("irnSettingsBtn")?.addEventListener("click",()=>{
+    alert("تنظیمات در نسخه بعدی به صفحه مستقل منتقل می‌شود.");
+  });
+
+  setInterval(render,3000);
 })();
 </script>
 
 </body></html>
+<style id="irn-floating-only">
+#irnUserPanel,#privateUserList,#irnUserList{display:none!important}
+</style>
+<script>
+(function(){
+  const b=document.getElementById("irnPeopleButton");
+  const p=document.getElementById("irnPeoplePanel");
+  if(!b||!p)return;
+  // The floating users button/panel stays available independently of page scrolling.
+  b.style.position="fixed";
+  p.style.position="fixed";
+})();
+</script>
