@@ -1,39 +1,191 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IRN Chat </title><style>
-*{box-sizing:border-box}html,body{margin:0;height:100%;background:#081426;color:#fff;font-family:Tahoma,Arial}.app{height:100dvh;display:flex}.side{width:260px;background:#0d1c31;padding:14px;display:flex;flex-direction:column;gap:8px}.side button{background:#162b46;color:#fff;border:0;border-radius:10px;padding:11px;text-align:right}.brand{font-size:22px;font-weight:bold}.users{overflow:auto;min-height:0}.user{padding:9px;border-radius:9px;display:flex;justify-content:space-between}.main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}.top{height:58px;flex:0 0 58px;padding:10px 14px;background:#0c1b2f;border-bottom:1px solid #20344f;display:flex;align-items:center;justify-content:space-between}.view{display:none;flex:1;min-height:0;flex-direction:column;padding:12px}.view.active{display:flex}.messages{flex:1;min-height:0;overflow:auto;padding:5px}.msg{max-width:78%;background:#132844;border-radius:14px;padding:9px 11px;margin:7px 0;position:relative}.actions{margin-top:5px}.actions button{background:#203a58;color:#fff;border:0;border-radius:7px;padding:3px 6px;font-size:11px}.ticks{font-size:11px;margin-right:5px}.tick-sent{color:#b8c5d6}.tick-seen{color:#55d98a}.mine{margin-right:auto;background:#075f8f}.meta{font-size:11px;color:#a9b7ca;margin-bottom:4px}.react button{background:none;color:white;border:0}.composer{display:flex;gap:7px;flex:0 0 auto;padding:8px 0}.composer input{flex:1;min-width:0;background:#142943;color:white;border:1px solid #284461;border-radius:12px;padding:12px}.composer button,.primary{background:#087bc7;color:white;border:0;border-radius:12px;padding:10px 15px}.card{background:#10233c;border:1px solid #213b5a;border-radius:16px;padding:16px;margin-bottom:10px}.notice{background:#153d61}.empty{text-align:center;color:#8494aa;padding:30px}@media(max-width:700px){.side{width:70px;padding:7px}.brand{font-size:12px}.side .me,.side .users{display:none}.side button{font-size:0;text-align:center}.side button:first-letter{font-size:18px}.msg{max-width:88%}}
-</style></head><body><div class="app"><aside class="side"><div class="brand">IRN</div><div class="me"><b id="sideName">مهمان</b><small id="conn">🟡 اتصال</small></div><button onclick="show('public')">💬 عمومی</button><button onclick="show('private')">👥 خصوصی</button><button onclick="show('notice')">📢 اطلاعیه</button><button onclick="show('rules')">📜 قوانین</button><button onclick="show('settings')">⚙️ تنظیمات</button><div class="users" id="users"></div></aside><main class="main"><header class="top"><b id="title">چت عمومی</b><span id="topStatus">🟢</span></header>
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IRN Chat 1.0</title><style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#081426;color:#fff;font-family:Tahoma,Arial}.app{height:100dvh;display:flex}.side{width:260px;background:#0d1c31;padding:14px;display:flex;flex-direction:column;gap:8px}.side button{background:#162b46;color:#fff;border:0;border-radius:10px;padding:11px;text-align:right;position:relative}.nav-badge{display:none;background:#e53935;color:#fff;border-radius:999px;min-width:19px;height:19px;line-height:19px;text-align:center;font-size:11px;font-weight:bold;padding:0 5px;margin-right:6px}.user-badge{display:none;background:#e53935;color:#fff;border-radius:999px;min-width:18px;height:18px;line-height:18px;text-align:center;font-size:10px;padding:0 5px;margin-right:5px}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.setting-row select{background:#142943;color:#fff;border:1px solid #284461;border-radius:10px;padding:10px;min-width:150px}.muted{color:#a9b7ca;font-size:12px;line-height:1.8}.brand{font-size:22px;font-weight:bold}.users{overflow:auto;min-height:0}.user{padding:9px;border-radius:9px;display:flex;justify-content:space-between}.main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}.top{height:58px;flex:0 0 58px;padding:10px 14px;background:#0c1b2f;border-bottom:1px solid #20344f;display:flex;align-items:center;justify-content:space-between}.view{display:none;flex:1;min-height:0;flex-direction:column;padding:12px}.view.active{display:flex}.messages{flex:1;min-height:0;overflow:auto;padding:5px}.msg{max-width:78%;background:#132844;border-radius:14px;padding:9px 11px;margin:7px 0;position:relative}.actions{margin-top:5px}.actions button{background:#203a58;color:#fff;border:0;border-radius:7px;padding:3px 6px;font-size:11px}.mine{margin-right:auto;background:#075f8f}.meta{font-size:11px;color:#a9b7ca;margin-bottom:4px}.msg-foot{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:4px}.msg-time{font-size:10px;color:#a9b7ca}.ticks{font-size:11px;margin-right:2px}.tick-sent{color:#b8c5d6}.tick-seen{color:#55d98a}.react button{background:none;color:white;border:0}.composer{display:flex;gap:7px;flex:0 0 auto;padding:8px 0}.composer input{flex:1;min-width:0;background:#142943;color:white;border:1px solid #284461;border-radius:12px;padding:12px}.composer button,.primary{background:#087bc7;color:white;border:0;border-radius:12px;padding:10px 15px}.card{background:#10233c;border:1px solid #213b5a;border-radius:16px;padding:16px;margin-bottom:10px}.notice{background:#153d61}.empty{text-align:center;color:#8494aa;padding:30px}@media(max-width:700px){.side{width:70px;padding:7px}.brand{font-size:12px}.side .me,.side .users{display:none}.side button{font-size:0;text-align:center}.side button:first-letter{font-size:18px}.msg{max-width:88%}}
+</style></head><body><div class="app"><aside class="side"><div class="brand">IRN</div><div class="me"><b id="sideName">مهمان</b><small id="conn">🟡 اتصال</small></div><button id="publicNav" onclick="show('public')">💬 عمومی <span id="publicBadge" class="nav-badge">0</span></button><button id="privateNav" onclick="show('private')">👥 خصوصی <span id="privateBadge" class="nav-badge">0</span></button><button onclick="show('notice')">📢 اطلاعیه</button><button onclick="show('rules')">📜 قوانین</button><button onclick="show('settings')">⚙️ تنظیمات</button><div class="users" id="users"></div></aside><main class="main"><header class="top"><b id="title">چت عمومی</b><span id="topStatus">🟢</span></header>
 <section id="public" class="view active"><div id="publicMessages" class="messages"><div class="empty">در حال دریافت پیام‌ها...</div></div><div class="composer"><input id="publicInput" placeholder="پیام عمومی..."><button onclick="sendPublic()">ارسال</button></div></section>
 <section id="private" class="view"><div class="card" id="privateHeader">یک کاربر را انتخاب کنید.</div><div id="privateMessages" class="messages"><div class="empty">هنوز گفت‌وگویی انتخاب نشده.</div></div><div class="composer"><input id="privateInput" placeholder="پیام خصوصی..." disabled><button id="privateSend" onclick="sendPrivate()" disabled>ارسال</button></div></section>
 <section id="notice" class="view"><div class="card notice"><h2>📢 اطلاعیه</h2><p>اطلاعیه‌های مهم پیام‌رسان اینجا نمایش داده می‌شوند.</p></div></section>
 <section id="rules" class="view"><div class="card"><h2>📜 قوانین</h2><p>احترام به دیگر کاربران الزامی است.</p><p>از ارسال پیام مزاحم، توهین‌آمیز یا غیرقانونی خودداری کنید.</p></div></section>
-<section id="settings" class="view"><div class="card"><h2>⚙️ تنظیمات</h2><p>نام: <b id="settingsName"></b></p><button class="primary" onclick="changeName()">✏️ تغییر نام</button></div><div class="card"><button class="primary" onclick="enableNotifications()">🔔 فعال‌سازی اعلان</button></div><div class="card"><button onclick="deleteAccount()">🗑️ حذف حساب</button></div></section>
+<section id="settings" class="view">
+<div class="card"><h2>⚙️ تنظیمات</h2><p>نام: <b id="settingsName"></b></p><button class="primary" onclick="changeName()">✏️ تغییر نام</button></div>
+<div class="card"><h3>🕒 حذف خودکار حساب غیرفعال</h3><p class="muted">اگر در مدت انتخاب‌شده هیچ فعالیتی نداشته باشی، حساب و پیام‌های مرتبطت به‌صورت خودکار حذف می‌شوند. مقدار پیش‌فرض یک ماه است.</p><div class="setting-row"><label for="inactiveMonths">مهلت عدم فعالیت</label><select id="inactiveMonths"><option value="1">۱ ماه</option><option value="2">۲ ماه</option><option value="3">۳ ماه</option><option value="6">۶ ماه</option><option value="12">۱۲ ماه</option><option value="0">غیرفعال</option></select><button class="primary" onclick="saveInactivitySetting()">ذخیره تنظیمات</button></div><p id="inactiveStatus" class="muted">در حال دریافت تنظیمات...</p></div>
+<div class="card"><button class="primary" onclick="enableNotifications()">🔔 فعال‌سازی اعلان</button></div><div class="card"><button onclick="deleteAccount()">🗑️ حذف حساب</button></div></section>
 </main></div>
-<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script><script>
+<script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-auth-compat.js"></script><script>
 const firebaseConfig={apiKey:"AIzaSyCzLno3kea6Ab4hXLsj9HZ9SJoTSDIuogk",authDomain:"irn-chat-pro.firebaseapp.com",projectId:"irn-chat-pro",storageBucket:"irn-chat-pro.firebasestorage.app",messagingSenderId:"1084279461221",appId:"1:1084279461221:web:2fb3ab923e3de7b9e0fd8c"};
-let db,usersRef,msgRef,uid=localStorage.getItem("irn_uid")||crypto.randomUUID(),name=localStorage.getItem("irn_name")||"",selected=null,privateUnsub=null;localStorage.setItem("irn_uid",uid);
+let db,auth,usersRef,msgRef,uid="",name=localStorage.getItem("irn_name")||"",selected=null,privateUnsub=null;
 const $=x=>document.getElementById(x),esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const stamp=()=>firebase.firestore.FieldValue.serverTimestamp();
-function show(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));$(v).classList.add("active");$("title").textContent={public:"چت عمومی",private:"چت خصوصی",notice:"اطلاعیه‌ها",rules:"قوانین",settings:"تنظیمات"}[v]}
+function show(v){
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  $(v).classList.add("active");
+  $("title").textContent={public:"چت عمومی",private:"چت خصوصی",notice:"اطلاعیه‌ها",rules:"قوانین",settings:"تنظیمات"}[v];
+  if(v==="public"){markPublicRead();updateUnreadBadges();}
+  if(v==="private"&&selected)markSeen();
+  if(v==="settings")loadInactivitySetting();
+}
+
 function valid(n){return n.length>=3&&n.length<=30&&!/[<>]/.test(n)}
-async function ensureName(){while(!name){let n=prompt("نام کاربری خود را وارد کنید","");if(n===null)continue;n=n.trim();if(!valid(n)){alert("نام باید بین ۳ تا ۳۰ کاراکتر باشد.");continue}let s=await usersRef.where("name","==",n).limit(1).get();if(!s.empty){alert("این نام قبلاً گرفته شده.");continue}name=n;localStorage.setItem("irn_name",name)}await usersRef.doc(uid).set({userId:uid,name,online:true,lastSeen:stamp()},{merge:true})}
-async function changeName(){let n=prompt("نام کاربری جدید",name);if(n===null)return;n=n.trim();if(!valid(n)){alert("نام باید بین ۳ تا ۳۰ کاراکتر باشد.");return}let s=await usersRef.where("name","==",n).limit(1).get();if(!s.empty&&s.docs[0].id!==uid){alert("این نام قبلاً گرفته شده.");return}await usersRef.doc(uid).set({userId:uid,name:n,online:true,lastSeen:stamp()},{merge:true});name=n;localStorage.setItem("irn_name",name);paint()}
+async function ensureName(){
+  while(!name){
+    let n=prompt("نام کاربری خود را وارد کنید","");
+    if(n===null)continue;
+    n=n.trim();
+    if(!valid(n)){alert("نام باید بین ۳ تا ۳۰ کاراکتر باشد.");continue}
+    let s=await usersRef.where("name","==",n).limit(1).get();
+    if(!s.empty){alert("این نام قبلاً گرفته شده.");continue}
+    name=n;localStorage.setItem("irn_name",name)
+  }
+  await usersRef.doc(uid).set({
+    userId:uid,name,online:true,lastSeen:stamp()
+  },{merge:true})
+}
+async function changeName(){touchActivity();
+  let n=prompt("نام کاربری جدید",name);
+  if(n===null)return;
+  n=n.trim();
+  if(!valid(n)){alert("نام باید بین ۳ تا ۳۰ کاراکتر باشد.");return}
+  let s=await usersRef.where("name","==",n).limit(1).get();
+  if(!s.empty&&s.docs[0].id!==uid){alert("این نام قبلاً گرفته شده.");return}
+  await usersRef.doc(uid).set({userId:uid,name:n,online:true,lastSeen:stamp()},{merge:true});
+  name=n;localStorage.setItem("irn_name",name);paint()
+}
+async function authReady(){
+  if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+  db=firebase.firestore();
+  auth=firebase.auth();
+  usersRef=db.collection("users");
+  msgRef=db.collection("messages");
+  if(!auth.currentUser) await auth.signInAnonymously();
+  uid=auth.currentUser.uid;window.uid=uid;window.userId=uid;
+}
+function setBadge(id,n){const el=$(id);if(!el)return;el.textContent=n>99?"99+":String(n);el.style.display=n>0?"inline-block":"none"}
+function expireAt(){return firebase.firestore.Timestamp.fromDate(new Date(Date.now()+86400000))}
+function isExpired(m){const exp=m.expiresAt?.toDate?.();if(exp)return exp.getTime()<=Date.now();const created=m.time?.toDate?.();return !!created&&created.getTime()+86400000<=Date.now()}
+async function removeExpired(id,m){if(!isExpired(m))return;try{await msgRef.doc(id).delete()}catch(e){console.warn("پاک‌کردن پیام منقضی‌شده توسط Rules مجاز نشد.",e)}}
+let latestPublicMessages=[],latestPrivateMessages=[];
+function markPublicRead(){const now=Date.now();localStorage.setItem("irn_public_last_read",String(now));if(usersRef&&uid)usersRef.doc(uid).set({publicLastReadAt:firebase.firestore.Timestamp.fromDate(new Date(now))},{merge:true}).catch(()=>{})}
+function updateUnreadBadges(){
+  const last=Number(localStorage.getItem("irn_public_last_read")||Date.now());
+  const pub=latestPublicMessages.filter(x=>x.m.userId!==uid&&(x.m.time?.toDate?.()?.getTime()||0)>last).length;
+  setBadge("publicBadge",document.getElementById("public")?.classList.contains("active")?0:pub);
+  const incoming=latestPrivateMessages.filter(x=>x.m.receiverId===uid&&x.m.userId!==uid&&!x.m.seen&&!isExpired(x.m));
+  setBadge("privateBadge",incoming.length);
+  document.querySelectorAll("[data-user-id]").forEach(row=>{
+    const id=row.getAttribute("data-user-id"),b=row.querySelector(".user-badge");
+    const n=incoming.filter(x=>x.m.userId===id).length;
+    if(b){b.textContent=n>99?"99+":String(n);b.style.display=n?"inline-block":"none"}
+  });
+}
+function monthAgoDate(months){const d=new Date();d.setMonth(d.getMonth()+months);return d}
+let lastActivityWrite=0;
+async function touchActivity(){
+  if(!usersRef||!uid)return;
+  if(Date.now()-lastActivityWrite<60000)return;
+  lastActivityWrite=Date.now();
+  try{
+    const snap=await usersRef.doc(uid).get(),data=snap.data()||{};
+    const months=Number.isInteger(data.inactivityMonths)?data.inactivityMonths:1;
+    const patch={lastActivity:stamp(),inactivityMonths:months};
+    if(months>0)patch.inactivityDeleteAt=firebase.firestore.Timestamp.fromDate(monthAgoDate(months));
+    else patch.inactivityDeleteAt=firebase.firestore.FieldValue.delete();
+    await usersRef.doc(uid).set(patch,{merge:true});
+  }catch(e){lastActivityWrite=0;console.warn("ثبت فعالیت انجام نشد.",e)}
+}
+async function loadInactivitySetting(){
+  if(!usersRef||!uid)return;
+  try{
+    const s=await usersRef.doc(uid).get(),d=s.data()||{};
+    const months=Number.isInteger(d.inactivityMonths)?d.inactivityMonths:1;
+    $("inactiveMonths").value=String([0,1,2,3,6,12].includes(months)?months:1);
+    $("inactiveStatus").textContent=months===0?"حذف خودکار حساب غیرفعال است.":"در صورت "+months+" ماه عدم فعالیت، حساب حذف می‌شود.";
+  }catch(e){$("inactiveStatus").textContent="تنظیمات دریافت نشد؛ دسترسی Firestore را بررسی کنید."}
+}
+async function saveInactivitySetting(){
+  const months=Number($("inactiveMonths").value);
+  if(![0,1,2,3,6,12].includes(months))return;
+  if(!confirm(months===0?"حذف خودکار حساب غیرفعال شود؟":`اگر ${months} ماه فعالیت نکنی، حساب و پیام‌های مرتبطت حذف می‌شود. ادامه می‌دهی؟`))return;
+  try{
+    const patch={inactivityMonths:months,lastActivity:stamp()};
+    if(months>0)patch.inactivityDeleteAt=firebase.firestore.Timestamp.fromDate(monthAgoDate(months));
+    else patch.inactivityDeleteAt=firebase.firestore.FieldValue.delete();
+    await usersRef.doc(uid).set(patch,{merge:true});
+    $("inactiveStatus").textContent=months===0?"حذف خودکار غیرفعال شد.":`ذخیره شد: حذف پس از ${months} ماه عدم فعالیت.`;
+  }catch(e){alert("ذخیره تنظیمات انجام نشد. مجوزهای Firestore را بررسی کن.")}
+}
 function paint(){$("sideName").textContent=name;$("settingsName").textContent=name}
-function users(){usersRef.onSnapshot(s=>{window.cache=[];s.forEach(d=>{if(d.id!==uid)window.cache.push({id:d.id,...d.data()})});$("users").innerHTML=window.cache.map(u=>'<div class="user" onclick="selectUser(window.cache.find(x=>x.id===\''+u.id+'\'))"><span>'+esc(u.name)+'</span><span>'+(u.online?"🟢":"⚪")+'</span></div>').join("")})}
-function msgHTML(m,id){let r=m.reactions||{};return '<div class="msg '+(m.userId===uid?"mine":"")+'"><div class="meta">'+esc(m.name||"کاربر")+'</div><div>'+esc(m.text)+'</div><div class="actions">'+(m.userId===uid?'<button onclick="deleteMsg(\''+id+'\')">🗑️ حذف</button>':'')+'</div><div class="react"><button onclick="react(\''+id+'\',\'like\')">👍 '+(r.like||0)+'</button><button onclick="react(\''+id+'\',\'heart\')">❤️ '+(r.heart||0)+'</button><button onclick="react(\''+id+'\',\'laugh\')">😂 '+(r.laugh||0)+'</button></div></div>'}
-function listenPublic(){msgRef.onSnapshot(s=>{let a=[];s.forEach(d=>{let m=d.data();if(!m.receiverId)a.push({id:d.id,m})});a.sort((a,b)=>(a.m.time?.toMillis?.()||0)-(b.m.time?.toMillis?.()||0));$("publicMessages").innerHTML=a.length?a.map(x=>msgHTML(x.m,x.id)).join(""):'<div class="empty">هنوز پیامی نیست.</div>';$("publicMessages").scrollTop=$("publicMessages").scrollHeight})}
-async function sendPublic(){let i=$("publicInput"),t=i.value.trim();if(!t)return;try{await msgRef.add({type:"public",name,userId:uid,text:t,receiverId:null,reactions:{},seen:false,time:stamp()});i.value=""}catch(e){alert("ارسال پیام انجام نشد.")}}
-function selectUser(u){if(!u)return;selected=u;show("private");$("privateHeader").innerHTML="💬 گفتگو با <b>"+esc(u.name)+"</b> "+(u.online?"🟢":"⚪");$("privateInput").disabled=false;$("privateSend").disabled=false;listenPrivate();markSeen()}
-function listenPrivate(){if(privateUnsub)privateUnsub();privateUnsub=msgRef.onSnapshot(s=>{if(!selected)return;let a=[];s.forEach(d=>{let m=d.data();if(m.receiverId&&((m.userId===uid&&m.receiverId===selected.id)||(m.userId===selected.id&&m.receiverId===uid)))a.push({id:d.id,m})});a.sort((a,b)=>(a.m.time?.toMillis?.()||0)-(b.m.time?.toMillis?.()||0));$("privateMessages").innerHTML=a.length?a.map(x=>msgHTML(x.m,x.id)).join(""):'<div class="empty">هنوز پیامی نیست.</div>';$("privateMessages").scrollTop=$("privateMessages").scrollHeight;markSeen()})}
-async function sendPrivate(){if(!selected)return;let i=$("privateInput"),t=i.value.trim();if(!t)return;try{await msgRef.add({type:"private",name,userId:uid,text:t,receiverId:selected.id,reactions:{},seen:false,time:stamp()});i.value=""}catch(e){alert("ارسال پیام خصوصی انجام نشد.")}}
+function users(){usersRef.onSnapshot(s=>{
+  window.cache=[];s.forEach(d=>{if(d.id!==uid)window.cache.push({id:d.id,...d.data()})});
+  $("users").innerHTML=window.cache.map(u=>'<div class="user" data-user-id="'+esc(u.id)+'" onclick="selectUser(window.cache.find(x=>x.id===this.dataset.userId))"><span>'+esc(u.name)+' <b class="user-badge">0</b></span><span>'+(u.online?"🟢":"⚪")+'</span></div>').join("");
+  updateUnreadBadges();
+})}
+function msgHTML(m,id){
+  let r=m.reactions||{};
+  let d=m.time?.toDate?.();
+  let tm=d?d.toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"}):"";
+  let isMine=m.userId===uid;
+  let ticks=isMine ? (m.seen ? '<span class="ticks tick-seen">✓✓</span>' :
+                 (m.delivered ? '<span class="ticks tick-sent">✓✓</span>' :
+                 '<span class="ticks tick-sent">✓</span>')) : "";
+  return '<div class="msg '+(isMine?"mine":"")+'">'
+    +'<div class="meta">'+esc(m.name||"کاربر")+'</div>'
+    +'<div>'+esc(m.text)+'</div>'
+    +'<div class="msg-foot"><span class="msg-time">'+tm+'</span>'+ticks+'</div>'
+    +'<div class="actions">'+(isMine?'<button onclick="deleteMsg(\''+id+'\')">🗑️ حذف</button>':'')+'</div>'
+    +'<div class="react"><button onclick="react(\''+id+'\',\'like\')">👍 '+(r.like||0)+'</button>'
+    +'<button onclick="react(\''+id+'\',\'heart\')">❤️ '+(r.heart||0)+'</button>'
+    +'<button onclick="react(\''+id+'\',\'laugh\')">😂 '+(r.laugh||0)+'</button></div></div>'
+}
+function listenPublic(){msgRef.onSnapshot(s=>{
+  let a=[];s.forEach(d=>{let m=d.data();if(!m.receiverId){if(isExpired(m)){removeExpired(d.id,m);return}a.push({id:d.id,m})}});
+  a.sort((a,b)=>(a.m.time?.toMillis?.()||0)-(b.m.time?.toMillis?.()||0));latestPublicMessages=a;updateUnreadBadges();
+  $("publicMessages").innerHTML=a.length?a.map(x=>msgHTML(x.m,x.id)).join(""):'<div class="empty">هنوز پیامی نیست.</div>';
+  $("publicMessages").scrollTop=$("publicMessages").scrollHeight;
+})}
+function listenUnread(){
+  msgRef.onSnapshot(s=>{
+    latestPrivateMessages=[];latestPublicMessages=[];
+    s.forEach(d=>{
+      const m=d.data();
+      if(isExpired(m)){removeExpired(d.id,m);return}
+      if(!m.receiverId)latestPublicMessages.push({id:d.id,m});
+      else latestPrivateMessages.push({id:d.id,m});
+    });
+    updateUnreadBadges();
+  });
+}
+async function sendPublic(){touchActivity();let i=$("publicInput"),t=i.value.trim();if(!t)return;try{await msgRef.add({type:"public",name,userId:uid,text:t,receiverId:null,reactions:{},seen:false,time:stamp(),expiresAt:expireAt()});i.value=""}catch(e){alert("ارسال پیام انجام نشد.")}}
+function selectUser(u){if(!u)return;touchActivity();selected=u;show("private");$("privateHeader").innerHTML="💬 گفتگو با <b>"+esc(u.name)+"</b> "+(u.online?"🟢":"⚪");$("privateInput").disabled=false;$("privateSend").disabled=false;listenPrivate();markSeen()}
+function listenPrivate(){if(privateUnsub)privateUnsub();privateUnsub=msgRef.onSnapshot(s=>{
+  let all=[],a=[];s.forEach(d=>{let m=d.data();if(m.receiverId){if(isExpired(m)){removeExpired(d.id,m);return}all.push({id:d.id,m});if(selected&&((m.userId===uid&&m.receiverId===selected.id)||(m.userId===selected.id&&m.receiverId===uid)))a.push({id:d.id,m})}});
+  latestPrivateMessages=all;updateUnreadBadges();
+  if(!selected)return;
+  a.sort((a,b)=>(a.m.time?.toMillis?.()||0)-(b.m.time?.toMillis?.()||0));
+  $("privateMessages").innerHTML=a.length?a.map(x=>msgHTML(x.m,x.id)).join(""):'<div class="empty">هنوز پیامی نیست.</div>';
+  $("privateMessages").scrollTop=$("privateMessages").scrollHeight;markSeen()
+})}
+async function sendPrivate(){if(!selected)return;touchActivity();let i=$("privateInput"),t=i.value.trim();if(!t)return;try{await msgRef.add({type:"private",name,userId:uid,text:t,receiverId:selected.id,reactions:{},delivered:false,seen:false,time:stamp(),expiresAt:expireAt()});i.value=""}catch(e){alert("ارسال پیام خصوصی انجام نشد.")}}
 async function deleteMsg(id){
  try{const s=await msgRef.doc(id).get();if(!s.exists||s.data().userId!==uid)return;await msgRef.doc(id).delete()}catch(e){alert("حذف پیام انجام نشد. Rules فایربیس را بررسی کنید.")}
 }
 async function markSeen(){
- if(!selected)return;
- try{const s=await msgRef.where("receiverId","==",uid).get();const batch=db.batch();let n=0;s.forEach(d=>{const m=d.data();if(m.userId===selected.id&&!m.seen){batch.update(d.ref,{seen:true});n++}});if(n)await batch.commit()}catch(e){console.warn("seen",e)}
+  if(!selected)return;
+  try{
+    const s=await msgRef.where("receiverId","==",uid).get();
+    const batch=db.batch(); let n=0;
+    s.forEach(d=>{
+      const m=d.data();
+      if(m.userId===selected.id){
+        const patch={delivered:true};
+        if(!m.seen)patch.seen=true;
+        batch.update(d.ref,patch); n++;
+      }
+    });
+    if(n)await batch.commit();
+  }catch(e){console.warn("delivery/seen",e)}
 }
 async function react(id,f){try{await db.runTransaction(async tx=>{let ref=msgRef.doc(id),s=await tx.get(ref);if(!s.exists)return;let r=s.data().reactions||{},by=r.reactedBy||{};if(by[uid])return;tx.update(ref,{["reactions."+f]:firebase.firestore.FieldValue.increment(1),["reactions.reactedBy."+uid]:f})})}catch(e){console.error(e)}}
 async function enableNotifications(){if("Notification"in window)alert("اجازه اعلان: "+await Notification.requestPermission())}
-async function deleteAccount(){if(!confirm("حساب حذف شود؟"))return;try{await usersRef.doc(uid).delete();localStorage.clear();location.reload()}catch(e){alert("حذف حساب توسط Rules فعلی مجاز نیست.")}}
+async function deleteAccount(){if(!confirm("حساب حذف شود؟"))return;try{await usersRef.doc(uid).delete();if(auth?.currentUser)await auth.signOut();localStorage.clear();location.reload()}catch(e){alert("حذف حساب توسط Rules فعلی مجاز نیست.")}}
 function connection(){
  let serverOK=false;
  const paint=()=>{if(!navigator.onLine){serverOK=false;$("conn").textContent="🔴 آفلاین";$("topStatus").textContent="🔴"}else if(serverOK){$("conn").textContent="🟢 متصل";$("topStatus").textContent="🟢"}else{$("conn").textContent="🟡 در حال اتصال";$("topStatus").textContent="🟡"}};
@@ -43,8 +195,18 @@ function connection(){
  addEventListener("offline",()=>{serverOK=false;paint()});
  setInterval(()=>{if(navigator.onLine)usersRef.doc(uid).set({online:true,lastSeen:stamp()},{merge:true}).catch(()=>{serverOK=false;paint()})},15000);
 }
-async function boot(){try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);db=firebase.firestore();usersRef=db.collection("users");msgRef=db.collection("messages");await ensureName();paint();connection();users();listenPublic()}catch(e){console.error(e);$("conn").textContent="🔴 خطای اتصال";alert("اتصال به Firebase برقرار نشد.")}}
-$("publicInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendPublic()}});$("privateInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendPrivate()}});boot();
+async function boot(){
+  try{
+    await authReady();
+    await ensureName();
+    if(!localStorage.getItem("irn_public_last_read"))localStorage.setItem("irn_public_last_read",String(Date.now()));paint();connection();users();listenPublic();listenPrivate();listenUnread();loadInactivitySetting();touchActivity()
+  }catch(e){
+    console.error(e);
+    $("conn").textContent="🔴 خطای اتصال";
+    alert("اتصال به Firebase برقرار نشد. Anonymous Authentication را در Firebase فعال کنید.")
+  }
+}
+document.addEventListener("click",e=>{if(e.target.closest("button,.user"))touchActivity()});document.addEventListener("keydown",e=>{if(e.target.matches("input,textarea"))touchActivity()});$("publicInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendPublic()}});$("privateInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendPrivate()}});boot();
 </script>
 <div id="irnUserPanel" style="background:#111;border-radius:10px;padding:8px;margin:6px 0;flex:0 0 auto">
   <div style="font-weight:700;margin-bottom:6px">👥 کاربران</div>
@@ -188,7 +350,7 @@ $("publicInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDef
 })();
 </script>
 
-</body></html>
+</body>
 <style id="irn-floating-only">
 #irnUserPanel,#privateUserList,#irnUserList{display:none!important}
 </style>
@@ -202,3 +364,9 @@ $("publicInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDef
   p.style.position="fixed";
 })();
 </script>
+
+
+
+
+
+</html>
