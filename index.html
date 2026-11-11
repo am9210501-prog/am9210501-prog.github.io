@@ -3,7 +3,7 @@
 
 .actions button{cursor:pointer;transition:filter .15s}.actions button:hover{filter:brightness(1.25)}
 .msg{overflow-wrap:anywhere;box-shadow:0 2px 8px #0002}.side button{cursor:pointer;transition:background .15s}.side button:hover{background:#214568}
-#conn{display:block;font-size:11px;margin-top:4px;color:#b8cce0}
+#conn{display:block;font-size:11px;margin-top:4px;color:#b8cce0}.connection-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;background:#26384b;color:#d9e6f2;font-size:12px;white-space:nowrap;border:1px solid #38516b}.connection-pill.online{background:#0d392e;color:#7ff0b5;border-color:#176849}.connection-pill.offline{background:#401f28;color:#ff9eaa;border-color:#713342}.connection-pill.waiting{background:#443719;color:#ffd77b;border-color:#705b25}
 @media(max-width:700px){.app{height:100dvh}.side{width:64px;flex:0 0 64px}.side .brand{font-size:11px}.side button{padding:12px 4px}.top{padding:8px 10px}.view{padding:8px}.composer button{padding:10px}.composer input{padding:10px}}
 </style>
 <style id="irn-modern-ui">
@@ -27,14 +27,14 @@ html,body{background:radial-gradient(ellipse at 15% 0%,#123553 0,transparent 38%
 @media(max-width:700px){.side{width:66px;flex:0 0 66px;padding:8px 5px}.side .me,.side .users{display:none}.side button{padding:13px 3px;border-radius:11px}.brand{font-size:13px}.top{height:58px;flex-basis:58px}.view{padding:8px}.messages{padding:7px 2px}.msg{max-width:91%;padding:9px 10px}.composer{gap:6px;padding:7px}.composer button{min-width:58px}.card{padding:13px}}
 @media(min-width:1100px){.side{width:290px;flex:0 0 290px}.view{padding:22px 28px}.msg{max-width:70%}}
 </style>
-</head><body><div class="app"><aside class="side"><div class="brand">IRN</div><div class="me"><b id="sideName">مهمان</b><small id="conn">🟡 اتصال</small></div><button id="publicNav" onclick="show('public')">💬 عمومی <span id="publicBadge" class="nav-badge">0</span></button><button id="privateNav" onclick="show('private')">👥 خصوصی <span id="privateBadge" class="nav-badge">0</span></button><button onclick="show('notice')">📢 اطلاعیه</button><button onclick="show('rules')">📜 قوانین</button><button onclick="show('settings')">⚙️ تنظیمات</button><div class="users" id="users"></div></aside><main class="main"><header class="top"><b id="title">چت عمومی</b><span id="topStatus">🟢</span></header>
+</head><body><div class="app"><aside class="side"><div class="brand">IRN</div><div class="me"><b id="sideName">مهمان</b><small id="conn">🟡 اتصال</small></div><button id="publicNav" onclick="show('public')">💬 عمومی <span id="publicBadge" class="nav-badge">0</span></button><button id="privateNav" onclick="show('private')">👥 خصوصی <span id="privateBadge" class="nav-badge">0</span></button><button onclick="show('notice')">📢 اطلاعیه</button><button onclick="show('rules')">📜 قوانین</button><button onclick="show('settings')">⚙️ تنظیمات</button><div class="users" id="users"></div></aside><main class="main"><header class="top"><b id="title">چت عمومی</b><span id="topStatus" class="connection-pill">🟡 در حال اتصال</span></header>
 <section id="public" class="view active"><div id="publicMessages" class="messages"><div class="empty">در حال دریافت پیام‌ها...</div></div><div id="publicReplyPreview" class="muted" style="display:none;padding:6px 10px;background:#17324e;border-radius:9px"></div><div class="composer"><input id="publicInput" placeholder="پیام عمومی..."><button onclick="sendPublic()">ارسال</button></div></section>
 <section id="private" class="view"><div class="card" id="privateHeader">یک کاربر را انتخاب کنید.</div><div id="privateMessages" class="messages"><div class="empty">هنوز گفت‌وگویی انتخاب نشده.</div></div><div id="privateReplyPreview" class="muted" style="display:none;padding:6px 10px;background:#17324e;border-radius:9px"></div><div class="composer"><input id="privateInput" placeholder="پیام خصوصی..." disabled><button id="privateSend" onclick="sendPrivate()" disabled>ارسال</button></div></section>
 <section id="notice" class="view"><div class="card notice"><h2>📢 اطلاعیه</h2><p>اطلاعیه‌های مهم پیام‌رسان اینجا نمایش داده می‌شوند.</p></div></section>
 <section id="rules" class="view"><div class="card"><h2>📜 قوانین</h2><p>احترام به دیگر کاربران الزامی است.</p><p>از ارسال پیام مزاحم، توهین‌آمیز یا غیرقانونی خودداری کنید.</p></div></section>
 <section id="settings" class="view">
 <div class="card"><h2>⚙️ تنظیمات</h2><p>نام: <b id="settingsName"></b></p><button class="primary" onclick="changeName()">✏️ تغییر نام</button></div>
-<div class="card"><h3>🕒 حذف خودکار حساب غیرفعال</h3><p class="muted">این گزینه مهلت عدم فعالیت را ذخیره می‌کند. حذف واقعی حساب و پیام‌ها پس از راه‌اندازی سرویس زمان‌بندی‌شده سمت سرور فعال خواهد شد. مقدار پیش‌فرض یک ماه است.</p><div class="setting-row"><label for="inactiveMonths">مهلت عدم فعالیت</label><select id="inactiveMonths"><option value="1">۱ ماه</option><option value="2">۲ ماه</option></select><button class="primary" onclick="saveInactivitySetting()">ذخیره تنظیمات</button></div><p id="inactiveStatus" class="muted">در حال دریافت تنظیمات...</p></div>
+<div class="card"><h3>🕒 حذف خودکار پیام‌ها</h3><p class="muted">هر پیام با زمان انقضای ۲۴ ساعته ثبت می‌شود و بلافاصله پس از پایان مهلت از صفحه پنهان می‌شود. برای حذف دائمی از دیتابیس، باید سیاست TTL فایربیس روی فیلد expiresAt مجموعه messages فعال شود؛ راهنمای دقیق آن کنار فایل قوانین آمده است.</p></div><div class="card"><h3>🕒 حذف خودکار حساب غیرفعال</h3><p class="muted">این گزینه مهلت عدم فعالیت را ذخیره می‌کند. حذف واقعی حساب و پیام‌ها پس از راه‌اندازی سرویس زمان‌بندی‌شده سمت سرور فعال خواهد شد. مقدار پیش‌فرض یک ماه است.</p><div class="setting-row"><label for="inactiveMonths">مهلت عدم فعالیت</label><select id="inactiveMonths"><option value="1">۱ ماه</option><option value="2">۲ ماه</option></select><button class="primary" onclick="saveInactivitySetting()">ذخیره تنظیمات</button></div><p id="inactiveStatus" class="muted">در حال دریافت تنظیمات...</p></div>
 <div class="card"><button class="primary" onclick="enableNotifications()">🔔 فعال‌سازی اعلان</button></div><div class="card"><button onclick="deleteAccount()">🗑️ حذف حساب</button></div></section>
 </main></div>
 <script src="https://www.gstatic.com/firebasejs/13.2.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore-compat.js"></script><script src="https://www.gstatic.com/firebasejs/13.2.0/firebase-auth-compat.js"></script><script>
@@ -93,7 +93,8 @@ async function authReady(){
 function setBadge(id,n){const el=$(id);if(!el)return;el.textContent=n>99?"99+":String(n);el.style.display=n>0?"inline-block":"none"}
 function expireAt(){return firebase.firestore.Timestamp.fromDate(new Date(Date.now()+86400000))}
 function isExpired(m){const exp=m.expiresAt?.toDate?.();if(exp)return exp.getTime()<=Date.now();const created=m.time?.toDate?.();return !!created&&created.getTime()+86400000<=Date.now()}
-async function removeExpired(id,m){if(!isExpired(m))return;try{await msgRef.doc(id).delete()}catch(e){console.warn("پاک‌کردن پیام منقضی‌شده توسط Rules مجاز نشد.",e)}}
+// پیام منقضی‌شده فوراً در رابط کاربری پنهان می‌شود؛ حذف دائمی با Firestore TTL انجام می‌شود.
+async function removeExpired(id,m){ /* Firestore TTL performs server-side deletion. */ }
 let latestPublicMessages=[],latestPrivateMessages=[];
 function markPublicRead(){const now=Date.now();localStorage.setItem("irn_public_last_read",String(now));if(usersRef&&uid)usersRef.doc(uid).set({publicLastReadAt:firebase.firestore.Timestamp.fromDate(new Date(now))},{merge:true}).catch(()=>{})}
 function updateUnreadBadges(){
@@ -242,15 +243,21 @@ async function deleteAccount(){
 }
 function connection(){
  let serverOK=false;
- const paint=()=>{if(!navigator.onLine){serverOK=false;$("conn").textContent="🔴 آفلاین";$("topStatus").textContent="🔴"}else if(serverOK){$("conn").textContent="🟢 متصل";$("topStatus").textContent="🟢"}else{$("conn").textContent="🟡 در حال اتصال";$("topStatus").textContent="🟡"}};
+ const paint=()=>{
+   const el=$("topStatus");
+   if(!navigator.onLine){serverOK=false;$ ("conn").textContent="🔴 آفلاین";el.textContent="🔴 آفلاین";el.className="connection-pill offline"}
+   else if(serverOK){$("conn").textContent="🟢 متصل به سرور";el.textContent="🟢 متصل به سرور";el.className="connection-pill online"}
+   else{$("conn").textContent="🟡 در حال اتصال";el.textContent="🟡 در حال اتصال";el.className="connection-pill waiting"}
+ };
  paint();
  profilesRef.doc(uid).onSnapshot({includeMetadataChanges:true},snap=>{serverOK=!!snap.exists&&!snap.metadata.fromCache;paint()},()=>{serverOK=false;paint()});
  addEventListener("online",()=>{serverOK=false;paint();profilesRef.doc(uid).set({online:true,lastSeen:stamp()},{merge:true}).catch(()=>{})});
- addEventListener("offline",()=>{serverOK=false;paint();profilesRef.doc(uid).set({online:false,lastSeen:stamp()},{merge:true}).catch(()=>{})});
+ addEventListener("offline",()=>{serverOK=false;paint()});
  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&navigator.onLine){profilesRef.doc(uid).set({online:true,lastSeen:stamp()},{merge:true}).catch(()=>{})}});
  addEventListener("pagehide",()=>{if(profilesRef&&uid)profilesRef.doc(uid).set({online:false,lastSeen:stamp()},{merge:true}).catch(()=>{})});
  setInterval(()=>{if(navigator.onLine)profilesRef.doc(uid).set({online:true,lastSeen:stamp()},{merge:true}).catch(()=>{serverOK=false;paint()})},15000);
 }
+
 async function boot(){
   try{
     await authReady();
