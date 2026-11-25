@@ -1,4 +1,5 @@
-name: Build APK
+
+name: Build IRN Chat APK
 
 on:
   workflow_dispatch:
@@ -16,46 +17,41 @@ jobs:
         with:
           node-version: 20
 
-      - name: Prepare web files
-        run: |
-          mkdir www
-          rsync -av --exclude='.git' --exclude='.github' --exclude='www' --exclude='android' ./ www/
-
-      - name: Install Capacitor
-        run: |
-          npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-
-      - name: Initialize Capacitor
-        run: |
-          npx cap init "My Messenger" "com.mymessenger.app" --web-dir=www
-
-      - name: Add Android
-        run: npx cap add android
-
-      - name: Fix Kotlin dependencies
-        run: |
-          cat > android/gradle/force-kotlin.gradle <<'EOF'
-          allprojects {
-              configurations.all {
-                  resolutionStrategy.eachDependency { details ->
-                      if (details.requested.group == "org.jetbrains.kotlin") {
-                          details.useVersion "1.8.22"
-                      }
-                  }
-              }
-          }
-          EOF
-          echo 'apply from: "$rootDir/gradle/force-kotlin.gradle"' >> android/build.gradle
-
-      - name: Sync
-        run: npx cap sync android
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
+
+      - name: Prepare web files
+        run: |
+          mkdir -p www
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='www' \
+            --exclude='android' \
+            ./ www/
+
+      - name: Install Capacitor
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
+
+      - name: Initialize Capacitor
+        run: |
+          npx cap init "IRN Chat" "com.mymessenger.app" --web-dir=www
+
+      - name: Add Android
+        run: npx cap add android
+
+      - name: Generate App Icon
+        run: |
+          test -f resources/icon.png
+          npx capacitor-assets generate --android
+
+      - name: Sync Android
+        run: npx cap sync android
 
       - name: Build APK
         run: |
@@ -66,5 +62,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: messenger-apk
+          name: IRN-Chat-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
