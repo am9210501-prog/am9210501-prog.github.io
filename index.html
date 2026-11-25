@@ -59,6 +59,29 @@
 .view#private.private-chat-open .composer input{background:#0b1724}
 @media(max-width:720px){.view#private.private-chat-open{padding:0}.view#private.private-chat-open #privateHeader{padding:12px 10px}.view#private.private-chat-open #privateMessages{padding:9px 8px 14px}.view#private.private-chat-open .composer{padding:8px 9px calc(8px + env(safe-area-inset-bottom))}}
 
+
+
+/* IRN Chat 0.2.2 — Android safe-area correction */
+@media(max-width:720px){
+  .app{
+    height:100dvh;
+    padding-top:max(env(safe-area-inset-top, 0px), 24px);
+    padding-bottom:max(env(safe-area-inset-bottom, 0px), 24px);
+  }
+  .view#private.private-chat-open{
+    top:max(env(safe-area-inset-top, 0px), 24px);
+    bottom:max(env(safe-area-inset-bottom, 0px), 24px);
+    height:auto;
+    min-height:0;
+  }
+  .user-fab{bottom:calc(76px + max(env(safe-area-inset-bottom, 0px), 24px));}
+  .people-panel{
+    top:max(env(safe-area-inset-top, 0px), 24px);
+    bottom:max(env(safe-area-inset-bottom, 0px), 24px);
+  }
+  .toast{bottom:calc(18px + max(env(safe-area-inset-bottom, 0px), 24px));}
+}
+
 </style></head>
 <body><section class="auth-overlay" id="authOverlay"><div class="auth-card"><div class="auth-logo">IRN CHAT</div><div class="auth-sub">پیام‌رسان ساده، سریع و امن<br>برای ادامه وارد حساب خود شوید یا حساب جدید بسازید.</div><input id="authEmail" type="email" autocomplete="email" placeholder="ایمیل بازیابی و ورود"><div class="auth-password-wrap"><input id="authPassword" type="password" autocomplete="current-password" placeholder="رمز عبور (حداقل ۶ نویسه)" aria-label="رمز عبور"><button class="auth-toggle-password" id="toggleAuthPassword" type="button" aria-pressed="false">نمایش رمز</button></div><div class="auth-actions"><button class="primary" id="authLoginBtn">ورود به حساب</button><button class="auth-secondary" id="authRegisterBtn">ساخت حساب جدید</button><button class="auth-secondary" id="authResetBtn">فراموشی رمز عبور</button><button class="auth-secondary" id="authGuestBtn">ادامه به‌صورت مهمان</button></div><div class="auth-error" id="authError"></div><p class="small" style="text-align:center;margin-top:8px">حساب مهمان به همین نشست دستگاه وابسته است؛ برای نگهداری دائمی، آن را به ایمیل و رمز ارتقا بده.</p><div class="auth-busy" id="authBusy" role="status" aria-live="polite"><div class="auth-busy-spinner" aria-hidden="true"></div><div class="auth-busy-text" id="authBusyText">لطفاً منتظر بمانید…</div><div class="auth-busy-sub">در حال ارتباط امن با سرور</div></div></div></section><div class="app">
 <aside class="side"><div class="brand">IRN CHAT<div class="version-label official">نسخه رسمی 0.2</div></div><div class="me"><b id="sideName">در حال ورود...</b><div class="muted" id="connection">در حال اتصال</div></div>
