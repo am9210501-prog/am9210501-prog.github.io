@@ -309,7 +309,67 @@ $('supportRequestBtn').onclick=async()=>{
 $('copySupportPhoneBtn').onclick=()=>{if(navigator.clipboard?.writeText){navigator.clipboard.writeText(SUPPORT_PHONE).then(()=>toast('شماره پشتیبانی کپی شد.')).catch(()=>toast('کپی شماره ممکن نشد.'));}else toast('امکان کپی خودکار در این مرورگر وجود ندارد.');};
 $('supportTelegramBtn').onclick=()=>{window.location.href='tg://resolve?phone=989944870538';};
 
-$('deleteAccountBtn').onclick=async()=>{if(!confirm('حساب و پیام‌هایی که خودت فرستاده‌ای حذف می‌شوند. این کار برگشت‌پذیر نیست. ادامه می‌دهی؟'))return;if(!confirm('برای تأیید نهایی، مطمئنی که می‌خواهی حساب IRN Chat را حذف کنی؟'))return;const btn=$('deleteAccountBtn');btn.disabled=true;try{for(const col of [msgRef.where('userId','==',uid)]){while(true){const s=await col.limit(400).get();if(s.empty)break;const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();if(s.size<400)break}}const b=db.batch();const usernameRef=db.collection('usernames').doc(usernameKey(name));const usernameSnap=await usernameRef.get();if(usernameSnap.exists&&usernameSnap.data().userId===uid)b.delete(usernameRef);b.delete(usersRef.doc(uid));b.delete(profilesRef.doc(uid));b.delete(db.collection('supportRequests').doc(uid));await b.commit();await auth.currentUser.delete();if(presenceTimer)clearInterval(presenceTimer);localStorage.removeItem('irn_name');localStorage.removeItem('irn_public_last_read');toast('حساب حذف شد.');setTimeout(()=>location.reload(),1000)}catch(e){console.error(e);toast('حذف کامل نشد: '+e.code+'. ممکن است نیاز به ورود مجدد یا مجوز حذف در قوانین باشد.');btn.disabled=false}};
+async function reauthenticateBeforeDelete(user){
+  await user.reload();
+  const hasPasswordProvider=(user.providerData||[]).some(p=>p.providerId==='password');
+  if(hasPasswordProvider){
+    const password=prompt('برای امنیت حساب، رمز عبور ایمیلت را دوباره وارد کن:');
+    if(password===null){const e=new Error('عملیات حذف لغو شد.');e.code='irn/delete-cancelled';throw e;}
+    if(!password){const e=new Error('رمز عبور وارد نشده است.');e.code='irn/empty-password';throw e;}
+    const credential=firebase.auth.EmailAuthProvider.credential(user.email,password);
+    await user.reauthenticateWithCredential(credential);
+    return;
+  }
+  // حساب مهمان در همان نشست فعال است؛ تلاش حذف حساب در ادامه توسط Firebase اعتبارسنجی می‌شود.
+}
+$('deleteAccountBtn').onclick=async()=>{
+  if(!confirm('حساب و پیام‌هایی که خودت فرستاده‌ای حذف می‌شوند. این کار برگشت‌پذیر نیست. ادامه می‌دهی؟'))return;
+  if(!confirm('برای تأیید نهایی، مطمئنی که می‌خواهی حساب IRN Chat را حذف کنی؟'))return;
+  const btn=$('deleteAccountBtn'),currentUser=auth.currentUser;
+  if(!currentUser){toast('ابتدا دوباره وارد حساب شو.');return;}
+  btn.disabled=true;btn.textContent='در حال تأیید هویت…';
+  try{
+    // احراز هویت مجدد باید پیش از هرگونه حذف اطلاعات انجام شود.
+    await reauthenticateBeforeDelete(currentUser);
+    btn.textContent='در حال حذف اطلاعات حساب…';
+    const sentMessages=msgRef.where('userId','==',uid);
+    while(true){
+      const snap=await sentMessages.limit(400).get();
+      if(snap.empty)break;
+      const batch=db.batch();
+      snap.docs.forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+      if(snap.size<400)break;
+    }
+    const batch=db.batch();
+    const usernameRef=db.collection('usernames').doc(usernameKey(name));
+    const usernameSnap=await usernameRef.get();
+    if(usernameSnap.exists&&usernameSnap.data().userId===uid)batch.delete(usernameRef);
+    batch.delete(usersRef.doc(uid));
+    batch.delete(profilesRef.doc(uid));
+    batch.delete(db.collection('supportRequests').doc(uid));
+    await batch.commit();
+    await currentUser.delete();
+    if(presenceTimer)clearInterval(presenceTimer);
+    localStorage.removeItem('irn_name');
+    localStorage.removeItem('irn_public_last_read');
+    toast('حساب حذف شد.');
+    setTimeout(()=>location.reload(),1000);
+  }catch(e){
+    console.error('account deletion:',e);
+    let message='حذف حساب کامل نشد: '+(e.code||e.message||'خطای نامشخص');
+    if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')message='رمز عبور اشتباه است؛ هیچ اطلاعاتی حذف نشد.';
+    else if(e.code==='auth/too-many-requests')message='تلاش‌های زیاد انجام شده؛ کمی بعد دوباره امتحان کن. هیچ اطلاعاتی حذف نشد.';
+    else if(e.code==='auth/requires-recent-login')message='ورود مجدد لازم است. از حساب خارج شو، دوباره وارد شو و حذف را تکرار کن.';
+    else if(e.code==='irn/delete-cancelled')message='حذف حساب لغو شد؛ هیچ اطلاعاتی حذف نشد.';
+    else if(e.code==='irn/empty-password')message='رمز عبور وارد نشده؛ هیچ اطلاعاتی حذف نشد.';
+    else if(e.code==='auth/user-mismatch'||e.code==='auth/user-not-found')message='حساب برای تأیید هویت در دسترس نیست؛ دوباره وارد شو.';
+    else message='حذف حساب کامل نشد: '+(e.code||e.message||'خطا')+'؛ اگر خطا مربوط به مجوز است، Firestore Rules باید بررسی شود.';
+    toast(message);
+  }finally{
+    btn.disabled=false;btn.textContent='حذف حساب من';
+  }
+};
 
 updateBulkBar('public');updateBulkBar('private');
 async function startLoginWithRetry(){try{await login();}catch(e){console.error(e);$('connection').textContent='اتصال ناموفق';$('topStatus').textContent='● خطا';showAuth();authError('راه‌اندازی برنامه ناموفق بود: '+(e.code||e.message||'خطا'));}}
