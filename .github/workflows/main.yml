@@ -53,6 +53,22 @@ jobs:
       - name: Sync Android
         run: npx cap sync android
 
+      - name: Fix Kotlin dependencies
+        run: |
+          cat >> android/build.gradle <<'EOF'
+
+          allprojects {
+              configurations.configureEach {
+                  resolutionStrategy.eachDependency { details ->
+                      if (details.requested.group == "org.jetbrains.kotlin") {
+                          details.useVersion "1.8.22"
+                          details.because "Align Kotlin dependencies"
+                      }
+                  }
+              }
+          }
+          EOF
+
       - name: Build APK
         run: |
           cd android
